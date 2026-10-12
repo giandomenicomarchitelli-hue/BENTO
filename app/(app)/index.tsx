@@ -1,108 +1,133 @@
-import { Link, Redirect } from 'expo-router';
-import { useEffect } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { router, Link } from 'expo-router';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { esci } from '@/api/auth';
+import type { Gruppo } from '@/api/gruppi';
 import { useMieiGruppi } from '@/hooks/useMieiGruppi';
-import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 
 export default function Home() {
-  const email = useAuthStore((stato) => stato.session?.user.email);
   const { gruppi, isLoading } = useMieiGruppi();
-  const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
   const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
 
-  const primoGruppo = gruppi[0] ?? null;
-
-  useEffect(() => {
-    if (primoGruppo !== null && gruppoAttivoId !== primoGruppo.id) {
-      impostaGruppoAttivo(primoGruppo.id);
-    }
-  }, [primoGruppo, gruppoAttivoId, impostaGruppoAttivo]);
-
-  if (isLoading) {
-    return (
-      <View style={styles.centrato}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
-
-  if (primoGruppo === null) {
-    return <Redirect href="/onboarding" />;
+  function apriGruppo(gruppo: Gruppo) {
+    impostaGruppoAttivo(gruppo.id);
+    router.push('/dashboard');
   }
 
   return (
     <View style={styles.contenitore}>
-      <Text style={styles.titolo}>{primoGruppo.nome}</Text>
-      <Text style={styles.sottotitolo}>
-        Fase 1 in corso: lista della spesa e spese condivise con saldo.
-      </Text>
-      {email !== undefined && <Text style={styles.email}>Accesso effettuato come {email}</Text>}
+      <Text style={styles.titolo}>I tuoi gruppi</Text>
 
-      <Link href="/lista-spesa" style={styles.link}>
-        Lista della spesa
-      </Link>
-      <Link href="/spese" style={styles.link}>
-        Spese
-      </Link>
-      <Link href="/saldi" style={styles.link}>
-        Saldi
-      </Link>
-      <Link href="/gruppo" style={styles.link}>
-        Il tuo gruppo
-      </Link>
+      {isLoading ? (
+        <ActivityIndicator style={styles.caricamento} />
+      ) : gruppi.length === 0 ? (
+        <Text style={styles.vuoto}>Non fai ancora parte di nessun gruppo.</Text>
+      ) : (
+        <FlatList
+          data={gruppi}
+          keyExtractor={(gruppo) => gruppo.id}
+          style={styles.elenco}
+          renderItem={({ item }) => (
+            <Pressable style={styles.riga} onPress={() => apriGruppo(item)}>
+              <Text style={styles.nomeGruppo}>{item.nome}</Text>
+              <Text style={styles.tipoGruppo}>{item.tipo}</Text>
+            </Pressable>
+          )}
+        />
+      )}
 
-      <Pressable style={styles.bottone} onPress={() => esci()}>
-        <Text style={styles.testoBottone}>Esci</Text>
+      <View style={styles.azioni}>
+        <Link href="/onboarding/crea-gruppo" style={styles.bottone}>
+          Crea un gruppo
+        </Link>
+        <Link href="/onboarding/unisciti-a-gruppo" style={styles.bottoneSecondario}>
+          Ho un codice invito
+        </Link>
+      </View>
+
+      <Pressable style={styles.bottoneEsci} onPress={() => esci()}>
+        <Text style={styles.testoBottoneEsci}>Esci</Text>
       </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  centrato: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   contenitore: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
     padding: 24,
-    gap: 8,
   },
   titolo: {
     fontSize: 24,
     fontWeight: '600',
-  },
-  sottotitolo: {
-    fontSize: 15,
     textAlign: 'center',
-    color: '#555',
+    marginBottom: 16,
   },
-  email: {
+  caricamento: {
+    marginTop: 24,
+  },
+  vuoto: {
+    textAlign: 'center',
+    color: '#888',
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  elenco: {
+    flexGrow: 0,
+    marginBottom: 16,
+  },
+  riga: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  nomeGruppo: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  tipoGruppo: {
     fontSize: 13,
     color: '#888',
-    marginTop: 16,
+    textTransform: 'capitalize',
   },
-  link: {
-    marginTop: 20,
+  azioni: {
+    gap: 8,
+  },
+  bottone: {
+    backgroundColor: '#2d6cdf',
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    borderRadius: 8,
+    paddingVertical: 14,
+    textAlign: 'center',
+    overflow: 'hidden',
+  },
+  bottoneSecondario: {
+    borderWidth: 1,
+    borderColor: '#2d6cdf',
     color: '#2d6cdf',
     fontSize: 16,
     fontWeight: '600',
+    borderRadius: 8,
+    paddingVertical: 14,
+    textAlign: 'center',
+    overflow: 'hidden',
   },
-  bottone: {
+  bottoneEsci: {
     marginTop: 24,
+    alignSelf: 'center',
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderWidth: 1,
     borderColor: '#c0392b',
   },
-  testoBottone: {
+  testoBottoneEsci: {
     color: '#c0392b',
     fontSize: 15,
     fontWeight: '600',
