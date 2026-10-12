@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, Redirect } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { SpesaConQuote } from '@/api/spese';
@@ -9,6 +9,15 @@ import { formattaEuro } from '@/lib/formato';
 
 export default function Spese() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
+
+  if (gruppoAttivoId === null) {
+    return <Redirect href="/" />;
+  }
+
+  return <SpeseDelGruppo gruppoAttivoId={gruppoAttivoId} />;
+}
+
+function SpeseDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const { membri } = useGruppoAttivo();
   const { spese, isLoading, annulla } = useSpese(gruppoAttivoId);
 

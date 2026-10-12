@@ -1,12 +1,29 @@
 import * as Clipboard from 'expo-clipboard';
+import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 
+import { esciDalGruppo } from '@/api/membri';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
+import { useInvalidaMieiGruppi } from '@/hooks/useMieiGruppi';
+import { useAuthStore } from '@/store/authStore';
+import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 
 export default function Gruppo() {
+  const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
   const { gruppo, membri, isLoading } = useGruppoAttivo();
+  const utenteId = useAuthStore((stato) => stato.session?.user.id);
+  const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
+  const invalidaMieiGruppi = useInvalidaMieiGruppi();
   const [copiato, setCopiato] = useState(false);
+  const [uscendo, setUscendo] = useState(false);
+
+  // Si arriva qui solo dalla dashboard di un gruppo scelto in home; senza
+  // un gruppo attivo (es. link diretto, o store resettato da un refresh)
+  // si torna all'elenco gruppi invece di restare bloccati in caricamento.
+  if (gruppoAttivoId === null) {
+    return <Redirect href="/" />;
+  }
 
   if (isLoading || gruppo === null) {
     return (
@@ -15,6 +32,37 @@ export default function Gruppo() {
       </View>
     );
   }
+
+  const ilMioMembro = membri.find((m) => m.utente_id === utenteId);
+
+  const confermaUscita = () => {
+    if (ilMioMembro === undefined) {
+      return;
+    }
+    Alert.alert(
+      'Uscire dal gruppo?',
+      `Non farai più parte di "${gruppo.nome}" e non vedrai più le sue spese e la sua lista della spesa.`,
+      [
+        { text: 'Annulla', style: 'cancel' },
+        {
+          text: 'Esci dal gruppo',
+          style: 'destructive',
+          onPress: async () => {
+            setUscendo(true);
+            try {
+              await esciDalGruppo(ilMioMembro.id);
+              impostaGruppoAttivo(null);
+              await invalidaMieiGruppi();
+              router.replace('/');
+            } catch {
+              Alert.alert('Qualcosa è andato storto', 'Riprova.');
+              setUscendo(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const copiaCodice = async () => {
     await Clipboard.setStringAsync(gruppo.codice_invito);
@@ -52,6 +100,14 @@ export default function Gruppo() {
           {membro.nome}
         </Text>
       ))}
+
+      <Pressable style={styles.bottoneEsci} onPress={confermaUscita} disabled={uscendo}>
+        {uscendo ? (
+          <ActivityIndicator color="#c0392b" />
+        ) : (
+          <Text style={styles.testoBottoneEsci}>Esci dal gruppo</Text>
+        )}
+      </Pressable>
     </View>
   );
 }
@@ -116,5 +172,19 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+  },
+  bottoneEsci: {
+    marginTop: 32,
+    alignSelf: 'center',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: '#c0392b',
+  },
+  testoBottoneEsci: {
+    color: '#c0392b',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

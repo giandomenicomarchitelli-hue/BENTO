@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -27,6 +27,15 @@ const schema = z.object({
 
 export default function NuovaSpesa() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
+
+  if (gruppoAttivoId === null) {
+    return <Redirect href="/" />;
+  }
+
+  return <NuovaSpesaDelGruppo gruppoAttivoId={gruppoAttivoId} />;
+}
+
+function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const { membri } = useGruppoAttivo();
   const { crea } = useSpese(gruppoAttivoId);
   const utenteId = useAuthStore((stato) => stato.session?.user.id);

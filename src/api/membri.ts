@@ -28,3 +28,11 @@ export async function entraInGruppo(codiceInvito: string, nome: string): Promise
   }
   return data;
 }
+
+/** Esce da un gruppo (elimina la propria riga membro). */
+export async function esciDalGruppo(membroId: string): Promise<void> {
+  const { error } = await supabase.from('membri').delete().eq('id', membroId);
+  if (error) {
+    throw error;
+  }
+}

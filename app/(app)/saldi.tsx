@@ -1,3 +1,4 @@
+import { Redirect } from 'expo-router';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
@@ -7,6 +8,15 @@ import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 
 export default function Saldi() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
+
+  if (gruppoAttivoId === null) {
+    return <Redirect href="/" />;
+  }
+
+  return <SaldiDelGruppo gruppoAttivoId={gruppoAttivoId} />;
+}
+
+function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const { membri } = useGruppoAttivo();
   const { transazioni, isLoading } = useSaldi(gruppoAttivoId);
 

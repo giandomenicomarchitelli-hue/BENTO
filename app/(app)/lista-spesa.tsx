@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -43,6 +43,15 @@ function RigaArticolo({
 
 export default function ListaSpesa() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
+
+  if (gruppoAttivoId === null) {
+    return <Redirect href="/" />;
+  }
+
+  return <ListaSpesaDelGruppo gruppoAttivoId={gruppoAttivoId} />;
+}
+
+function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const { membri } = useGruppoAttivo();
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const { articoli, isLoading, aggiungi, aggiornaStato, elimina } =
