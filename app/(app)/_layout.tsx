@@ -4,6 +4,7 @@ export default function AppLayout() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ title: 'Gestione Casa' }} />
+      <Stack.Screen name="lista-spesa" options={{ title: 'Lista della spesa' }} />
       <Stack.Screen name="onboarding/index" options={{ title: 'Benvenuto' }} />
       <Stack.Screen name="onboarding/crea-gruppo" options={{ title: 'Crea un gruppo' }} />
       <Stack.Screen

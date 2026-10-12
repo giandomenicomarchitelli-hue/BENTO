@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Link, Redirect } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -41,6 +41,10 @@ export default function Home() {
       </Text>
       {email !== undefined && <Text style={styles.email}>Accesso effettuato come {email}</Text>}
 
+      <Link href="/lista-spesa" style={styles.link}>
+        Lista della spesa
+      </Link>
+
       <Pressable style={styles.bottone} onPress={() => esci()}>
         <Text style={styles.testoBottone}>Esci</Text>
       </Pressable>
@@ -74,6 +78,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#888',
     marginTop: 16,
+  },
+  link: {
+    marginTop: 20,
+    color: '#2d6cdf',
+    fontSize: 16,
+    fontWeight: '600',
   },
   bottone: {
     marginTop: 24,

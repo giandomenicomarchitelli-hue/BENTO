@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 import {
   aggiornaStatoArticolo,
@@ -7,6 +8,7 @@ import {
   listaArticoli,
   type ArticoloSpesa,
 } from '@/api/articoliSpesa';
+import { supabase } from '@/lib/supabase';
 
 export function useArticoliSpesa(gruppoId: string | null) {
   const queryClient = useQueryClient();
@@ -19,6 +21,27 @@ export function useArticoliSpesa(gruppoId: string | null) {
   });
 
   const invalida = () => queryClient.invalidateQueries({ queryKey: chiaveQuery });
+
+  // Aggiorna la lista quando un altro membro del gruppo la modifica.
+  useEffect(() => {
+    if (gruppoId === null) {
+      return;
+    }
+
+    const canale = supabase
+      .channel(`articoli_spesa:${gruppoId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'articoli_spesa', filter: `gruppo_id=eq.${gruppoId}` },
+        invalida
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(canale);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gruppoId]);
 
   const aggiungi = useMutation({
     mutationFn: ({ nome, creatoDaMembroId }: { nome: string; creatoDaMembroId: string }) =>
