@@ -1,14 +1,41 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Redirect } from 'expo-router';
+import { useEffect } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { esci } from '@/api/auth';
+import { useMieiGruppi } from '@/hooks/useMieiGruppi';
 import { useAuthStore } from '@/store/authStore';
+import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 
 export default function Home() {
   const email = useAuthStore((stato) => stato.session?.user.email);
+  const { gruppi, isLoading } = useMieiGruppi();
+  const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
+  const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
+
+  const primoGruppo = gruppi[0] ?? null;
+
+  useEffect(() => {
+    if (primoGruppo !== null && gruppoAttivoId !== primoGruppo.id) {
+      impostaGruppoAttivo(primoGruppo.id);
+    }
+  }, [primoGruppo, gruppoAttivoId, impostaGruppoAttivo]);
+
+  if (isLoading) {
+    return (
+      <View style={styles.centrato}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  if (primoGruppo === null) {
+    return <Redirect href="/onboarding" />;
+  }
 
   return (
     <View style={styles.contenitore}>
-      <Text style={styles.titolo}>Gestione Casa</Text>
+      <Text style={styles.titolo}>{primoGruppo.nome}</Text>
       <Text style={styles.sottotitolo}>
         Fase 1 in corso: lista della spesa e spese condivise con saldo.
       </Text>
@@ -22,6 +49,11 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
+  centrato: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   contenitore: {
     flex: 1,
     alignItems: 'center',

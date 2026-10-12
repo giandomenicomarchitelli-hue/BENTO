@@ -41,3 +41,18 @@ export async function leggiGruppo(gruppoId: string): Promise<Gruppo> {
   }
   return data;
 }
+
+/** Gruppi di cui l'utente corrente è membro. */
+export async function listaGruppiUtente(): Promise<Gruppo[]> {
+  const utenteId = await leggiUtenteIdCorrente();
+
+  const { data, error } = await supabase
+    .from('membri')
+    .select('gruppi(*)')
+    .eq('utente_id', utenteId);
+
+  if (error) {
+    throw error;
+  }
+  return data.map((riga) => riga.gruppi);
+}
