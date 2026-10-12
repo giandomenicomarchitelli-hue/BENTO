@@ -6,9 +6,8 @@ export default function AppLayout() {
       <Stack.Screen name="index" options={{ title: 'I tuoi gruppi' }} />
       <Stack.Screen name="dashboard" options={{ title: 'Gestione Casa' }} />
       <Stack.Screen name="lista-spesa" options={{ title: 'Lista della spesa' }} />
-      <Stack.Screen name="spese/index" options={{ title: 'Spese' }} />
       <Stack.Screen name="spese/nuova" options={{ title: 'Nuova spesa' }} />
-      <Stack.Screen name="saldi" options={{ title: 'Saldi' }} />
+      <Stack.Screen name="saldi" options={{ title: 'Saldi e spese' }} />
       <Stack.Screen name="liste/index" options={{ title: 'Liste' }} />
       <Stack.Screen name="liste/[id]" options={{ title: 'Lista' }} />
       <Stack.Screen name="gruppo/index" options={{ title: 'Il tuo gruppo' }} />

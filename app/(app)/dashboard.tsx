@@ -34,11 +34,8 @@ export default function Dashboard() {
       <Link href="/lista-spesa" style={styles.link}>
         Lista della spesa
       </Link>
-      <Link href="/spese" style={styles.link}>
-        Spese
-      </Link>
       <Link href="/saldi" style={styles.link}>
-        Saldi
+        Saldi e spese
       </Link>
       <Link href="/liste" style={styles.link}>
         Liste
