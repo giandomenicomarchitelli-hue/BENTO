@@ -7,6 +7,7 @@ export default function AppLayout() {
       <Stack.Screen name="lista-spesa" options={{ title: 'Lista della spesa' }} />
       <Stack.Screen name="spese/index" options={{ title: 'Spese' }} />
       <Stack.Screen name="spese/nuova" options={{ title: 'Nuova spesa' }} />
+      <Stack.Screen name="saldi" options={{ title: 'Saldi' }} />
       <Stack.Screen name="onboarding/index" options={{ title: 'Benvenuto' }} />
       <Stack.Screen name="onboarding/crea-gruppo" options={{ title: 'Crea un gruppo' }} />
       <Stack.Screen
