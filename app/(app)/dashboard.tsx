@@ -40,6 +40,9 @@ export default function Dashboard() {
       <Link href="/saldi" style={styles.link}>
         Saldi
       </Link>
+      <Link href="/liste" style={styles.link}>
+        Liste
+      </Link>
       <Link href="/gruppo" style={styles.link}>
         Il tuo gruppo
       </Link>

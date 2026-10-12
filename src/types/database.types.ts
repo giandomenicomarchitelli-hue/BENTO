@@ -122,6 +122,45 @@ export type Database = {
         }
         Relationships: []
       }
+      liste: {
+        Row: {
+          creato_da: string | null
+          creato_il: string
+          gruppo_id: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          creato_da?: string | null
+          creato_il?: string
+          gruppo_id: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          creato_da?: string | null
+          creato_il?: string
+          gruppo_id?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "liste_creato_da_fkey"
+            columns: ["creato_da"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "liste_gruppo_id_fkey"
+            columns: ["gruppo_id"]
+            isOneToOne: false
+            referencedRelation: "gruppi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       membri: {
         Row: {
           creato_il: string
@@ -231,6 +270,51 @@ export type Database = {
             columns: ["pagato_da"]
             isOneToOne: false
             referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voci_lista: {
+        Row: {
+          aggiornato_il: string
+          creato_da: string | null
+          creato_il: string
+          fatto: boolean
+          id: string
+          lista_id: string
+          testo: string
+        }
+        Insert: {
+          aggiornato_il?: string
+          creato_da?: string | null
+          creato_il?: string
+          fatto?: boolean
+          id?: string
+          lista_id: string
+          testo: string
+        }
+        Update: {
+          aggiornato_il?: string
+          creato_da?: string | null
+          creato_il?: string
+          fatto?: boolean
+          id?: string
+          lista_id?: string
+          testo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voci_lista_creato_da_fkey"
+            columns: ["creato_da"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voci_lista_lista_id_fkey"
+            columns: ["lista_id"]
+            isOneToOne: false
+            referencedRelation: "liste"
             referencedColumns: ["id"]
           },
         ]
