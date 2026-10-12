@@ -1,11 +1,12 @@
 import * as Clipboard from 'expo-clipboard';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 
 import { esciDalGruppo } from '@/api/membri';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useInvalidaMieiGruppi } from '@/hooks/useMieiGruppi';
+import { confermaAzione } from '@/lib/conferma';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 
@@ -35,33 +36,29 @@ export default function Gruppo() {
 
   const ilMioMembro = membri.find((m) => m.utente_id === utenteId);
 
-  const confermaUscita = () => {
+  const confermaUscita = async () => {
     if (ilMioMembro === undefined) {
       return;
     }
-    Alert.alert(
+    const conferma = await confermaAzione(
       'Uscire dal gruppo?',
       `Non farai più parte di "${gruppo.nome}" e non vedrai più le sue spese e la sua lista della spesa.`,
-      [
-        { text: 'Annulla', style: 'cancel' },
-        {
-          text: 'Esci dal gruppo',
-          style: 'destructive',
-          onPress: async () => {
-            setUscendo(true);
-            try {
-              await esciDalGruppo(ilMioMembro.id);
-              impostaGruppoAttivo(null);
-              await invalidaMieiGruppi();
-              router.replace('/');
-            } catch {
-              Alert.alert('Qualcosa è andato storto', 'Riprova.');
-              setUscendo(false);
-            }
-          },
-        },
-      ]
+      'Esci dal gruppo'
     );
+    if (!conferma) {
+      return;
+    }
+
+    setUscendo(true);
+    try {
+      await esciDalGruppo(ilMioMembro.id);
+      impostaGruppoAttivo(null);
+      await invalidaMieiGruppi();
+      router.replace('/');
+    } catch {
+      await confermaAzione('Qualcosa è andato storto', 'Riprova.', 'OK');
+      setUscendo(false);
+    }
   };
 
   const copiaCodice = async () => {
