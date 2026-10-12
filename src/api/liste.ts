@@ -16,14 +16,30 @@ export async function listaListe(gruppoId: string): Promise<Lista[]> {
   return data;
 }
 
-export async function creaLista(
-  gruppoId: string,
-  nome: string,
-  creatoDaMembroId: string
-): Promise<Lista> {
+interface CreaListaParams {
+  gruppoId: string;
+  nome: string;
+  creatoDaMembroId: string;
+  mostraInHome: boolean;
+  conPrezzi: boolean;
+}
+
+export async function creaLista({
+  gruppoId,
+  nome,
+  creatoDaMembroId,
+  mostraInHome,
+  conPrezzi,
+}: CreaListaParams): Promise<Lista> {
   const { data, error } = await supabase
     .from('liste')
-    .insert({ gruppo_id: gruppoId, nome, creato_da: creatoDaMembroId })
+    .insert({
+      gruppo_id: gruppoId,
+      nome,
+      creato_da: creatoDaMembroId,
+      mostra_in_home: mostraInHome,
+      con_prezzi: conPrezzi,
+    })
     .select()
     .single();
 

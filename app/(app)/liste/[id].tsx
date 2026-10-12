@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -38,7 +38,11 @@ function RigaVoce({
 }
 
 export default function DettaglioLista() {
-  const { id, nome } = useLocalSearchParams<{ id: string; nome?: string }>();
+  const { id, nome, conPrezzi } = useLocalSearchParams<{
+    id: string;
+    nome?: string;
+    conPrezzi?: string;
+  }>();
   const { membri } = useGruppoAttivo();
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const { voci, isLoading, aggiungi, aggiornaStato, elimina } = useVociLista(id ?? null);
@@ -88,7 +92,22 @@ export default function DettaglioLista() {
           renderItem={({ item }) => (
             <RigaVoce
               voce={item}
-              onTocca={() => aggiornaStato.mutate({ id: item.id, fatto: !item.fatto })}
+              onTocca={() => {
+                if (!item.fatto && conPrezzi === '1') {
+                  // Segnare fatta una voce di una lista "con prezzi" apre il
+                  // form per registrare la spesa (o saltarlo).
+                  router.push({
+                    pathname: '/spese/nuova',
+                    params: {
+                      voceListaId: item.id,
+                      listaId: id,
+                      nomeVoce: item.testo,
+                    },
+                  });
+                } else {
+                  aggiornaStato.mutate({ id: item.id, fatto: !item.fatto });
+                }
+              }}
               onElimina={() => elimina.mutate(item.id)}
             />
           )}

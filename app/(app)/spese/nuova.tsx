@@ -12,6 +12,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { aggiornaStatoArticolo } from '@/api/articoliSpesa';
+import { aggiornaVoce } from '@/api/vociLista';
 import { dividiEqualmente } from '@/calcolo/divisioni';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useSpese } from '@/hooks/useSpese';
@@ -42,15 +43,36 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const queryClient = useQueryClient();
 
   // Presenti solo quando si arriva dalla lista della spesa (tap su
-  // "comprato" di un articolo): precompila la descrizione e permette di
-  // segnare l'articolo comprato insieme alla spesa, o anche senza spesa.
-  const { articoloId, nomeArticolo } = useLocalSearchParams<{
+  // "comprato" di un articolo) o da una voce di una lista "con prezzi":
+  // precompilano la descrizione e permettono di segnare l'elemento fatto
+  // insieme alla spesa, o anche senza spesa.
+  const { articoloId, nomeArticolo, voceListaId, listaId, nomeVoce } = useLocalSearchParams<{
     articoloId?: string;
     nomeArticolo?: string;
+    voceListaId?: string;
+    listaId?: string;
+    nomeVoce?: string;
   }>();
 
+  // Normalizza le due provenienze possibili in un'unica forma, cosi' il
+  // resto del componente non deve ramificare su articolo vs voce di lista.
+  const collegamento =
+    articoloId !== undefined
+      ? {
+          testo: nomeArticolo,
+          segnaFatto: () => aggiornaStatoArticolo(articoloId, 'comprato'),
+          chiaveInvalidazione: ['articoli-spesa', gruppoAttivoId],
+        }
+      : voceListaId !== undefined
+        ? {
+            testo: nomeVoce,
+            segnaFatto: () => aggiornaVoce(voceListaId, true),
+            chiaveInvalidazione: ['voci-lista', listaId],
+          }
+        : null;
+
   const [importoEuro, setImportoEuro] = useState('');
-  const [descrizione, setDescrizione] = useState(nomeArticolo ?? '');
+  const [descrizione, setDescrizione] = useState(collegamento?.testo ?? '');
   // null = l'utente non ha ancora scelto esplicitamente: si usa il default
   // derivato da membri (appena caricato). Evita di sincronizzare stato
   // asincrono con un useEffect.
@@ -100,9 +122,9 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           quotaCentesimi: quoteCentesimi[indice],
         })),
       });
-      if (articoloId !== undefined) {
-        await aggiornaStatoArticolo(articoloId, 'comprato');
-        await queryClient.invalidateQueries({ queryKey: ['articoli-spesa', gruppoAttivoId] });
+      if (collegamento !== null) {
+        await collegamento.segnaFatto();
+        await queryClient.invalidateQueries({ queryKey: collegamento.chiaveInvalidazione });
       }
       router.back();
     } catch {
@@ -112,14 +134,14 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     }
   }
 
-  async function segnaCompratoSenzaSpesa() {
-    if (articoloId === undefined) {
+  async function segnaFattoSenzaSpesa() {
+    if (collegamento === null) {
       return;
     }
     setInviando(true);
     try {
-      await aggiornaStatoArticolo(articoloId, 'comprato');
-      await queryClient.invalidateQueries({ queryKey: ['articoli-spesa', gruppoAttivoId] });
+      await collegamento.segnaFatto();
+      await queryClient.invalidateQueries({ queryKey: collegamento.chiaveInvalidazione });
       router.back();
     } catch {
       setErrore('Qualcosa è andato storto. Riprova.');
@@ -130,8 +152,10 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 
   return (
     <View style={styles.contenitore}>
-      {nomeArticolo !== undefined && (
-        <Text style={styles.hintArticolo}>Hai comprato «{nomeArticolo}»: quanto hai pagato?</Text>
+      {collegamento?.testo !== undefined && (
+        <Text style={styles.hintArticolo}>
+          Hai segnato «{collegamento.testo}»: quanto hai pagato?
+        </Text>
       )}
 
       <TextInput
@@ -196,9 +220,9 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
         )}
       </Pressable>
 
-      {articoloId !== undefined && (
-        <Pressable onPress={segnaCompratoSenzaSpesa} disabled={inviando}>
-          <Text style={styles.linkSecondario}>Segna comprato senza registrare la spesa</Text>
+      {collegamento !== null && (
+        <Pressable onPress={segnaFattoSenzaSpesa} disabled={inviando}>
+          <Text style={styles.linkSecondario}>Segna fatto senza registrare la spesa</Text>
         </Pressable>
       )}
     </View>

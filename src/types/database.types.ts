@@ -124,24 +124,30 @@ export type Database = {
       }
       liste: {
         Row: {
+          con_prezzi: boolean
           creato_da: string | null
           creato_il: string
           gruppo_id: string
           id: string
+          mostra_in_home: boolean
           nome: string
         }
         Insert: {
+          con_prezzi?: boolean
           creato_da?: string | null
           creato_il?: string
           gruppo_id: string
           id?: string
+          mostra_in_home?: boolean
           nome: string
         }
         Update: {
+          con_prezzi?: boolean
           creato_da?: string | null
           creato_il?: string
           gruppo_id?: string
           id?: string
+          mostra_in_home?: boolean
           nome?: string
         }
         Relationships: [

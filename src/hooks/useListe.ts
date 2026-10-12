@@ -38,8 +38,8 @@ export function useListe(gruppoId: string | null) {
   }, [gruppoId, idIstanza]);
 
   const crea = useMutation({
-    mutationFn: ({ nome, creatoDaMembroId }: { nome: string; creatoDaMembroId: string }) =>
-      creaLista(gruppoId as string, nome, creatoDaMembroId),
+    mutationFn: (params: Omit<Parameters<typeof creaLista>[0], 'gruppoId'>) =>
+      creaLista({ ...params, gruppoId: gruppoId as string }),
     onSuccess: invalida,
   });
 
