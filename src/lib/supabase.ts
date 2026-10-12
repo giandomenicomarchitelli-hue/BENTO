@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 
 import type { Database } from '@/types/database.types';
@@ -11,7 +12,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: AsyncStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+    // Nessun login via OAuth/magic link in questa fase: niente URL da intercettare.
+    detectSessionInUrl: false,
+  },
+});
 
 /** Id dell'utente autenticato, o errore se non c'è una sessione attiva. */
 export async function leggiUtenteIdCorrente(): Promise<string> {
