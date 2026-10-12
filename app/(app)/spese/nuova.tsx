@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -8,8 +8,10 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
+import { aggiornaStatoArticolo } from '@/api/articoliSpesa';
 import { dividiEqualmente } from '@/calcolo/divisioni';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useSpese } from '@/hooks/useSpese';
@@ -28,9 +30,18 @@ export default function NuovaSpesa() {
   const { membri } = useGruppoAttivo();
   const { crea } = useSpese(gruppoAttivoId);
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
+  const queryClient = useQueryClient();
+
+  // Presenti solo quando si arriva dalla lista della spesa (tap su
+  // "comprato" di un articolo): precompila la descrizione e permette di
+  // segnare l'articolo comprato insieme alla spesa, o anche senza spesa.
+  const { articoloId, nomeArticolo } = useLocalSearchParams<{
+    articoloId?: string;
+    nomeArticolo?: string;
+  }>();
 
   const [importoEuro, setImportoEuro] = useState('');
-  const [descrizione, setDescrizione] = useState('');
+  const [descrizione, setDescrizione] = useState(nomeArticolo ?? '');
   // null = l'utente non ha ancora scelto esplicitamente: si usa il default
   // derivato da membri (appena caricato). Evita di sincronizzare stato
   // asincrono con un useEffect.
@@ -80,6 +91,26 @@ export default function NuovaSpesa() {
           quotaCentesimi: quoteCentesimi[indice],
         })),
       });
+      if (articoloId !== undefined) {
+        await aggiornaStatoArticolo(articoloId, 'comprato');
+        await queryClient.invalidateQueries({ queryKey: ['articoli-spesa', gruppoAttivoId] });
+      }
+      router.back();
+    } catch {
+      setErrore('Qualcosa è andato storto. Riprova.');
+    } finally {
+      setInviando(false);
+    }
+  }
+
+  async function segnaCompratoSenzaSpesa() {
+    if (articoloId === undefined) {
+      return;
+    }
+    setInviando(true);
+    try {
+      await aggiornaStatoArticolo(articoloId, 'comprato');
+      await queryClient.invalidateQueries({ queryKey: ['articoli-spesa', gruppoAttivoId] });
       router.back();
     } catch {
       setErrore('Qualcosa è andato storto. Riprova.');
@@ -90,6 +121,10 @@ export default function NuovaSpesa() {
 
   return (
     <View style={styles.contenitore}>
+      {nomeArticolo !== undefined && (
+        <Text style={styles.hintArticolo}>Hai comprato «{nomeArticolo}»: quanto hai pagato?</Text>
+      )}
+
       <TextInput
         style={styles.input}
         placeholder="Importo (es. 12,50)"
@@ -151,6 +186,12 @@ export default function NuovaSpesa() {
           <Text style={styles.testoBottone}>Registra spesa</Text>
         )}
       </Pressable>
+
+      {articoloId !== undefined && (
+        <Pressable onPress={segnaCompratoSenzaSpesa} disabled={inviando}>
+          <Text style={styles.linkSecondario}>Segna comprato senza registrare la spesa</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -160,6 +201,12 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     gap: 12,
+  },
+  hintArticolo: {
+    fontSize: 15,
+    color: '#555',
+    textAlign: 'center',
+    marginBottom: 4,
   },
   input: {
     borderWidth: 1,
@@ -212,5 +259,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  linkSecondario: {
+    textAlign: 'center',
+    color: '#555',
+    fontSize: 14,
+    marginTop: 4,
   },
 });

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useId } from 'react';
 
 import {
   aggiornaStatoArticolo,
@@ -13,6 +13,12 @@ import { supabase } from '@/lib/supabase';
 export function useArticoliSpesa(gruppoId: string | null) {
   const queryClient = useQueryClient();
   const chiaveQuery = ['articoli-spesa', gruppoId];
+  // Nome canale univoco per ogni "montaggio" dell'hook: evita collisioni se
+  // un componente si smonta e rimonta rapidamente (es. navigazione avanti e
+  // indietro) prima che la rimozione del canale precedente sia confermata
+  // dal server — supabase.channel(stessoNome) altrimenti riuso il canale
+  // già sottoscritto e genera un errore su .on() dopo subscribe().
+  const idIstanza = useId();
 
   const query = useQuery({
     queryKey: chiaveQuery,
@@ -29,7 +35,7 @@ export function useArticoliSpesa(gruppoId: string | null) {
     }
 
     const canale = supabase
-      .channel(`articoli_spesa:${gruppoId}`)
+      .channel(`articoli_spesa:${gruppoId}:${idIstanza}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'articoli_spesa', filter: `gruppo_id=eq.${gruppoId}` },
@@ -41,7 +47,7 @@ export function useArticoliSpesa(gruppoId: string | null) {
       supabase.removeChannel(canale);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gruppoId]);
+  }, [gruppoId, idIstanza]);
 
   const aggiungi = useMutation({
     mutationFn: ({ nome, creatoDaMembroId }: { nome: string; creatoDaMembroId: string }) =>

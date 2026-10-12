@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useId } from 'react';
 
 import { annullaSpesa, creaSpesa, listaSpese } from '@/api/spese';
 import { supabase } from '@/lib/supabase';
@@ -7,6 +7,9 @@ import { supabase } from '@/lib/supabase';
 export function useSpese(gruppoId: string | null) {
   const queryClient = useQueryClient();
   const chiaveQuery = ['spese', gruppoId];
+  // Vedi commento in useArticoliSpesa.ts: nome canale univoco per montaggio,
+  // per evitare collisioni se il componente si smonta/rimonta rapidamente.
+  const idIstanza = useId();
 
   const query = useQuery({
     queryKey: chiaveQuery,
@@ -23,7 +26,7 @@ export function useSpese(gruppoId: string | null) {
     }
 
     const canale = supabase
-      .channel(`spese:${gruppoId}`)
+      .channel(`spese:${gruppoId}:${idIstanza}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'spese', filter: `gruppo_id=eq.${gruppoId}` },
@@ -35,7 +38,7 @@ export function useSpese(gruppoId: string | null) {
       supabase.removeChannel(canale);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gruppoId]);
+  }, [gruppoId, idIstanza]);
 
   const crea = useMutation({
     mutationFn: (params: Omit<Parameters<typeof creaSpesa>[0], 'gruppoId'>) =>

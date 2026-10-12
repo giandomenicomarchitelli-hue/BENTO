@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -90,12 +91,18 @@ export default function ListaSpesa() {
           renderItem={({ item }) => (
             <RigaArticolo
               articolo={item}
-              onTocca={() =>
-                aggiornaStato.mutate({
-                  id: item.id,
-                  stato: item.stato === 'da_comprare' ? 'comprato' : 'da_comprare',
-                })
-              }
+              onTocca={() => {
+                if (item.stato === 'da_comprare') {
+                  // Segnare comprato apre il form per registrare la spesa
+                  // (o saltarlo, se non si vuole registrare nulla).
+                  router.push({
+                    pathname: '/spese/nuova',
+                    params: { articoloId: item.id, nomeArticolo: item.nome },
+                  });
+                } else {
+                  aggiornaStato.mutate({ id: item.id, stato: 'da_comprare' });
+                }
+              }}
               onElimina={() => elimina.mutate(item.id)}
             />
           )}
