@@ -29,9 +29,17 @@ export async function entraInGruppo(codiceInvito: string, nome: string): Promise
   return data;
 }
 
-/** Esce da un gruppo (elimina la propria riga membro). */
+/**
+ * Esce da un gruppo. Non cancella la riga membro (le spese passate la
+ * referenziano con on delete restrict, per proteggere lo storico): la
+ * marca come uscita, cosi' il nome resta leggibile nelle spese vecchie ma
+ * perde l'accesso al gruppo.
+ */
 export async function esciDalGruppo(membroId: string): Promise<void> {
-  const { error } = await supabase.from('membri').delete().eq('id', membroId);
+  const { error } = await supabase
+    .from('membri')
+    .update({ uscito_il: new Date().toISOString() })
+    .eq('id', membroId);
   if (error) {
     throw error;
   }

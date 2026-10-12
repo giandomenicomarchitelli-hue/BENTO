@@ -173,6 +173,7 @@ export type Database = {
           gruppo_id: string
           id: string
           nome: string
+          uscito_il: string | null
           utente_id: string
         }
         Insert: {
@@ -180,6 +181,7 @@ export type Database = {
           gruppo_id: string
           id?: string
           nome: string
+          uscito_il?: string | null
           utente_id: string
         }
         Update: {
@@ -187,6 +189,7 @@ export type Database = {
           gruppo_id?: string
           id?: string
           nome?: string
+          uscito_il?: string | null
           utente_id?: string
         }
         Relationships: [

@@ -18,10 +18,17 @@ export function useGruppoAttivo() {
     },
   });
 
+  const membri = query.data?.membri ?? [];
+
   return {
     gruppoAttivoId,
     gruppo: query.data?.gruppo ?? null,
-    membri: query.data?.membri ?? [],
+    // Tutti i membri, compresi quelli usciti: serve per risalire ai nomi
+    // nelle spese passate (chi ha pagato/diviso una spesa vecchia).
+    membri,
+    // Solo i membri attuali: per i selettori "pagato da"/"diviso tra" di
+    // una nuova spesa, o per l'elenco membri della schermata gruppo.
+    membriAttivi: membri.filter((m) => m.uscito_il === null),
     isLoading: query.isLoading,
     error: query.error,
   };

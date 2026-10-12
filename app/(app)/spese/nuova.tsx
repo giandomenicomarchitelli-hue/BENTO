@@ -37,7 +37,7 @@ export default function NuovaSpesa() {
 }
 
 function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
-  const { membri } = useGruppoAttivo();
+  const { membriAttivi } = useGruppoAttivo();
   const { crea } = useSpese(gruppoAttivoId);
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const queryClient = useQueryClient();
@@ -79,9 +79,9 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const [pagatoDa, setPagatoDa] = useState<string | null>(null);
   const [membriSelezionati, setMembriSelezionati] = useState<string[] | null>(null);
 
-  const ilMioMembro = membri.find((m) => m.utente_id === utenteId);
-  const pagatoDaEffettivo = pagatoDa ?? ilMioMembro?.id ?? membri[0]?.id ?? '';
-  const membriSelezionatiEffettivo = membriSelezionati ?? membri.map((m) => m.id);
+  const ilMioMembro = membriAttivi.find((m) => m.utente_id === utenteId);
+  const pagatoDaEffettivo = pagatoDa ?? ilMioMembro?.id ?? membriAttivi[0]?.id ?? '';
+  const membriSelezionatiEffettivo = membriSelezionati ?? membriAttivi.map((m) => m.id);
 
   const [errore, setErrore] = useState<string | null>(null);
   const [inviando, setInviando] = useState(false);
@@ -174,7 +174,7 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 
       <Text style={styles.etichetta}>Pagato da</Text>
       <View style={styles.righeChip}>
-        {membri.map((membro) => (
+        {membriAttivi.map((membro) => (
           <Pressable
             key={membro.id}
             style={[styles.chip, pagatoDaEffettivo === membro.id && styles.chipSelezionato]}
@@ -194,7 +194,7 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 
       <Text style={styles.etichetta}>Diviso tra</Text>
       <View style={styles.righeChip}>
-        {membri.map((membro) => {
+        {membriAttivi.map((membro) => {
           const selezionato = membriSelezionatiEffettivo.includes(membro.id);
           return (
             <Pressable

@@ -12,7 +12,7 @@ import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 
 export default function Gruppo() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
-  const { gruppo, membri, isLoading } = useGruppoAttivo();
+  const { gruppo, membri, membriAttivi, isLoading } = useGruppoAttivo();
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
   const invalidaMieiGruppi = useInvalidaMieiGruppi();
@@ -90,9 +90,9 @@ export default function Gruppo() {
       </Pressable>
 
       <Text style={[styles.etichetta, styles.etichettaMembri]}>
-        Membri ({membri.length})
+        Membri ({membriAttivi.length})
       </Text>
-      {membri.map((membro) => (
+      {membriAttivi.map((membro) => (
         <Text key={membro.id} style={styles.membro}>
           {membro.nome}
         </Text>

@@ -49,7 +49,8 @@ export async function listaGruppiUtente(): Promise<Gruppo[]> {
   const { data, error } = await supabase
     .from('membri')
     .select('gruppi(*)')
-    .eq('utente_id', utenteId);
+    .eq('utente_id', utenteId)
+    .is('uscito_il', null);
 
   if (error) {
     throw error;
