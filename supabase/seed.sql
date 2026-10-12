@@ -1,0 +1,5 @@
+-- Dati di prova per lo sviluppo locale.
+-- Lasciato vuoto per ora: gruppi/membri richiedono utenti reali in auth.users
+-- (creati via Supabase Auth), non ha senso inventarli qui. Una volta creato
+-- un utente di test (es. con `supabase auth` o la UI Studio locale), si può
+-- popolare questo file con gruppi/membri/articoli di esempio per quell'utente.
