@@ -20,9 +20,7 @@ export async function listaSpese(gruppoId: string): Promise<SpesaConQuote[]> {
   if (error) {
     throw error;
   }
-  // Il tipo Database non include i metadati di relazione (Relationships) per
-  // l'embedding automatico: il risultato ha comunque questa forma a runtime.
-  return data as unknown as SpesaConQuote[];
+  return data;
 }
 
 interface CreaSpesaParams {
@@ -39,8 +37,8 @@ export async function creaSpesa(params: CreaSpesaParams): Promise<string> {
     p_gruppo_id: params.gruppoId,
     p_pagato_da: params.pagatoDa,
     p_importo_centesimi: params.importoCentesimi,
-    p_descrizione: params.descrizione ?? null,
-    p_data: params.data ?? null,
+    p_descrizione: params.descrizione ?? '',
+    p_data: params.data ?? new Date().toISOString().slice(0, 10),
     p_quote: params.quote.map((q) => ({
       membro_id: q.membroId,
       quota_centesimi: q.quotaCentesimi,
