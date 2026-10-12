@@ -47,9 +47,14 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 
   return (
     <ScrollView style={styles.contenitore} contentContainerStyle={styles.contenuto}>
-      <Link href="/spese/nuova" style={styles.bottoneNuova}>
-        + Nuova spesa
-      </Link>
+      <View style={styles.rigaBottoni}>
+        <Link href="/spese/nuova" style={styles.bottoneNuova}>
+          + Nuova spesa
+        </Link>
+        <Link href="/saldi/salda" style={styles.bottoneSalda}>
+          Salda un debito
+        </Link>
+      </View>
 
       <Text style={styles.titoloSezione}>Saldi</Text>
       {saldiInCaricamento ? (
@@ -64,6 +69,15 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
               <Text style={styles.nome}>{nomeMembro(t.a)}</Text>
             </Text>
             <Text style={styles.importo}>{formattaEuro(t.importoCentesimi)}</Text>
+            <Link
+              href={{
+                pathname: '/saldi/salda',
+                params: { da: t.da, a: t.a, importoCentesimi: String(t.importoCentesimi) },
+              }}
+              style={styles.linkSalda}
+            >
+              Salda
+            </Link>
           </View>
         ))
       )}
@@ -88,16 +102,38 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 8,
   },
+  rigaBottoni: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
   bottoneNuova: {
+    flex: 1,
     backgroundColor: '#2d6cdf',
     color: '#fff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     borderRadius: 8,
     paddingVertical: 12,
     textAlign: 'center',
     overflow: 'hidden',
-    marginBottom: 8,
+  },
+  bottoneSalda: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#2d6cdf',
+    color: '#2d6cdf',
+    fontSize: 15,
+    fontWeight: '600',
+    borderRadius: 8,
+    paddingVertical: 12,
+    textAlign: 'center',
+    overflow: 'hidden',
+  },
+  linkSalda: {
+    color: '#2d6cdf',
+    fontSize: 13,
+    fontWeight: '600',
   },
   titoloSezione: {
     fontSize: 13,
