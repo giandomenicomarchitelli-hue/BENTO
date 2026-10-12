@@ -50,6 +50,9 @@ export default function Home() {
       <Link href="/saldi" style={styles.link}>
         Saldi
       </Link>
+      <Link href="/gruppo" style={styles.link}>
+        Il tuo gruppo
+      </Link>
 
       <Pressable style={styles.bottone} onPress={() => esci()}>
         <Text style={styles.testoBottone}>Esci</Text>
