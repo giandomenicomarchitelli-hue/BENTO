@@ -44,6 +44,9 @@ export default function Home() {
       <Link href="/lista-spesa" style={styles.link}>
         Lista della spesa
       </Link>
+      <Link href="/spese" style={styles.link}>
+        Spese
+      </Link>
 
       <Pressable style={styles.bottone} onPress={() => esci()}>
         <Text style={styles.testoBottone}>Esci</Text>

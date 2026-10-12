@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 import { annullaSpesa, creaSpesa, listaSpese } from '@/api/spese';
+import { supabase } from '@/lib/supabase';
 
 export function useSpese(gruppoId: string | null) {
   const queryClient = useQueryClient();
@@ -13,6 +15,27 @@ export function useSpese(gruppoId: string | null) {
   });
 
   const invalida = () => queryClient.invalidateQueries({ queryKey: chiaveQuery });
+
+  // Aggiorna l'elenco quando un altro membro registra o annulla una spesa.
+  useEffect(() => {
+    if (gruppoId === null) {
+      return;
+    }
+
+    const canale = supabase
+      .channel(`spese:${gruppoId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'spese', filter: `gruppo_id=eq.${gruppoId}` },
+        invalida
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(canale);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gruppoId]);
 
   const crea = useMutation({
     mutationFn: (params: Omit<Parameters<typeof creaSpesa>[0], 'gruppoId'>) =>
