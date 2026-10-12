@@ -24,5 +24,10 @@ export function useMieiGruppi() {
 
 export function useInvalidaMieiGruppi() {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: CHIAVE_QUERY });
+  // refetchType: 'all' forza il refetch anche se, come in questo caso, la
+  // query non ha osservatori attivi nel momento in cui viene invalidata (si
+  // chiama da crea-gruppo/unisciti-a-gruppo, non dalla home che la usa) -
+  // altrimenti invalidateQueries la segna solo "stale" senza ricaricarla
+  // subito, e il redirect in home legge ancora i dati vecchi.
+  return () => queryClient.invalidateQueries({ queryKey: CHIAVE_QUERY, refetchType: 'all' });
 }
