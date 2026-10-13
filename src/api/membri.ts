@@ -29,6 +29,14 @@ export async function entraInGruppo(codiceInvito: string, nome: string): Promise
   return data;
 }
 
+/** Cambia il proprio nome visualizzato in un gruppo. */
+export async function rinominaMembro(membroId: string, nome: string): Promise<void> {
+  const { error } = await supabase.from('membri').update({ nome }).eq('id', membroId);
+  if (error) {
+    throw error;
+  }
+}
+
 /**
  * Esce da un gruppo. Non cancella la riga membro (le spese passate la
  * referenziano con on delete restrict, per proteggere lo storico): la

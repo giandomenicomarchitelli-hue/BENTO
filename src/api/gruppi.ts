@@ -42,6 +42,14 @@ export async function leggiGruppo(gruppoId: string): Promise<Gruppo> {
   return data;
 }
 
+/** Rinomina un gruppo (qualunque membro attivo può farlo). */
+export async function rinominaGruppo(gruppoId: string, nome: string): Promise<void> {
+  const { error } = await supabase.from('gruppi').update({ nome }).eq('id', gruppoId);
+  if (error) {
+    throw error;
+  }
+}
+
 /** Gruppi di cui l'utente corrente è membro. */
 export async function listaGruppiUtente(): Promise<Gruppo[]> {
   const utenteId = await leggiUtenteIdCorrente();

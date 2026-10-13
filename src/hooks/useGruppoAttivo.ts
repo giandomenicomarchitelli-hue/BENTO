@@ -31,5 +31,6 @@ export function useGruppoAttivo() {
     membriAttivi: membri.filter((m) => m.uscito_il === null),
     isLoading: query.isLoading,
     error: query.error,
+    ricarica: query.refetch,
   };
 }
