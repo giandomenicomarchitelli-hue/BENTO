@@ -202,6 +202,27 @@ export type Database = {
           },
         ]
       }
+      profili: {
+        Row: {
+          codice_utente: string
+          creato_il: string
+          nome_utente: string
+          utente_id: string
+        }
+        Insert: {
+          codice_utente?: string
+          creato_il?: string
+          nome_utente: string
+          utente_id: string
+        }
+        Update: {
+          codice_utente?: string
+          creato_il?: string
+          nome_utente?: string
+          utente_id?: string
+        }
+        Relationships: []
+      }
       quote_spesa: {
         Row: {
           membro_id: string
@@ -346,7 +367,7 @@ export type Database = {
       }
       e_membro_di: { Args: { p_gruppo_id: string }; Returns: boolean }
       unisciti_a_gruppo: {
-        Args: { p_codice_invito: string; p_nome: string }
+        Args: { p_codice_invito: string }
         Returns: string
       }
     }

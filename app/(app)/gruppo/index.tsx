@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 
 import { rinominaGruppo } from '@/api/gruppi';
-import { esciDalGruppo, rinominaMembro } from '@/api/membri';
+import { esciDalGruppo } from '@/api/membri';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useInvalidaMieiGruppi } from '@/hooks/useMieiGruppi';
 import { confermaAzione } from '@/lib/conferma';
@@ -31,10 +31,6 @@ export default function Gruppo() {
   const [modificandoNomeGruppo, setModificandoNomeGruppo] = useState(false);
   const [bozzaNomeGruppo, setBozzaNomeGruppo] = useState('');
   const [salvandoNomeGruppo, setSalvandoNomeGruppo] = useState(false);
-
-  const [modificandoIlMioNome, setModificandoIlMioNome] = useState(false);
-  const [bozzaIlMioNome, setBozzaIlMioNome] = useState('');
-  const [salvandoIlMioNome, setSalvandoIlMioNome] = useState(false);
 
   // Si arriva qui solo dalla dashboard di un gruppo scelto in home; senza
   // un gruppo attivo (es. link diretto, o store resettato da un refresh)
@@ -113,35 +109,6 @@ export default function Gruppo() {
     }
   };
 
-  const apriModificaIlMioNome = () => {
-    if (ilMioMembro === undefined) {
-      return;
-    }
-    setBozzaIlMioNome(ilMioMembro.nome);
-    setModificandoIlMioNome(true);
-  };
-
-  const salvaIlMioNome = async () => {
-    if (ilMioMembro === undefined) {
-      return;
-    }
-    const nome = bozzaIlMioNome.trim();
-    if (nome === '' || nome === ilMioMembro.nome) {
-      setModificandoIlMioNome(false);
-      return;
-    }
-    setSalvandoIlMioNome(true);
-    try {
-      await rinominaMembro(ilMioMembro.id, nome);
-      await ricarica();
-      setModificandoIlMioNome(false);
-    } catch {
-      await confermaAzione('Qualcosa è andato storto', 'Riprova.', 'OK');
-    } finally {
-      setSalvandoIlMioNome(false);
-    }
-  };
-
   return (
     <View style={styles.contenitore}>
       {modificandoNomeGruppo ? (
@@ -187,46 +154,12 @@ export default function Gruppo() {
       <Text style={[styles.etichetta, styles.etichettaMembri]}>
         Membri ({membriAttivi.length})
       </Text>
-      {membriAttivi.map((membro) => {
-        const sonoIo = membro.id === ilMioMembro?.id;
-        if (sonoIo && modificandoIlMioNome) {
-          return (
-            <View key={membro.id} style={[styles.membro, styles.rigaModifica]}>
-              <TextInput
-                style={styles.inputNome}
-                value={bozzaIlMioNome}
-                onChangeText={setBozzaIlMioNome}
-                autoFocus
-              />
-              {salvandoIlMioNome ? (
-                <ActivityIndicator />
-              ) : (
-                <>
-                  <Pressable onPress={salvaIlMioNome} hitSlop={8}>
-                    <Text style={styles.linkSalva}>Salva</Text>
-                  </Pressable>
-                  <Pressable onPress={() => setModificandoIlMioNome(false)} hitSlop={8}>
-                    <Text style={styles.linkAnnulla}>Annulla</Text>
-                  </Pressable>
-                </>
-              )}
-            </View>
-          );
-        }
-        return (
-          <View key={membro.id} style={[styles.membro, styles.rigaMembro]}>
-            <Text style={styles.testoMembro}>
-              {membro.nome}
-              {sonoIo ? ' (tu)' : ''}
-            </Text>
-            {sonoIo && (
-              <Pressable onPress={apriModificaIlMioNome} hitSlop={8}>
-                <Text style={styles.linkModifica}>Modifica</Text>
-              </Pressable>
-            )}
-          </View>
-        );
-      })}
+      {membriAttivi.map((membro) => (
+        <Text key={membro.id} style={styles.membro}>
+          {membro.nome}
+          {membro.id === ilMioMembro?.id ? ' (tu)' : ''}
+        </Text>
+      ))}
 
       <Pressable style={styles.bottoneEsci} onPress={confermaUscita} disabled={uscendo}>
         {uscendo ? (
@@ -271,15 +204,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: '600',
-    borderWidth: 1,
-    borderColor: '#2d6cdf',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  inputNome: {
-    flex: 1,
-    fontSize: 16,
     borderWidth: 1,
     borderColor: '#2d6cdf',
     borderRadius: 8,
@@ -340,17 +264,10 @@ const styles = StyleSheet.create({
     marginTop: 32,
   },
   membro: {
+    fontSize: 16,
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-  },
-  rigaMembro: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  testoMembro: {
-    fontSize: 16,
   },
   bottoneEsci: {
     marginTop: 32,

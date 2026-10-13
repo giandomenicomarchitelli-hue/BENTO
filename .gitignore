@@ -43,3 +43,6 @@ yarn-error.*
 
 # Supabase CLI
 supabase/.temp/
+
+# Config locale per l'avvio del dev server da Claude Code
+.claude/

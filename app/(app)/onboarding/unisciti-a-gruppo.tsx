@@ -15,7 +15,6 @@ import { useInvalidaMieiGruppi } from '@/hooks/useMieiGruppi';
 
 const schema = z.object({
   codiceInvito: z.string().trim().min(1, 'Inserisci il codice invito'),
-  nomeMembro: z.string().trim().min(1, 'Come ti chiami?'),
 });
 
 function messaggioErrore(errore: unknown): string {
@@ -27,14 +26,13 @@ function messaggioErrore(errore: unknown): string {
 
 export default function UniscitiAGruppo() {
   const [codiceInvito, setCodiceInvito] = useState('');
-  const [nomeMembro, setNomeMembro] = useState('');
   const [errore, setErrore] = useState<string | null>(null);
   const [inviando, setInviando] = useState(false);
 
   const invalidaMieiGruppi = useInvalidaMieiGruppi();
 
   async function inviaForm() {
-    const risultato = schema.safeParse({ codiceInvito, nomeMembro });
+    const risultato = schema.safeParse({ codiceInvito });
     if (!risultato.success) {
       setErrore(risultato.error.issues[0].message);
       return;
@@ -43,7 +41,7 @@ export default function UniscitiAGruppo() {
     setErrore(null);
     setInviando(true);
     try {
-      await entraInGruppo(risultato.data.codiceInvito, risultato.data.nomeMembro);
+      await entraInGruppo(risultato.data.codiceInvito);
       await invalidaMieiGruppi();
       router.replace('/');
     } catch (e) {
@@ -63,12 +61,6 @@ export default function UniscitiAGruppo() {
         autoCapitalize="none"
         value={codiceInvito}
         onChangeText={setCodiceInvito}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Il tuo nome nel gruppo"
-        value={nomeMembro}
-        onChangeText={setNomeMembro}
       />
 
       {errore !== null && <Text style={styles.errore}>{errore}</Text>}

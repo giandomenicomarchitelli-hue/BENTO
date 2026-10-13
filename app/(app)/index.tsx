@@ -1,14 +1,16 @@
-import { router, Link } from 'expo-router';
+import { router, Link, Redirect } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { esci } from '@/api/auth';
 import type { Gruppo } from '@/api/gruppi';
 import { useMieiGruppi } from '@/hooks/useMieiGruppi';
+import { useProfilo } from '@/hooks/useProfilo';
 import { useSaldiAggregati } from '@/hooks/useSaldiAggregati';
 import { formattaEuro } from '@/lib/formato';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 
 export default function Home() {
+  const { profilo, isLoading: profiloInCaricamento } = useProfilo();
   const { gruppi, isLoading } = useMieiGruppi();
   const { persone: personeConSaldo } = useSaldiAggregati();
   const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
@@ -16,6 +18,18 @@ export default function Home() {
   function apriGruppo(gruppo: Gruppo) {
     impostaGruppoAttivo(gruppo.id);
     router.push('/dashboard');
+  }
+
+  // Serve un nome utente fisso prima di poter creare o unirsi a un gruppo.
+  if (profiloInCaricamento) {
+    return (
+      <View style={styles.centrato}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+  if (profilo === null) {
+    return <Redirect href="/crea-profilo" />;
   }
 
   return (
@@ -62,6 +76,10 @@ export default function Home() {
         </Link>
       </View>
 
+      <Link href="/profilo" style={styles.linkProfilo}>
+        {profilo.nome_utente}
+      </Link>
+
       <Pressable style={styles.bottoneEsci} onPress={() => esci()}>
         <Text style={styles.testoBottoneEsci}>Esci</Text>
       </Pressable>
@@ -70,6 +88,11 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
+  centrato: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   contenitore: {
     flex: 1,
     padding: 24,
@@ -150,8 +173,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     overflow: 'hidden',
   },
-  bottoneEsci: {
+  linkProfilo: {
     marginTop: 24,
+    alignSelf: 'center',
+    color: '#2d6cdf',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  bottoneEsci: {
+    marginTop: 12,
     alignSelf: 'center',
     borderRadius: 8,
     paddingVertical: 10,

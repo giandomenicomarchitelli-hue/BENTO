@@ -16,25 +16,19 @@ export async function listaMembri(gruppoId: string): Promise<Membro[]> {
   return data;
 }
 
-/** Adesione a un gruppo esistente tramite codice invito. */
-export async function entraInGruppo(codiceInvito: string, nome: string): Promise<string> {
+/**
+ * Adesione a un gruppo esistente tramite codice invito, col nome fisso del
+ * proprio profilo (richiede che il profilo esista già).
+ */
+export async function entraInGruppo(codiceInvito: string): Promise<string> {
   const { data, error } = await supabase.rpc('unisciti_a_gruppo', {
     p_codice_invito: codiceInvito,
-    p_nome: nome,
   });
 
   if (error) {
     throw error;
   }
   return data;
-}
-
-/** Cambia il proprio nome visualizzato in un gruppo. */
-export async function rinominaMembro(membroId: string, nome: string): Promise<void> {
-  const { error } = await supabase.from('membri').update({ nome }).eq('id', membroId);
-  if (error) {
-    throw error;
-  }
 }
 
 /**

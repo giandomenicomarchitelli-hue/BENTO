@@ -23,12 +23,10 @@ const TIPI_GRUPPO = [
 
 const schema = z.object({
   nome: z.string().trim().min(1, 'Dai un nome al gruppo'),
-  nomeMembro: z.string().trim().min(1, 'Come ti chiami?'),
 });
 
 export default function CreaGruppo() {
   const [nome, setNome] = useState('');
-  const [nomeMembro, setNomeMembro] = useState('');
   const [tipo, setTipo] = useState<(typeof TIPI_GRUPPO)[number]['valore']>('casa');
   const [errore, setErrore] = useState<string | null>(null);
   const [inviando, setInviando] = useState(false);
@@ -37,7 +35,7 @@ export default function CreaGruppo() {
   const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
 
   async function inviaForm() {
-    const risultato = schema.safeParse({ nome, nomeMembro });
+    const risultato = schema.safeParse({ nome });
     if (!risultato.success) {
       setErrore(risultato.error.issues[0].message);
       return;
@@ -46,11 +44,7 @@ export default function CreaGruppo() {
     setErrore(null);
     setInviando(true);
     try {
-      const gruppo = await creaGruppo({
-        nome: risultato.data.nome,
-        tipo,
-        nomeMembro: risultato.data.nomeMembro,
-      });
+      const gruppo = await creaGruppo({ nome: risultato.data.nome, tipo });
       impostaGruppoAttivo(gruppo.id);
       await invalidaMieiGruppi();
       router.replace('/');
@@ -70,12 +64,6 @@ export default function CreaGruppo() {
         placeholder="Nome del gruppo (es. Casa di Via Roma)"
         value={nome}
         onChangeText={setNome}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Il tuo nome nel gruppo"
-        value={nomeMembro}
-        onChangeText={setNomeMembro}
       />
 
       <View style={styles.righeTipo}>

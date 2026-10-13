@@ -6,12 +6,24 @@ export type Gruppo = Database['public']['Tables']['gruppi']['Row'];
 interface CreaGruppoParams {
   nome: string;
   tipo?: Gruppo['tipo'];
-  nomeMembro: string;
 }
 
-/** Crea un gruppo e iscrive subito il creatore come primo membro. */
-export async function creaGruppo({ nome, tipo = 'casa', nomeMembro }: CreaGruppoParams): Promise<Gruppo> {
+/**
+ * Crea un gruppo e iscrive subito il creatore come primo membro, col nome
+ * fisso del suo profilo (richiede che il profilo esista già).
+ */
+export async function creaGruppo({ nome, tipo = 'casa' }: CreaGruppoParams): Promise<Gruppo> {
   const utenteId = await leggiUtenteIdCorrente();
+
+  const { data: profilo, error: erroreProfilo } = await supabase
+    .from('profili')
+    .select('nome_utente')
+    .eq('utente_id', utenteId)
+    .single();
+
+  if (erroreProfilo) {
+    throw erroreProfilo;
+  }
 
   const { data: gruppo, error: erroreGruppo } = await supabase
     .from('gruppi')
@@ -25,7 +37,7 @@ export async function creaGruppo({ nome, tipo = 'casa', nomeMembro }: CreaGruppo
 
   const { error: erroreMembro } = await supabase
     .from('membri')
-    .insert({ gruppo_id: gruppo.id, utente_id: utenteId, nome: nomeMembro });
+    .insert({ gruppo_id: gruppo.id, utente_id: utenteId, nome: profilo.nome_utente });
 
   if (erroreMembro) {
     throw erroreMembro;
