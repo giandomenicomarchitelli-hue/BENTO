@@ -4,10 +4,13 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from '
 import { esci } from '@/api/auth';
 import type { Gruppo } from '@/api/gruppi';
 import { useMieiGruppi } from '@/hooks/useMieiGruppi';
+import { useSaldiAggregati } from '@/hooks/useSaldiAggregati';
+import { formattaEuro } from '@/lib/formato';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 
 export default function Home() {
   const { gruppi, isLoading } = useMieiGruppi();
+  const { persone: personeConSaldo } = useSaldiAggregati();
   const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
 
   function apriGruppo(gruppo: Gruppo) {
@@ -18,6 +21,19 @@ export default function Home() {
   return (
     <View style={styles.contenitore}>
       <Text style={styles.titolo}>I tuoi gruppi</Text>
+
+      {personeConSaldo.length > 0 && (
+        <Link href="/saldi-personali" asChild>
+          <Pressable style={styles.cartaSaldiPersonali}>
+            <Text style={styles.testoCartaSaldiPersonali}>I miei saldi</Text>
+            <Text style={styles.dettaglioCartaSaldiPersonali}>
+              {personeConSaldo.length === 1
+                ? `Hai un saldo aperto con ${personeConSaldo[0].nome} (${formattaEuro(Math.abs(personeConSaldo[0].nettoCentesimi))}), sommato su tutti i gruppi in comune`
+                : `Hai saldi aperti con ${personeConSaldo.length} persone, sommati su tutti i gruppi in comune`}
+            </Text>
+          </Pressable>
+        </Link>
+      )}
 
       {isLoading ? (
         <ActivityIndicator style={styles.caricamento} />
@@ -63,6 +79,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 16,
+  },
+  cartaSaldiPersonali: {
+    backgroundColor: '#eaf0fd',
+    borderRadius: 8,
+    padding: 14,
+    marginBottom: 16,
+  },
+  testoCartaSaldiPersonali: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#2d6cdf',
+  },
+  dettaglioCartaSaldiPersonali: {
+    fontSize: 13,
+    color: '#555',
+    marginTop: 4,
   },
   caricamento: {
     marginTop: 24,
