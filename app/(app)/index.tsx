@@ -24,7 +24,8 @@ export default function Homepage() {
 
   return (
     <View style={styles.contenitore}>
-      <Text style={styles.titolo}>Gestione Casa</Text>
+      <Text style={styles.titolo}>Bento</Text>
+      <Text style={styles.payoff}>Everything, together.</Text>
 
       <View style={styles.scelte}>
         <Link href="/gruppi" asChild>
@@ -76,6 +77,12 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: '700',
     textAlign: 'center',
+  },
+  payoff: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    marginTop: 4,
     marginBottom: 32,
   },
   scelte: {

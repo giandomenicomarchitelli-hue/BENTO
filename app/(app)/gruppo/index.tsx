@@ -82,7 +82,7 @@ export default function Gruppo() {
 
   const condividiCodice = () => {
     Share.share({
-      message: `Unisciti al mio gruppo "${gruppo.nome}" su Gestione Casa! Codice invito: ${gruppo.codice_invito}`,
+      message: `Unisciti al mio gruppo "${gruppo.nome}" su Bento! Codice invito: ${gruppo.codice_invito}`,
     });
   };
 

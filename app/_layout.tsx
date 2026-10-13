@@ -34,7 +34,7 @@ function useIconaWeb() {
       document.head.appendChild(meta);
     };
     metaTag('apple-mobile-web-app-capable', 'yes');
-    metaTag('apple-mobile-web-app-title', 'Gestione Casa');
+    metaTag('apple-mobile-web-app-title', 'Bento');
     metaTag('theme-color', '#2d6cdf');
   }, []);
 }
