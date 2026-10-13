@@ -32,11 +32,11 @@ export default function Gruppo() {
   const [bozzaNomeGruppo, setBozzaNomeGruppo] = useState('');
   const [salvandoNomeGruppo, setSalvandoNomeGruppo] = useState(false);
 
-  // Si arriva qui solo dalla dashboard di un gruppo scelto in home; senza
-  // un gruppo attivo (es. link diretto, o store resettato da un refresh)
+  // Si arriva qui solo dalla dashboard di un gruppo scelto; senza un
+  // gruppo attivo (es. link diretto, o store resettato da un refresh)
   // si torna all'elenco gruppi invece di restare bloccati in caricamento.
   if (gruppoAttivoId === null) {
-    return <Redirect href="/" />;
+    return <Redirect href="/gruppi" />;
   }
 
   if (isLoading || gruppo === null) {
@@ -67,7 +67,7 @@ export default function Gruppo() {
       await esciDalGruppo(ilMioMembro.id);
       impostaGruppoAttivo(null);
       await invalidaMieiGruppi();
-      router.replace('/');
+      router.replace('/gruppi');
     } catch {
       await confermaAzione('Qualcosa è andato storto', 'Riprova.', 'OK');
       setUscendo(false);

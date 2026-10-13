@@ -45,7 +45,7 @@ export default function ListaSpesa() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
 
   if (gruppoAttivoId === null) {
-    return <Redirect href="/" />;
+    return <Redirect href="/gruppi" />;
   }
 
   return <ListaSpesaDelGruppo gruppoAttivoId={gruppoAttivoId} />;

@@ -14,11 +14,11 @@ export default function Dashboard() {
   const { liste } = useListe(gruppoAttivoId);
   const listeInHome = liste.filter((l) => l.mostra_in_home);
 
-  // Si arriva qui solo scegliendo un gruppo dalla home; senza un gruppo
-  // attivo selezionato (es. link diretto, o store appena resettato) si
-  // torna all'elenco gruppi.
+  // Si arriva qui solo scegliendo un gruppo dall'elenco gruppi; senza un
+  // gruppo attivo selezionato (es. link diretto, o store appena resettato)
+  // si torna all'elenco gruppi.
   if (gruppoAttivoId === null) {
-    return <Redirect href="/" />;
+    return <Redirect href="/gruppi" />;
   }
 
   if (isLoading || gruppo === null) {

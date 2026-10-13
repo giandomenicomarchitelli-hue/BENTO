@@ -21,7 +21,7 @@ export default function Liste() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
 
   if (gruppoAttivoId === null) {
-    return <Redirect href="/" />;
+    return <Redirect href="/gruppi" />;
   }
 
   return <ListeDelGruppo gruppoAttivoId={gruppoAttivoId} />;

@@ -26,7 +26,7 @@ export default function SaldaDebito() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
 
   if (gruppoAttivoId === null) {
-    return <Redirect href="/" />;
+    return <Redirect href="/gruppi" />;
   }
 
   return <SaldaDebitoDelGruppo gruppoAttivoId={gruppoAttivoId} />;

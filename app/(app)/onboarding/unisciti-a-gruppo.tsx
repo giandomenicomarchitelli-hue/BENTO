@@ -43,7 +43,7 @@ export default function UniscitiAGruppo() {
     try {
       await entraInGruppo(risultato.data.codiceInvito);
       await invalidaMieiGruppi();
-      router.replace('/');
+      router.replace('/gruppi');
     } catch (e) {
       setErrore(messaggioErrore(e));
     } finally {

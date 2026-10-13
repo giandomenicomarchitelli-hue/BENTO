@@ -47,7 +47,7 @@ export default function CreaGruppo() {
       const gruppo = await creaGruppo({ nome: risultato.data.nome, tipo });
       impostaGruppoAttivo(gruppo.id);
       await invalidaMieiGruppi();
-      router.replace('/');
+      router.replace('/gruppi');
     } catch {
       setErrore('Qualcosa è andato storto. Riprova.');
     } finally {

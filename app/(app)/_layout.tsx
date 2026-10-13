@@ -3,7 +3,8 @@ import { Stack } from 'expo-router';
 export default function AppLayout() {
   return (
     <Stack>
-      <Stack.Screen name="index" options={{ title: 'I tuoi gruppi' }} />
+      <Stack.Screen name="index" options={{ title: 'Homepage' }} />
+      <Stack.Screen name="gruppi/index" options={{ title: 'I tuoi gruppi' }} />
       <Stack.Screen name="crea-profilo" options={{ title: 'Nome utente' }} />
       <Stack.Screen name="profilo" options={{ title: 'Il mio profilo' }} />
       <Stack.Screen name="dashboard" options={{ title: 'Gestione Casa' }} />

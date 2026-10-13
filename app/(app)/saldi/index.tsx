@@ -12,7 +12,7 @@ export default function Saldi() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
 
   if (gruppoAttivoId === null) {
-    return <Redirect href="/" />;
+    return <Redirect href="/gruppi" />;
   }
 
   return <SaldiDelGruppo gruppoAttivoId={gruppoAttivoId} />;

@@ -1,26 +1,16 @@
-import { router, Link, Redirect } from 'expo-router';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Link, Redirect } from 'expo-router';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { esci } from '@/api/auth';
-import type { Gruppo } from '@/api/gruppi';
-import { useMieiGruppi } from '@/hooks/useMieiGruppi';
 import { useProfilo } from '@/hooks/useProfilo';
 import { useSaldiAggregati } from '@/hooks/useSaldiAggregati';
 import { formattaEuro } from '@/lib/formato';
-import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 
-export default function Home() {
+export default function Homepage() {
   const { profilo, isLoading: profiloInCaricamento } = useProfilo();
-  const { gruppi, isLoading } = useMieiGruppi();
   const { persone: personeConSaldo } = useSaldiAggregati();
-  const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
 
-  function apriGruppo(gruppo: Gruppo) {
-    impostaGruppoAttivo(gruppo.id);
-    router.push('/dashboard');
-  }
-
-  // Serve un nome utente fisso prima di poter creare o unirsi a un gruppo.
+  // Serve un nome utente fisso prima di poter fare qualunque cosa.
   if (profiloInCaricamento) {
     return (
       <View style={styles.centrato}>
@@ -34,45 +24,29 @@ export default function Home() {
 
   return (
     <View style={styles.contenitore}>
-      <Text style={styles.titolo}>I tuoi gruppi</Text>
+      <Text style={styles.titolo}>Gestione Casa</Text>
 
-      {personeConSaldo.length > 0 && (
-        <Link href="/saldi-personali" asChild>
-          <Pressable style={styles.cartaSaldiPersonali}>
-            <Text style={styles.testoCartaSaldiPersonali}>I miei saldi</Text>
-            <Text style={styles.dettaglioCartaSaldiPersonali}>
-              {personeConSaldo.length === 1
-                ? `Hai un saldo aperto con ${personeConSaldo[0].nome} (${formattaEuro(Math.abs(personeConSaldo[0].nettoCentesimi))}), sommato su tutti i gruppi in comune`
-                : `Hai saldi aperti con ${personeConSaldo.length} persone, sommati su tutti i gruppi in comune`}
+      <View style={styles.scelte}>
+        <Link href="/gruppi" asChild>
+          <Pressable style={styles.carta}>
+            <Text style={styles.testoCarta}>I tuoi gruppi</Text>
+            <Text style={styles.dettaglioCarta}>
+              Spesa, spese e liste dei gruppi a cui partecipi
             </Text>
           </Pressable>
         </Link>
-      )}
 
-      {isLoading ? (
-        <ActivityIndicator style={styles.caricamento} />
-      ) : gruppi.length === 0 ? (
-        <Text style={styles.vuoto}>Non fai ancora parte di nessun gruppo.</Text>
-      ) : (
-        <FlatList
-          data={gruppi}
-          keyExtractor={(gruppo) => gruppo.id}
-          style={styles.elenco}
-          renderItem={({ item }) => (
-            <Pressable style={styles.riga} onPress={() => apriGruppo(item)}>
-              <Text style={styles.nomeGruppo}>{item.nome}</Text>
-              <Text style={styles.tipoGruppo}>{item.tipo}</Text>
-            </Pressable>
-          )}
-        />
-      )}
-
-      <View style={styles.azioni}>
-        <Link href="/onboarding/crea-gruppo" style={styles.bottone}>
-          Crea un gruppo
-        </Link>
-        <Link href="/onboarding/unisciti-a-gruppo" style={styles.bottoneSecondario}>
-          Ho un codice invito
+        <Link href="/saldi-personali" asChild>
+          <Pressable style={StyleSheet.flatten([styles.carta, styles.cartaSaldi])}>
+            <Text style={[styles.testoCarta, styles.testoCartaSaldi]}>I miei saldi</Text>
+            <Text style={[styles.dettaglioCarta, styles.dettaglioCartaSaldi]}>
+              {personeConSaldo.length === 0
+                ? 'Sei in pari con tutti'
+                : personeConSaldo.length === 1
+                  ? `Hai un saldo aperto con ${personeConSaldo[0].nome} (${formattaEuro(Math.abs(personeConSaldo[0].nettoCentesimi))}), sommato su tutti i gruppi in comune`
+                  : `Hai saldi aperti con ${personeConSaldo.length} persone, sommati su tutti i gruppi in comune`}
+            </Text>
+          </Pressable>
         </Link>
       </View>
 
@@ -80,9 +54,9 @@ export default function Home() {
         {profilo.nome_utente}
       </Link>
 
-      <Pressable style={styles.bottoneEsci} onPress={() => esci()}>
-        <Text style={styles.testoBottoneEsci}>Esci</Text>
-      </Pressable>
+      <Text style={styles.bottoneEsci} onPress={() => esci()}>
+        Esci
+      </Text>
     </View>
   );
 }
@@ -96,102 +70,53 @@ const styles = StyleSheet.create({
   contenitore: {
     flex: 1,
     padding: 24,
+    justifyContent: 'center',
   },
   titolo: {
-    fontSize: 24,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  cartaSaldiPersonali: {
-    backgroundColor: '#eaf0fd',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 16,
-  },
-  testoCartaSaldiPersonali: {
-    fontSize: 15,
+    fontSize: 26,
     fontWeight: '700',
-    color: '#2d6cdf',
-  },
-  dettaglioCartaSaldiPersonali: {
-    fontSize: 13,
-    color: '#555',
-    marginTop: 4,
-  },
-  caricamento: {
-    marginTop: 24,
-  },
-  vuoto: {
     textAlign: 'center',
-    color: '#888',
-    marginTop: 8,
-    marginBottom: 16,
+    marginBottom: 32,
   },
-  elenco: {
-    flexGrow: 0,
-    marginBottom: 16,
+  scelte: {
+    gap: 16,
   },
-  riga: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  nomeGruppo: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  tipoGruppo: {
-    fontSize: 13,
-    color: '#888',
-    textTransform: 'capitalize',
-  },
-  azioni: {
-    gap: 8,
-  },
-  bottone: {
+  carta: {
     backgroundColor: '#2d6cdf',
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    borderRadius: 8,
-    paddingVertical: 14,
-    textAlign: 'center',
-    overflow: 'hidden',
+    borderRadius: 12,
+    padding: 20,
   },
-  bottoneSecondario: {
-    borderWidth: 1,
-    borderColor: '#2d6cdf',
+  cartaSaldi: {
+    backgroundColor: '#eaf0fd',
+  },
+  testoCarta: {
+    fontSize: 19,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  testoCartaSaldi: {
     color: '#2d6cdf',
-    fontSize: 16,
-    fontWeight: '600',
-    borderRadius: 8,
-    paddingVertical: 14,
-    textAlign: 'center',
-    overflow: 'hidden',
+  },
+  dettaglioCarta: {
+    fontSize: 13,
+    color: '#e4ecfc',
+    marginTop: 6,
+  },
+  dettaglioCartaSaldi: {
+    color: '#4a76c4',
   },
   linkProfilo: {
-    marginTop: 24,
+    marginTop: 40,
     alignSelf: 'center',
     color: '#2d6cdf',
     fontSize: 14,
     fontWeight: '600',
   },
   bottoneEsci: {
-    marginTop: 12,
+    marginTop: 16,
     alignSelf: 'center',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderWidth: 1,
-    borderColor: '#c0392b',
-  },
-  testoBottoneEsci: {
     color: '#c0392b',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
   },
 });

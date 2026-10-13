@@ -30,7 +30,7 @@ export default function NuovaSpesa() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
 
   if (gruppoAttivoId === null) {
-    return <Redirect href="/" />;
+    return <Redirect href="/gruppi" />;
   }
 
   return <NuovaSpesaDelGruppo gruppoAttivoId={gruppoAttivoId} />;
