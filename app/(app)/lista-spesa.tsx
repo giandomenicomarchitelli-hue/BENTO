@@ -18,10 +18,12 @@ import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 
 function RigaArticolo({
   articolo,
+  nomeCompratore,
   onTocca,
   onElimina,
 }: {
   articolo: ArticoloSpesa;
+  nomeCompratore: string | null;
   onTocca: () => void;
   onElimina: () => void;
 }) {
@@ -31,9 +33,14 @@ function RigaArticolo({
       <View style={[styles.casella, comprato && styles.caselladSelezionata]}>
         {comprato && <Text style={styles.segno}>✓</Text>}
       </View>
-      <Text style={[styles.nomeArticolo, comprato && styles.nomeArticoloComprato]}>
-        {articolo.nome}
-      </Text>
+      <View style={styles.testiArticolo}>
+        <Text style={[styles.nomeArticolo, comprato && styles.nomeArticoloComprato]}>
+          {articolo.nome}
+        </Text>
+        {comprato && nomeCompratore !== null && (
+          <Text style={styles.compratoDa}>Comprato da {nomeCompratore}</Text>
+        )}
+      </View>
       <Pressable onPress={onElimina} hitSlop={8}>
         <Text style={styles.elimina}>Elimina</Text>
       </Pressable>
@@ -100,6 +107,7 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           renderItem={({ item }) => (
             <RigaArticolo
               articolo={item}
+              nomeCompratore={membri.find((m) => m.id === item.comprato_da)?.nome ?? null}
               onTocca={() => {
                 if (item.stato === 'da_comprare') {
                   // Segnare comprato apre il form per registrare la spesa
@@ -186,13 +194,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  nomeArticolo: {
+  testiArticolo: {
     flex: 1,
+  },
+  nomeArticolo: {
     fontSize: 16,
   },
   nomeArticoloComprato: {
     textDecorationLine: 'line-through',
     color: '#999',
+  },
+  compratoDa: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
   },
   elimina: {
     color: '#c0392b',

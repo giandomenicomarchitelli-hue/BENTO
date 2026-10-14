@@ -35,9 +35,13 @@ export async function aggiungiArticolo(
 
 export async function aggiornaStatoArticolo(
   articoloId: string,
-  stato: ArticoloSpesa['stato']
+  stato: ArticoloSpesa['stato'],
+  compratoDaMembroId: string | null = null
 ): Promise<void> {
-  const { error } = await supabase.from('articoli_spesa').update({ stato }).eq('id', articoloId);
+  const { error } = await supabase
+    .from('articoli_spesa')
+    .update({ stato, comprato_da: compratoDaMembroId })
+    .eq('id', articoloId);
   if (error) {
     throw error;
   }

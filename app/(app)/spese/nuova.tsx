@@ -60,13 +60,14 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     articoloId !== undefined
       ? {
           testo: nomeArticolo,
-          segnaFatto: () => aggiornaStatoArticolo(articoloId, 'comprato'),
+          segnaFatto: (compratoDaMembroId: string | null) =>
+            aggiornaStatoArticolo(articoloId, 'comprato', compratoDaMembroId),
           chiaveInvalidazione: ['articoli-spesa', gruppoAttivoId],
         }
       : voceListaId !== undefined
         ? {
             testo: nomeVoce,
-            segnaFatto: () => aggiornaVoce(voceListaId, true),
+            segnaFatto: (_compratoDaMembroId: string | null) => aggiornaVoce(voceListaId, true),
             chiaveInvalidazione: ['voci-lista', listaId],
           }
         : null;
@@ -123,7 +124,9 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
         })),
       });
       if (collegamento !== null) {
-        await collegamento.segnaFatto();
+        // "Chi l'ha comprato" è chi ha pagato la spesa appena registrata,
+        // non per forza chi sta compilando il form.
+        await collegamento.segnaFatto(risultato.data.pagatoDa);
         await queryClient.invalidateQueries({ queryKey: collegamento.chiaveInvalidazione });
       }
       router.back();
@@ -140,7 +143,9 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     }
     setInviando(true);
     try {
-      await collegamento.segnaFatto();
+      // Nessuna spesa registrata quindi nessun "pagato da": si segna chi sta
+      // completando l'azione.
+      await collegamento.segnaFatto(ilMioMembro?.id ?? null);
       await queryClient.invalidateQueries({ queryKey: collegamento.chiaveInvalidazione });
       router.back();
     } catch {

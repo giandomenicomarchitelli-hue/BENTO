@@ -56,8 +56,15 @@ export function useArticoliSpesa(gruppoId: string | null) {
   });
 
   const aggiornaStato = useMutation({
-    mutationFn: ({ id, stato }: { id: string; stato: ArticoloSpesa['stato'] }) =>
-      aggiornaStatoArticolo(id, stato),
+    mutationFn: ({
+      id,
+      stato,
+      compratoDaMembroId,
+    }: {
+      id: string
+      stato: ArticoloSpesa['stato']
+      compratoDaMembroId?: string | null
+    }) => aggiornaStatoArticolo(id, stato, compratoDaMembroId ?? null),
     onSuccess: invalida,
   });
 

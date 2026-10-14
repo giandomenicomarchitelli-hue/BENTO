@@ -53,6 +53,7 @@ export type Database = {
       articoli_spesa: {
         Row: {
           aggiornato_il: string
+          comprato_da: string | null
           creato_da: string | null
           creato_il: string
           gruppo_id: string
@@ -62,6 +63,7 @@ export type Database = {
         }
         Insert: {
           aggiornato_il?: string
+          comprato_da?: string | null
           creato_da?: string | null
           creato_il?: string
           gruppo_id: string
@@ -71,6 +73,7 @@ export type Database = {
         }
         Update: {
           aggiornato_il?: string
+          comprato_da?: string | null
           creato_da?: string | null
           creato_il?: string
           gruppo_id?: string
@@ -79,6 +82,13 @@ export type Database = {
           stato?: "da_comprare" | "comprato"
         }
         Relationships: [
+          {
+            foreignKeyName: "articoli_spesa_comprato_da_fkey"
+            columns: ["comprato_da"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "articoli_spesa_creato_da_fkey"
             columns: ["creato_da"]
