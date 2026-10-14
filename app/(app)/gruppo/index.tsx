@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
@@ -13,12 +14,15 @@ import {
 
 import { rinominaGruppo } from '@/api/gruppi';
 import { esciDalGruppo } from '@/api/membri';
+import { Avatar } from '@/components/Avatar';
+import { Badge } from '@/components/Badge';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useInvalidaMieiGruppi } from '@/hooks/useMieiGruppi';
 import { useSaldi } from '@/hooks/useSaldi';
 import { confermaAzione } from '@/lib/conferma';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
+import { colori, raggio, spaziatura, tipografia } from '@/theme/tokens';
 
 export default function Gruppo() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
@@ -163,18 +167,28 @@ export default function Gruppo() {
       </Text>
 
       <Pressable style={styles.bottone} onPress={condividiCodice}>
+        <Feather name="share-2" size={16} color="#fff" />
         <Text style={styles.testoBottone}>Condividi invito</Text>
       </Pressable>
 
-      <Text style={[styles.etichetta, styles.etichettaMembri]}>
-        Membri ({membriAttivi.length})
-      </Text>
-      {membriAttivi.map((membro) => (
-        <Text key={membro.id} style={styles.membro}>
-          {membro.nome}
-          {membro.id === ilMioMembro?.id ? ' (tu)' : ''}
-        </Text>
-      ))}
+      <View style={styles.rigaEtichettaMembri}>
+        <Text style={styles.etichetta}>Membri</Text>
+        <Badge testo={String(membriAttivi.length)} tono="blu" />
+      </View>
+      <View style={styles.cartaMembri}>
+        {membriAttivi.map((membro, indice) => (
+          <View
+            key={membro.id}
+            style={[styles.rigaMembro, indice > 0 && styles.rigaMembroDivisa]}
+          >
+            <Avatar nome={membro.nome} dimensione={32} />
+            <Text style={styles.nomeMembro}>
+              {membro.nome}
+              {membro.id === ilMioMembro?.id ? ' (tu)' : ''}
+            </Text>
+          </View>
+        ))}
+      </View>
 
       <Pressable
         style={styles.bottoneEsci}
@@ -182,7 +196,7 @@ export default function Gruppo() {
         disabled={uscendo || saldiInCaricamento}
       >
         {uscendo ? (
-          <ActivityIndicator color="#c0392b" />
+          <ActivityIndicator color={colori.rosso600} />
         ) : (
           <Text style={styles.testoBottoneEsci}>Esci dal gruppo</Text>
         )}
@@ -199,59 +213,63 @@ const styles = StyleSheet.create({
   },
   contenitore: {
     flex: 1,
-    padding: 24,
+    backgroundColor: colori.sfondoApp,
+    padding: spaziatura.xl,
   },
   rigaTitolo: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'center',
     gap: 10,
-    marginBottom: 24,
+    marginBottom: spaziatura.xl,
   },
   titolo: {
+    ...tipografia.titolo,
     fontSize: 24,
-    fontWeight: '600',
     textAlign: 'center',
+    color: colori.inchiostro900,
   },
   rigaModifica: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 16,
+    marginBottom: spaziatura.lg,
   },
   inputTitolo: {
     flex: 1,
     fontSize: 20,
     fontWeight: '600',
     borderWidth: 1,
-    borderColor: '#2d6cdf',
-    borderRadius: 8,
+    borderColor: colori.blu600,
+    borderRadius: raggio.sm,
     paddingHorizontal: 10,
     paddingVertical: 6,
+    color: colori.inchiostro900,
   },
   linkModifica: {
-    color: '#2d6cdf',
+    color: colori.blu600,
     fontSize: 13,
     fontWeight: '600',
   },
   linkSalva: {
-    color: '#2d6cdf',
+    color: colori.blu600,
     fontSize: 14,
     fontWeight: '700',
   },
   linkAnnulla: {
-    color: '#888',
+    color: colori.inchiostro500,
     fontSize: 14,
   },
   etichetta: {
     fontSize: 14,
-    color: '#555',
-    marginBottom: 8,
+    color: colori.inchiostro500,
+    marginBottom: spaziatura.sm,
   },
   riquadroCodice: {
+    backgroundColor: colori.superficie,
     borderWidth: 1,
-    borderColor: '#2d6cdf',
-    borderRadius: 8,
+    borderColor: colori.blu600,
+    borderRadius: raggio.sm,
     paddingVertical: 16,
     alignItems: 'center',
   },
@@ -259,46 +277,69 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     letterSpacing: 2,
-    color: '#2d6cdf',
+    color: colori.blu600,
   },
   suggerimento: {
     fontSize: 13,
-    color: '#888',
+    color: colori.inchiostro500,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: spaziatura.sm,
   },
   bottone: {
-    backgroundColor: '#2d6cdf',
-    borderRadius: 8,
-    paddingVertical: 14,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colori.blu600,
+    borderRadius: raggio.sm,
+    paddingVertical: 14,
+    marginTop: spaziatura.lg,
   },
   testoBottone: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
-  etichettaMembri: {
-    marginTop: 32,
+  rigaEtichettaMembri: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spaziatura.xxl,
   },
-  membro: {
-    fontSize: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+  cartaMembri: {
+    backgroundColor: colori.superficie,
+    borderRadius: raggio.md,
+    borderWidth: 1,
+    borderColor: colori.inchiostro150,
+    overflow: 'hidden',
+  },
+  rigaMembro: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spaziatura.md,
+    paddingVertical: 10,
+    paddingHorizontal: spaziatura.md,
+  },
+  rigaMembroDivisa: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colori.inchiostro150,
+  },
+  nomeMembro: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colori.inchiostro900,
   },
   bottoneEsci: {
-    marginTop: 32,
+    marginTop: spaziatura.xxl,
     alignSelf: 'center',
-    borderRadius: 8,
+    borderRadius: raggio.sm,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderWidth: 1,
-    borderColor: '#c0392b',
+    borderColor: colori.rosso600,
   },
   testoBottoneEsci: {
-    color: '#c0392b',
+    color: colori.rosso600,
     fontSize: 15,
     fontWeight: '600',
   },

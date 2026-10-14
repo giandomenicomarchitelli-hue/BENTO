@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -11,10 +12,12 @@ import {
 } from 'react-native';
 
 import type { ArticoloSpesa } from '@/api/articoliSpesa';
+import { Badge } from '@/components/Badge';
 import { useArticoliSpesa } from '@/hooks/useArticoliSpesa';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
+import { colori, raggio, spaziatura, tipografia } from '@/theme/tokens';
 
 function RigaArticolo({
   articolo,
@@ -29,9 +32,12 @@ function RigaArticolo({
 }) {
   const comprato = articolo.stato === 'comprato';
   return (
-    <Pressable style={styles.riga} onPress={onTocca}>
+    <Pressable
+      style={({ pressed }) => [styles.riga, pressed && styles.rigaPremuta]}
+      onPress={onTocca}
+    >
       <View style={[styles.casella, comprato && styles.caselladSelezionata]}>
-        {comprato && <Text style={styles.segno}>✓</Text>}
+        {comprato && <Feather name="check" size={14} color="#fff" />}
       </View>
       <View style={styles.testiArticolo}>
         <Text style={[styles.nomeArticolo, comprato && styles.nomeArticoloComprato]}>
@@ -42,7 +48,7 @@ function RigaArticolo({
         )}
       </View>
       <Pressable onPress={onElimina} hitSlop={8}>
-        <Text style={styles.elimina}>Elimina</Text>
+        <Feather name="trash-2" size={16} color={colori.inchiostro300} />
       </Pressable>
     </Pressable>
   );
@@ -82,17 +88,32 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 
   return (
     <View style={styles.contenitore}>
+      <View style={styles.intestazione}>
+        <View>
+          <Text style={styles.titolo}>Lista della spesa</Text>
+          {articoli.length > 0 && (
+            <Text style={styles.sottotitolo}>
+              {comprati.length} di {articoli.length} comprati
+            </Text>
+          )}
+        </View>
+        {articoli.length > 0 && (
+          <Badge testo={`${comprati.length}/${articoli.length}`} tono="blu" />
+        )}
+      </View>
+
       <View style={styles.rigaInput}>
         <TextInput
           style={styles.input}
           placeholder="Aggiungi un articolo"
+          placeholderTextColor={colori.inchiostro300}
           value={nuovoArticolo}
           onChangeText={setNuovoArticolo}
           onSubmitEditing={aggiungiArticoloAllaLista}
           returnKeyType="done"
         />
         <Pressable style={styles.bottoneAggiungi} onPress={aggiungiArticoloAllaLista}>
-          <Text style={styles.testoBottoneAggiungi}>+</Text>
+          <Feather name="plus" size={20} color="#fff" />
         </Pressable>
       </View>
 
@@ -104,6 +125,7 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
         <FlatList
           data={elencoOrdinato}
           keyExtractor={(articolo) => articolo.id}
+          style={styles.elenco}
           renderItem={({ item }) => (
             <RigaArticolo
               articolo={item}
@@ -132,85 +154,100 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 const styles = StyleSheet.create({
   contenitore: {
     flex: 1,
-    padding: 16,
-    gap: 12,
+    backgroundColor: colori.sfondoApp,
+    padding: spaziatura.lg,
+    gap: spaziatura.md,
+  },
+  intestazione: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  titolo: {
+    ...tipografia.titolo,
+    fontSize: 22,
+    color: colori.inchiostro900,
+  },
+  sottotitolo: {
+    marginTop: 2,
+    fontSize: 13,
+    color: colori.inchiostro500,
   },
   rigaInput: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spaziatura.sm,
   },
   input: {
     flex: 1,
+    backgroundColor: colori.superficie,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
+    borderColor: colori.inchiostro150,
+    borderRadius: raggio.sm,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 16,
+    color: colori.inchiostro900,
   },
   bottoneAggiungi: {
     width: 44,
     height: 44,
-    borderRadius: 8,
-    backgroundColor: '#2d6cdf',
+    borderRadius: raggio.sm,
+    backgroundColor: colori.blu600,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  testoBottoneAggiungi: {
-    color: '#fff',
-    fontSize: 22,
-    lineHeight: 24,
   },
   caricamento: {
     marginTop: 24,
   },
   vuoto: {
     textAlign: 'center',
-    color: '#888',
+    color: colori.inchiostro500,
     marginTop: 24,
+  },
+  elenco: {
+    flex: 1,
   },
   riga: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spaziatura.md,
+    backgroundColor: colori.superficie,
+    borderRadius: raggio.md,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    paddingHorizontal: spaziatura.md,
+    marginBottom: spaziatura.sm,
+  },
+  rigaPremuta: {
+    opacity: 0.7,
   },
   casella: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 7,
     borderWidth: 1.5,
-    borderColor: '#2d6cdf',
+    borderColor: colori.blu600,
     alignItems: 'center',
     justifyContent: 'center',
   },
   caselladSelezionata: {
-    backgroundColor: '#2d6cdf',
-  },
-  segno: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
+    backgroundColor: colori.blu600,
+    borderColor: colori.blu600,
   },
   testiArticolo: {
     flex: 1,
   },
   nomeArticolo: {
     fontSize: 16,
+    fontWeight: '600',
+    color: colori.inchiostro900,
   },
   nomeArticoloComprato: {
     textDecorationLine: 'line-through',
-    color: '#999',
+    color: colori.inchiostro300,
   },
   compratoDa: {
     fontSize: 12,
-    color: '#999',
+    color: colori.inchiostro500,
     marginTop: 2,
-  },
-  elimina: {
-    color: '#c0392b',
-    fontSize: 13,
   },
 });

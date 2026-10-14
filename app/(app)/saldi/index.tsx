@@ -1,12 +1,15 @@
-import { Link, Redirect } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
+import { Link, Redirect, useRouter } from 'expo-router';
 import { ActivityIndicator, ScrollView, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { SpesaConQuote } from '@/api/spese';
+import { Avatar } from '@/components/Avatar';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useSaldi } from '@/hooks/useSaldi';
 import { useSpese } from '@/hooks/useSpese';
 import { formattaEuro } from '@/lib/formato';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
+import { colori, raggio, spaziatura, tipografia } from '@/theme/tokens';
 
 export default function Saldi() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
@@ -19,6 +22,7 @@ export default function Saldi() {
 }
 
 function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
+  const router = useRouter();
   const { membri } = useGruppoAttivo();
   const { transazioni, isLoading: saldiInCaricamento } = useSaldi(gruppoAttivoId);
   const { spese, isLoading: speseInCaricamento, annulla } = useSpese(gruppoAttivoId);
@@ -29,6 +33,7 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   function RigaSpesa({ spesa }: { spesa: SpesaConQuote }) {
     return (
       <View style={styles.riga}>
+        <Avatar nome={nomeMembro(spesa.pagato_da)} />
         <View style={styles.rigaTesto}>
           <Text style={styles.descrizione}>
             {spesa.descrizione !== '' ? spesa.descrizione : 'Spesa'}
@@ -37,9 +42,9 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
             {nomeMembro(spesa.pagato_da)} · {spesa.data}
           </Text>
         </View>
-        <Text style={styles.importo}>{formattaEuro(spesa.importo_centesimi)}</Text>
+        <Text style={styles.importoSpesa}>{formattaEuro(spesa.importo_centesimi)}</Text>
         <Pressable onPress={() => annulla.mutate(spesa.id)} hitSlop={8}>
-          <Text style={styles.annulla}>Annulla</Text>
+          <Feather name="x" size={16} color={colori.inchiostro300} />
         </Pressable>
       </View>
     );
@@ -48,9 +53,10 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   return (
     <ScrollView style={styles.contenitore} contentContainerStyle={styles.contenuto}>
       <View style={styles.rigaBottoni}>
-        <Link href="/spese/nuova" style={styles.bottoneNuova}>
-          + Nuova spesa
-        </Link>
+        <Pressable style={styles.bottoneNuova} onPress={() => router.push('/spese/nuova')}>
+          <Feather name="plus" size={16} color="#fff" />
+          <Text style={styles.testoBottoneNuova}>Nuova spesa</Text>
+        </Pressable>
         <Link href="/saldi/salda" style={styles.bottoneSalda}>
           Salda un debito
         </Link>
@@ -62,24 +68,30 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
       ) : transazioni.length === 0 ? (
         <Text style={styles.vuoto}>Siete in pari! 🎉</Text>
       ) : (
-        transazioni.map((t, indice) => (
-          <View key={`${t.da}-${t.a}-${indice}`} style={styles.riga}>
-            <Text style={styles.testo}>
-              <Text style={styles.nome}>{nomeMembro(t.da)}</Text> deve a{' '}
-              <Text style={styles.nome}>{nomeMembro(t.a)}</Text>
-            </Text>
-            <Text style={styles.importo}>{formattaEuro(t.importoCentesimi)}</Text>
-            <Link
-              href={{
-                pathname: '/saldi/salda',
-                params: { da: t.da, a: t.a, importoCentesimi: String(t.importoCentesimi) },
-              }}
-              style={styles.linkSalda}
+        <View style={styles.carta}>
+          {transazioni.map((t, indice) => (
+            <View
+              key={`${t.da}-${t.a}-${indice}`}
+              style={[styles.riga, indice > 0 && styles.rigaDivisa]}
             >
-              Salda
-            </Link>
-          </View>
-        ))
+              <Avatar nome={nomeMembro(t.da)} />
+              <Text style={styles.testo}>
+                <Text style={styles.nome}>{nomeMembro(t.da)}</Text> deve a{' '}
+                <Text style={styles.nome}>{nomeMembro(t.a)}</Text>
+              </Text>
+              <Text style={styles.importoDebito}>{formattaEuro(t.importoCentesimi)}</Text>
+              <Link
+                href={{
+                  pathname: '/saldi/salda',
+                  params: { da: t.da, a: t.a, importoCentesimi: String(t.importoCentesimi) },
+                }}
+                style={styles.linkSalda}
+              >
+                Salda
+              </Link>
+            </View>
+          ))}
+        </View>
       )}
 
       <Text style={styles.titoloSezione}>Spese</Text>
@@ -88,7 +100,13 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
       ) : spese.length === 0 ? (
         <Text style={styles.vuoto}>Nessuna spesa registrata.</Text>
       ) : (
-        spese.map((spesa) => <RigaSpesa key={spesa.id} spesa={spesa} />)
+        <View style={styles.carta}>
+          {spese.map((spesa, indice) => (
+            <View key={spesa.id} style={indice > 0 ? styles.rigaDivisa : undefined}>
+              <RigaSpesa spesa={spesa} />
+            </View>
+          ))}
+        </View>
       )}
     </ScrollView>
   );
@@ -97,92 +115,112 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 const styles = StyleSheet.create({
   contenitore: {
     flex: 1,
+    backgroundColor: colori.sfondoApp,
   },
   contenuto: {
-    padding: 16,
-    gap: 8,
+    padding: spaziatura.lg,
+    gap: spaziatura.sm,
   },
   rigaBottoni: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 8,
+    gap: spaziatura.sm,
+    marginBottom: spaziatura.sm,
   },
   bottoneNuova: {
     flex: 1,
-    backgroundColor: '#2d6cdf',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: colori.blu600,
+    borderRadius: raggio.sm,
+    paddingVertical: 12,
+  },
+  testoBottoneNuova: {
     color: '#fff',
     fontSize: 15,
     fontWeight: '600',
-    borderRadius: 8,
-    paddingVertical: 12,
-    textAlign: 'center',
-    overflow: 'hidden',
   },
   bottoneSalda: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#2d6cdf',
-    color: '#2d6cdf',
+    borderColor: colori.blu600,
+    color: colori.blu600,
     fontSize: 15,
     fontWeight: '600',
-    borderRadius: 8,
+    borderRadius: raggio.sm,
     paddingVertical: 12,
     textAlign: 'center',
     overflow: 'hidden',
   },
   linkSalda: {
-    color: '#2d6cdf',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  titoloSezione: {
+    color: colori.blu600,
     fontSize: 13,
     fontWeight: '700',
-    color: '#888',
+  },
+  titoloSezione: {
+    ...tipografia.etichetta,
+    color: colori.inchiostro500,
     textTransform: 'uppercase',
-    marginTop: 16,
+    letterSpacing: 0.4,
+    marginTop: spaziatura.lg,
+    marginBottom: 2,
   },
   caricamento: {
     marginTop: 12,
   },
   vuoto: {
     textAlign: 'center',
-    color: '#888',
+    color: colori.inchiostro500,
     marginTop: 12,
+  },
+  carta: {
+    backgroundColor: colori.superficie,
+    borderRadius: raggio.md,
+    borderWidth: 1,
+    borderColor: colori.inchiostro150,
+    overflow: 'hidden',
   },
   riga: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spaziatura.md,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    paddingHorizontal: spaziatura.md,
+  },
+  rigaDivisa: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colori.inchiostro150,
   },
   rigaTesto: {
     flex: 1,
   },
   descrizione: {
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: '600',
+    color: colori.inchiostro900,
   },
   dettaglio: {
     fontSize: 13,
-    color: '#888',
+    color: colori.inchiostro500,
     marginTop: 2,
   },
   testo: {
-    fontSize: 16,
+    fontSize: 15,
     flex: 1,
+    color: colori.inchiostro900,
   },
   nome: {
-    fontWeight: '600',
-  },
-  importo: {
-    fontSize: 16,
     fontWeight: '700',
-    color: '#2d6cdf',
   },
-  annulla: {
-    color: '#c0392b',
-    fontSize: 13,
+  importoSpesa: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colori.inchiostro900,
+  },
+  importoDebito: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colori.rosso600,
   },
 });
