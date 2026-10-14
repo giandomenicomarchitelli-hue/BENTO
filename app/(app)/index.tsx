@@ -6,6 +6,7 @@ import { esci } from '@/api/auth';
 import { GradientCard } from '@/components/GradientCard';
 import { ListGroup } from '@/components/ListGroup';
 import { ListRow } from '@/components/ListRow';
+import { useMieiGruppi } from '@/hooks/useMieiGruppi';
 import { useProfilo } from '@/hooks/useProfilo';
 import { useSaldiAggregati } from '@/hooks/useSaldiAggregati';
 import { formattaEuro } from '@/lib/formato';
@@ -15,6 +16,7 @@ export default function Homepage() {
   const router = useRouter();
   const { profilo, isLoading: profiloInCaricamento } = useProfilo();
   const { persone: personeConSaldo } = useSaldiAggregati();
+  const { gruppi } = useMieiGruppi();
 
   // Serve un nome utente fisso prima di poter fare qualunque cosa.
   if (profiloInCaricamento) {
@@ -39,25 +41,32 @@ export default function Homepage() {
         <Text style={styles.payoff}>Everything, together.</Text>
       </View>
 
-      <Link href="/saldi-personali" asChild>
-        <GradientCard style={styles.cardSaldo}>
-          <Text style={styles.etichettaSaldo}>I MIEI SALDI</Text>
-          <Text style={styles.importoSaldo}>
-            {inPari ? 'Sei in pari' : formattaEuro(Math.abs(nettoComplessivoCentesimi))}
-          </Text>
-          <Text style={styles.dettaglioSaldo}>
-            {inPari
-              ? 'Nessun saldo aperto in nessun gruppo'
-              : personeConSaldo.length === 1
-                ? `${nettoComplessivoCentesimi >= 0 ? 'Ti deve' : 'Devi a'} ${personeConSaldo[0].nome}, su tutti i gruppi in comune`
-                : `Con ${personeConSaldo.length} persone, sommato su tutti i gruppi in comune`}
+      <Link href="/gruppi" asChild>
+        <GradientCard style={styles.cardHero}>
+          <Text style={styles.etichettaHero}>I MIEI GRUPPI</Text>
+          <Text style={styles.importoHero}>{gruppi.length}</Text>
+          <Text style={styles.dettaglioHero}>
+            {gruppi.length === 0
+              ? 'Non fai ancora parte di nessun gruppo'
+              : gruppi.length === 1
+                ? gruppi[0].nome
+                : 'Casa, viaggi, ufficio e altro'}
           </Text>
         </GradientCard>
       </Link>
 
       <View style={styles.sezione}>
         <ListGroup>
-          <ListRow icona="users" titolo="I tuoi gruppi" onPress={() => router.push('/gruppi')} />
+          <ListRow
+            icona="repeat"
+            titolo="I miei saldi"
+            meta={
+              inPari
+                ? 'Sei in pari'
+                : formattaEuro(Math.abs(nettoComplessivoCentesimi))
+            }
+            onPress={() => router.push('/saldi-personali')}
+          />
         </ListGroup>
       </View>
 
@@ -102,22 +111,22 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colori.inchiostro500,
   },
-  cardSaldo: {
+  cardHero: {
     gap: 4,
   },
-  etichettaSaldo: {
+  etichettaHero: {
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.6,
     color: 'rgba(255,255,255,0.8)',
   },
-  importoSaldo: {
+  importoHero: {
     fontSize: 36,
     fontWeight: '800',
     color: '#fff',
     marginTop: 2,
   },
-  dettaglioSaldo: {
+  dettaglioHero: {
     fontSize: 13,
     fontWeight: '500',
     color: 'rgba(255,255,255,0.85)',

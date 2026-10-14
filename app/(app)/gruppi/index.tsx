@@ -16,7 +16,7 @@ export default function Gruppi() {
 
   return (
     <View style={styles.contenitore}>
-      <Text style={styles.titolo}>I tuoi gruppi</Text>
+      <Text style={styles.titolo}>I miei gruppi</Text>
 
       {isLoading ? (
         <ActivityIndicator style={styles.caricamento} />
