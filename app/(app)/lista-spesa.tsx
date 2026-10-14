@@ -44,13 +44,16 @@ function RigaArticolo({
         <Text style={[styles.nomeArticolo, comprato && styles.nomeArticoloComprato]}>
           {articolo.nome}
         </Text>
-        {comprato && (
+        {comprato ? (
           <Text style={styles.compratoDa}>
             {nomeCompratore !== null ? `Comprato da ${nomeCompratore}` : 'Comprato'}
             {articolo.prezzo_centesimi !== null
               ? ` · ${formattaEuro(articolo.prezzo_centesimi)}`
               : ''}
           </Text>
+        ) : (
+          articolo.note !== null &&
+          articolo.note !== '' && <Text style={styles.compratoDa}>{articolo.note}</Text>
         )}
       </View>
     </>
@@ -95,6 +98,7 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const { articoli, isLoading, aggiungi, elimina } = useArticoliSpesa(gruppoAttivoId);
   const [nuovoArticolo, setNuovoArticolo] = useState('');
+  const [nuovaNota, setNuovaNota] = useState('');
 
   const ilMioMembroId = membri.find((m) => m.utente_id === utenteId)?.id ?? null;
 
@@ -103,8 +107,13 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     if (nome === '' || ilMioMembroId === null) {
       return;
     }
-    aggiungi.mutate({ nome, creatoDaMembroId: ilMioMembroId });
+    aggiungi.mutate({
+      nome,
+      creatoDaMembroId: ilMioMembroId,
+      note: nuovaNota.trim() === '' ? null : nuovaNota.trim(),
+    });
     setNuovoArticolo('');
+    setNuovaNota('');
   }
 
   const daComprare = articoli.filter((a) => a.stato === 'da_comprare');
@@ -127,19 +136,30 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
         )}
       </View>
 
-      <View style={styles.rigaInput}>
+      <View style={styles.formAggiungi}>
+        <View style={styles.rigaInput}>
+          <TextInput
+            style={styles.input}
+            placeholder="Aggiungi un articolo"
+            placeholderTextColor={colori.inchiostro300}
+            value={nuovoArticolo}
+            onChangeText={setNuovoArticolo}
+            onSubmitEditing={aggiungiArticoloAllaLista}
+            returnKeyType="next"
+          />
+          <Pressable style={styles.bottoneAggiungi} onPress={aggiungiArticoloAllaLista}>
+            <Feather name="plus" size={20} color="#fff" />
+          </Pressable>
+        </View>
         <TextInput
-          style={styles.input}
-          placeholder="Aggiungi un articolo"
+          style={styles.inputNota}
+          placeholder="Note (opzionale, es. la marca)"
           placeholderTextColor={colori.inchiostro300}
-          value={nuovoArticolo}
-          onChangeText={setNuovoArticolo}
+          value={nuovaNota}
+          onChangeText={setNuovaNota}
           onSubmitEditing={aggiungiArticoloAllaLista}
           returnKeyType="done"
         />
-        <Pressable style={styles.bottoneAggiungi} onPress={aggiungiArticoloAllaLista}>
-          <Feather name="plus" size={20} color="#fff" />
-        </Pressable>
       </View>
 
       {isLoading ? (
@@ -157,10 +177,16 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
               nomeCompratore={membri.find((m) => m.id === item.comprato_da)?.nome ?? null}
               onTocca={() => {
                 // Segnare comprato apre il form per registrare la spesa
-                // (o saltarlo, se non si vuole registrare nulla).
+                // (o saltarlo, se non si vuole registrare nulla). La nota
+                // già presente si passa cosi' il form parte precompilato
+                // invece di perderla se non la si ritocca.
                 router.push({
                   pathname: '/spese/nuova',
-                  params: { articoloId: item.id, nomeArticolo: item.nome },
+                  params: {
+                    articoloId: item.id,
+                    nomeArticolo: item.nome,
+                    notaEsistente: item.note ?? undefined,
+                  },
                 });
               }}
               onApriModifica={() =>
@@ -197,6 +223,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colori.inchiostro500,
   },
+  formAggiungi: {
+    gap: spaziatura.sm,
+  },
   rigaInput: {
     flexDirection: 'row',
     gap: spaziatura.sm,
@@ -210,6 +239,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 16,
+    color: colori.inchiostro900,
+  },
+  inputNota: {
+    backgroundColor: colori.superficie,
+    borderWidth: 1,
+    borderColor: colori.inchiostro150,
+    borderRadius: raggio.sm,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
     color: colori.inchiostro900,
   },
   bottoneAggiungi: {

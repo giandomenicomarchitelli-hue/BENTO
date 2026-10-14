@@ -39,7 +39,12 @@ function RigaVoce({
       <View style={[styles.casella, voce.fatto && styles.caselladSelezionata]}>
         {voce.fatto && <Text style={styles.segno}>✓</Text>}
       </View>
-      <Text style={[styles.testoVoce, voce.fatto && styles.testoVoceFatto]}>{voce.testo}</Text>
+      <View style={styles.testiVoce}>
+        <Text style={[styles.testoVoce, voce.fatto && styles.testoVoceFatto]}>{voce.testo}</Text>
+        {!voce.fatto && voce.note !== null && voce.note !== '' && (
+          <Text style={styles.notaVoce}>{voce.note}</Text>
+        )}
+      </View>
     </>
   );
 
@@ -74,6 +79,7 @@ export default function DettaglioLista() {
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const { voci, isLoading, aggiungi, aggiorna, elimina } = useVociLista(id ?? null);
   const [nuovaVoce, setNuovaVoce] = useState('');
+  const [nuovaNota, setNuovaNota] = useState('');
 
   const ilMioMembroId = membri.find((m) => m.utente_id === utenteId)?.id ?? null;
 
@@ -82,8 +88,13 @@ export default function DettaglioLista() {
     if (testo === '' || ilMioMembroId === null) {
       return;
     }
-    aggiungi.mutate({ testo, creatoDaMembroId: ilMioMembroId });
+    aggiungi.mutate({
+      testo,
+      creatoDaMembroId: ilMioMembroId,
+      note: nuovaNota.trim() === '' ? null : nuovaNota.trim(),
+    });
     setNuovaVoce('');
+    setNuovaNota('');
   }
 
   const daFare = voci.filter((v) => !v.fatto);
@@ -94,18 +105,30 @@ export default function DettaglioLista() {
     <View style={styles.contenitore}>
       {nome !== undefined && <Stack.Screen options={{ title: nome }} />}
 
-      <View style={styles.rigaInput}>
-        <TextInput
-          style={styles.input}
-          placeholder="Aggiungi una voce"
-          value={nuovaVoce}
-          onChangeText={setNuovaVoce}
-          onSubmitEditing={aggiungiVoceAllaLista}
-          returnKeyType="done"
-        />
-        <Pressable style={styles.bottoneAggiungi} onPress={aggiungiVoceAllaLista}>
-          <Text style={styles.testoBottoneAggiungi}>+</Text>
-        </Pressable>
+      <View style={styles.formAggiungi}>
+        <View style={styles.rigaInput}>
+          <TextInput
+            style={styles.input}
+            placeholder="Aggiungi una voce"
+            value={nuovaVoce}
+            onChangeText={setNuovaVoce}
+            onSubmitEditing={aggiungiVoceAllaLista}
+            returnKeyType={conPrezzi === '1' ? 'next' : 'done'}
+          />
+          <Pressable style={styles.bottoneAggiungi} onPress={aggiungiVoceAllaLista}>
+            <Text style={styles.testoBottoneAggiungi}>+</Text>
+          </Pressable>
+        </View>
+        {conPrezzi === '1' && (
+          <TextInput
+            style={styles.inputNota}
+            placeholder="Note (opzionale)"
+            value={nuovaNota}
+            onChangeText={setNuovaNota}
+            onSubmitEditing={aggiungiVoceAllaLista}
+            returnKeyType="done"
+          />
+        )}
       </View>
 
       {isLoading ? (
@@ -130,6 +153,7 @@ export default function DettaglioLista() {
                       voceListaId: item.id,
                       listaId: id,
                       nomeVoce: item.testo,
+                      notaEsistente: item.note ?? undefined,
                     },
                   });
                 } else {
@@ -157,6 +181,9 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
   },
+  formAggiungi: {
+    gap: 8,
+  },
   rigaInput: {
     flexDirection: 'row',
     gap: 8,
@@ -169,6 +196,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 16,
+  },
+  inputNota: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
   },
   bottoneAggiungi: {
     width: 44,
@@ -225,13 +260,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  testoVoce: {
+  testiVoce: {
     flex: 1,
+  },
+  testoVoce: {
     fontSize: 16,
   },
   testoVoceFatto: {
     textDecorationLine: 'line-through',
     color: '#999',
+  },
+  notaVoce: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 2,
   },
   elimina: {
     color: '#c0392b',

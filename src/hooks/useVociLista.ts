@@ -38,8 +38,15 @@ export function useVociLista(listaId: string | null) {
   }, [listaId, idIstanza]);
 
   const aggiungi = useMutation({
-    mutationFn: ({ testo, creatoDaMembroId }: { testo: string; creatoDaMembroId: string }) =>
-      aggiungiVoce(listaId as string, testo, creatoDaMembroId),
+    mutationFn: ({
+      testo,
+      creatoDaMembroId,
+      note,
+    }: {
+      testo: string
+      creatoDaMembroId: string
+      note?: string | null
+    }) => aggiungiVoce(listaId as string, testo, creatoDaMembroId, note ?? null),
     onSuccess: invalida,
   });
 

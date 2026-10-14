@@ -52,13 +52,15 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   // "comprato" di un articolo) o da una voce di una lista "con prezzi":
   // precompilano la descrizione e permettono di segnare l'elemento fatto
   // insieme alla spesa, o anche senza spesa.
-  const { articoloId, nomeArticolo, voceListaId, listaId, nomeVoce } = useLocalSearchParams<{
-    articoloId?: string;
-    nomeArticolo?: string;
-    voceListaId?: string;
-    listaId?: string;
-    nomeVoce?: string;
-  }>();
+  const { articoloId, nomeArticolo, voceListaId, listaId, nomeVoce, notaEsistente } =
+    useLocalSearchParams<{
+      articoloId?: string;
+      nomeArticolo?: string;
+      voceListaId?: string;
+      listaId?: string;
+      nomeVoce?: string;
+      notaEsistente?: string;
+    }>();
 
   // Normalizza le due provenienze possibili in un'unica forma, cosi' il
   // resto del componente non deve ramificare su articolo vs voce di lista.
@@ -92,7 +94,7 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 
   const [importoEuro, setImportoEuro] = useState('');
   const [descrizione, setDescrizione] = useState(collegamento?.testo ?? '');
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState(notaEsistente ?? '');
   // null = l'utente non ha ancora scelto esplicitamente: si usa il default
   // derivato da membri (appena caricato). Evita di sincronizzare stato
   // asincrono con un useEffect.

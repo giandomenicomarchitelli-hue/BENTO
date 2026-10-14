@@ -32,11 +32,12 @@ export async function leggiVoce(voceId: string): Promise<VoceLista | null> {
 export async function aggiungiVoce(
   listaId: string,
   testo: string,
-  creatoDaMembroId: string
+  creatoDaMembroId: string,
+  note: string | null = null
 ): Promise<VoceLista> {
   const { data, error } = await supabase
     .from('voci_lista')
-    .insert({ lista_id: listaId, testo, creato_da: creatoDaMembroId })
+    .insert({ lista_id: listaId, testo, creato_da: creatoDaMembroId, note })
     .select()
     .single();
 

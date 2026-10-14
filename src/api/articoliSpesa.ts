@@ -32,11 +32,12 @@ export async function leggiArticolo(articoloId: string): Promise<ArticoloSpesa |
 export async function aggiungiArticolo(
   gruppoId: string,
   nome: string,
-  creatoDaMembroId: string
+  creatoDaMembroId: string,
+  note: string | null = null
 ): Promise<ArticoloSpesa> {
   const { data, error } = await supabase
     .from('articoli_spesa')
-    .insert({ gruppo_id: gruppoId, nome, creato_da: creatoDaMembroId })
+    .insert({ gruppo_id: gruppoId, nome, creato_da: creatoDaMembroId, note })
     .select()
     .single();
 

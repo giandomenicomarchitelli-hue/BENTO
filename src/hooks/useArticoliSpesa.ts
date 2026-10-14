@@ -50,8 +50,15 @@ export function useArticoliSpesa(gruppoId: string | null) {
   }, [gruppoId, idIstanza]);
 
   const aggiungi = useMutation({
-    mutationFn: ({ nome, creatoDaMembroId }: { nome: string; creatoDaMembroId: string }) =>
-      aggiungiArticolo(gruppoId as string, nome, creatoDaMembroId),
+    mutationFn: ({
+      nome,
+      creatoDaMembroId,
+      note,
+    }: {
+      nome: string
+      creatoDaMembroId: string
+      note?: string | null
+    }) => aggiungiArticolo(gruppoId as string, nome, creatoDaMembroId, note ?? null),
     onSuccess: invalida,
   });
 
