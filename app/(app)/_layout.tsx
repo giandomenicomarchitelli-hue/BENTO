@@ -9,6 +9,8 @@ export default function AppLayout() {
       <Stack.Screen name="profilo" options={{ title: 'Il mio profilo' }} />
       <Stack.Screen name="dashboard" options={{ title: 'Bento' }} />
       <Stack.Screen name="lista-spesa" options={{ title: 'Lista della spesa' }} />
+      <Stack.Screen name="articoli/[id]" options={{ title: 'Articolo' }} />
+      <Stack.Screen name="voci/[id]" options={{ title: 'Voce' }} />
       <Stack.Screen name="spese/nuova" options={{ title: 'Nuova spesa' }} />
       <Stack.Screen name="saldi/index" options={{ title: 'Saldi e spese' }} />
       <Stack.Screen name="saldi/salda" options={{ title: 'Salda un debito' }} />

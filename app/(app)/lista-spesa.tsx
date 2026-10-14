@@ -15,6 +15,7 @@ import type { ArticoloSpesa } from '@/api/articoliSpesa';
 import { Badge } from '@/components/Badge';
 import { useArticoliSpesa } from '@/hooks/useArticoliSpesa';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
+import { formattaEuro } from '@/lib/formato';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { colori, raggio, spaziatura, tipografia } from '@/theme/tokens';
@@ -23,19 +24,19 @@ function RigaArticolo({
   articolo,
   nomeCompratore,
   onTocca,
+  onApriModifica,
   onElimina,
 }: {
   articolo: ArticoloSpesa;
   nomeCompratore: string | null;
   onTocca: () => void;
+  onApriModifica: () => void;
   onElimina: () => void;
 }) {
   const comprato = articolo.stato === 'comprato';
-  return (
-    <Pressable
-      style={({ pressed }) => [styles.riga, pressed && styles.rigaPremuta]}
-      onPress={onTocca}
-    >
+
+  const contenuto = (
+    <>
       <View style={[styles.casella, comprato && styles.caselladSelezionata]}>
         {comprato && <Feather name="check" size={14} color="#fff" />}
       </View>
@@ -43,14 +44,39 @@ function RigaArticolo({
         <Text style={[styles.nomeArticolo, comprato && styles.nomeArticoloComprato]}>
           {articolo.nome}
         </Text>
-        {comprato && nomeCompratore !== null && (
-          <Text style={styles.compratoDa}>Comprato da {nomeCompratore}</Text>
+        {comprato && (
+          <Text style={styles.compratoDa}>
+            {nomeCompratore !== null ? `Comprato da ${nomeCompratore}` : 'Comprato'}
+            {articolo.prezzo_centesimi !== null
+              ? ` · ${formattaEuro(articolo.prezzo_centesimi)}`
+              : ''}
+          </Text>
         )}
       </View>
+    </>
+  );
+
+  return (
+    <View style={styles.riga}>
+      {comprato ? (
+        <>
+          {contenuto}
+          <Pressable onPress={onApriModifica} hitSlop={8} style={styles.bottoneAltro}>
+            <Feather name="more-vertical" size={18} color={colori.inchiostro500} />
+          </Pressable>
+        </>
+      ) : (
+        <Pressable
+          style={({ pressed }) => [styles.rigaCliccabile, pressed && styles.rigaPremuta]}
+          onPress={onTocca}
+        >
+          {contenuto}
+        </Pressable>
+      )}
       <Pressable onPress={onElimina} hitSlop={8}>
         <Feather name="trash-2" size={16} color={colori.inchiostro300} />
       </Pressable>
-    </Pressable>
+    </View>
   );
 }
 
@@ -67,8 +93,7 @@ export default function ListaSpesa() {
 function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const { membri } = useGruppoAttivo();
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
-  const { articoli, isLoading, aggiungi, aggiornaStato, elimina } =
-    useArticoliSpesa(gruppoAttivoId);
+  const { articoli, isLoading, aggiungi, elimina } = useArticoliSpesa(gruppoAttivoId);
   const [nuovoArticolo, setNuovoArticolo] = useState('');
 
   const ilMioMembroId = membri.find((m) => m.utente_id === utenteId)?.id ?? null;
@@ -131,17 +156,16 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
               articolo={item}
               nomeCompratore={membri.find((m) => m.id === item.comprato_da)?.nome ?? null}
               onTocca={() => {
-                if (item.stato === 'da_comprare') {
-                  // Segnare comprato apre il form per registrare la spesa
-                  // (o saltarlo, se non si vuole registrare nulla).
-                  router.push({
-                    pathname: '/spese/nuova',
-                    params: { articoloId: item.id, nomeArticolo: item.nome },
-                  });
-                } else {
-                  aggiornaStato.mutate({ id: item.id, stato: 'da_comprare' });
-                }
+                // Segnare comprato apre il form per registrare la spesa
+                // (o saltarlo, se non si vuole registrare nulla).
+                router.push({
+                  pathname: '/spese/nuova',
+                  params: { articoloId: item.id, nomeArticolo: item.nome },
+                });
               }}
+              onApriModifica={() =>
+                router.push({ pathname: '/articoli/[id]', params: { id: item.id } })
+              }
               onElimina={() => elimina.mutate(item.id)}
             />
           )}
@@ -217,8 +241,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spaziatura.md,
     marginBottom: spaziatura.sm,
   },
+  rigaCliccabile: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spaziatura.md,
+  },
   rigaPremuta: {
     opacity: 0.7,
+  },
+  bottoneAltro: {
+    padding: 4,
   },
   casella: {
     width: 24,

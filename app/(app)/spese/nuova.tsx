@@ -11,7 +11,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { aggiornaStatoArticolo } from '@/api/articoliSpesa';
+import { aggiornaArticolo } from '@/api/articoliSpesa';
 import { aggiornaVoce } from '@/api/vociLista';
 import { dividiEqualmente } from '@/calcolo/divisioni';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
@@ -25,6 +25,12 @@ const schema = z.object({
   pagatoDa: z.string().min(1, 'Scegli chi ha pagato'),
   membriSelezionati: z.array(z.string()).min(1, 'Scegli chi divide la spesa'),
 });
+
+type DatiAcquisto = {
+  compratoDa: string | null;
+  prezzoCentesimi: number | null;
+  note: string | null;
+};
 
 export default function NuovaSpesa() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
@@ -56,24 +62,37 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 
   // Normalizza le due provenienze possibili in un'unica forma, cosi' il
   // resto del componente non deve ramificare su articolo vs voce di lista.
+  // Prezzo e note sono solo un promemoria sull'articolo/voce, non toccano
+  // la spesa registrata - anche se non coincide con quanto segnato qui.
   const collegamento =
     articoloId !== undefined
       ? {
           testo: nomeArticolo,
-          segnaFatto: (compratoDaMembroId: string | null) =>
-            aggiornaStatoArticolo(articoloId, 'comprato', compratoDaMembroId),
+          segnaFatto: (dati: DatiAcquisto) =>
+            aggiornaArticolo(articoloId, {
+              stato: 'comprato',
+              compratoDa: dati.compratoDa,
+              prezzoCentesimi: dati.prezzoCentesimi,
+              note: dati.note,
+            }),
           chiaveInvalidazione: ['articoli-spesa', gruppoAttivoId],
         }
       : voceListaId !== undefined
         ? {
             testo: nomeVoce,
-            segnaFatto: (_compratoDaMembroId: string | null) => aggiornaVoce(voceListaId, true),
+            segnaFatto: (dati: DatiAcquisto) =>
+              aggiornaVoce(voceListaId, {
+                fatto: true,
+                prezzoCentesimi: dati.prezzoCentesimi,
+                note: dati.note,
+              }),
             chiaveInvalidazione: ['voci-lista', listaId],
           }
         : null;
 
   const [importoEuro, setImportoEuro] = useState('');
   const [descrizione, setDescrizione] = useState(collegamento?.testo ?? '');
+  const [note, setNote] = useState('');
   // null = l'utente non ha ancora scelto esplicitamente: si usa il default
   // derivato da membri (appena caricato). Evita di sincronizzare stato
   // asincrono con un useEffect.
@@ -126,7 +145,11 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
       if (collegamento !== null) {
         // "Chi l'ha comprato" è chi ha pagato la spesa appena registrata,
         // non per forza chi sta compilando il form.
-        await collegamento.segnaFatto(risultato.data.pagatoDa);
+        await collegamento.segnaFatto({
+          compratoDa: risultato.data.pagatoDa,
+          prezzoCentesimi: risultato.data.importoCentesimi,
+          note: note.trim() === '' ? null : note.trim(),
+        });
         await queryClient.invalidateQueries({ queryKey: collegamento.chiaveInvalidazione });
       }
       router.back();
@@ -145,7 +168,11 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     try {
       // Nessuna spesa registrata quindi nessun "pagato da": si segna chi sta
       // completando l'azione.
-      await collegamento.segnaFatto(ilMioMembro?.id ?? null);
+      await collegamento.segnaFatto({
+        compratoDa: ilMioMembro?.id ?? null,
+        prezzoCentesimi: euroInCentesimi(importoEuro),
+        note: note.trim() === '' ? null : note.trim(),
+      });
       await queryClient.invalidateQueries({ queryKey: collegamento.chiaveInvalidazione });
       router.back();
     } catch {
@@ -176,6 +203,14 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
         value={descrizione}
         onChangeText={setDescrizione}
       />
+      {collegamento !== null && (
+        <TextInput
+          style={styles.input}
+          placeholder="Note (opzionale, es. marca)"
+          value={note}
+          onChangeText={setNote}
+        />
+      )}
 
       <Text style={styles.etichetta}>Pagato da</Text>
       <View style={styles.righeChip}>

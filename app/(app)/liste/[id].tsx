@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -17,23 +18,49 @@ import { useAuthStore } from '@/store/authStore';
 
 function RigaVoce({
   voce,
+  conPrezzi,
   onTocca,
+  onApriModifica,
   onElimina,
 }: {
   voce: VoceLista;
+  conPrezzi: boolean;
   onTocca: () => void;
+  onApriModifica: () => void;
   onElimina: () => void;
 }) {
-  return (
-    <Pressable style={styles.riga} onPress={onTocca}>
+  // Una voce fatta di una lista "con prezzi" si modifica/annulla dalla sua
+  // pagina di dettaglio, non più con un tap diretto (per non togliere la
+  // spunta per sbaglio). Le liste senza prezzi restano un tap diretto.
+  const bloccata = voce.fatto && conPrezzi;
+
+  const contenuto = (
+    <>
       <View style={[styles.casella, voce.fatto && styles.caselladSelezionata]}>
         {voce.fatto && <Text style={styles.segno}>✓</Text>}
       </View>
       <Text style={[styles.testoVoce, voce.fatto && styles.testoVoceFatto]}>{voce.testo}</Text>
+    </>
+  );
+
+  return (
+    <View style={styles.riga}>
+      {bloccata ? (
+        <>
+          {contenuto}
+          <Pressable onPress={onApriModifica} hitSlop={8} style={styles.bottoneAltro}>
+            <Feather name="more-vertical" size={18} color="#888" />
+          </Pressable>
+        </>
+      ) : (
+        <Pressable style={styles.rigaCliccabile} onPress={onTocca}>
+          {contenuto}
+        </Pressable>
+      )}
       <Pressable onPress={onElimina} hitSlop={8}>
         <Text style={styles.elimina}>Elimina</Text>
       </Pressable>
-    </Pressable>
+    </View>
   );
 }
 
@@ -45,7 +72,7 @@ export default function DettaglioLista() {
   }>();
   const { membri } = useGruppoAttivo();
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
-  const { voci, isLoading, aggiungi, aggiornaStato, elimina } = useVociLista(id ?? null);
+  const { voci, isLoading, aggiungi, aggiorna, elimina } = useVociLista(id ?? null);
   const [nuovaVoce, setNuovaVoce] = useState('');
 
   const ilMioMembroId = membri.find((m) => m.utente_id === utenteId)?.id ?? null;
@@ -92,6 +119,7 @@ export default function DettaglioLista() {
           renderItem={({ item }) => (
             <RigaVoce
               voce={item}
+              conPrezzi={conPrezzi === '1'}
               onTocca={() => {
                 if (!item.fatto && conPrezzi === '1') {
                   // Segnare fatta una voce di una lista "con prezzi" apre il
@@ -105,9 +133,15 @@ export default function DettaglioLista() {
                     },
                   });
                 } else {
-                  aggiornaStato.mutate({ id: item.id, fatto: !item.fatto });
+                  aggiorna.mutate({ id: item.id, fatto: !item.fatto });
                 }
               }}
+              onApriModifica={() =>
+                router.push({
+                  pathname: '/voci/[id]',
+                  params: { id: item.id, listaId: id as string },
+                })
+              }
               onElimina={() => elimina.mutate(item.id)}
             />
           )}
@@ -164,6 +198,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+  },
+  rigaCliccabile: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  bottoneAltro: {
+    padding: 4,
   },
   casella: {
     width: 22,

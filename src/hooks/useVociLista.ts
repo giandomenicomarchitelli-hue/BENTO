@@ -43,8 +43,16 @@ export function useVociLista(listaId: string | null) {
     onSuccess: invalida,
   });
 
-  const aggiornaStato = useMutation({
-    mutationFn: ({ id, fatto }: { id: string; fatto: boolean }) => aggiornaVoce(id, fatto),
+  const aggiorna = useMutation({
+    mutationFn: ({
+      id,
+      ...campi
+    }: {
+      id: string
+      fatto?: boolean
+      prezzoCentesimi?: number | null
+      note?: string | null
+    }) => aggiornaVoce(id, campi),
     onSuccess: invalida,
   });
 
@@ -58,7 +66,7 @@ export function useVociLista(listaId: string | null) {
     isLoading: query.isLoading,
     error: query.error,
     aggiungi,
-    aggiornaStato,
+    aggiorna,
     elimina,
   };
 }

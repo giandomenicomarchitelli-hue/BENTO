@@ -59,6 +59,8 @@ export type Database = {
           gruppo_id: string
           id: string
           nome: string
+          note: string | null
+          prezzo_centesimi: number | null
           stato: "da_comprare" | "comprato"
         }
         Insert: {
@@ -69,6 +71,8 @@ export type Database = {
           gruppo_id: string
           id?: string
           nome: string
+          note?: string | null
+          prezzo_centesimi?: number | null
           stato?: "da_comprare" | "comprato"
         }
         Update: {
@@ -79,6 +83,8 @@ export type Database = {
           gruppo_id?: string
           id?: string
           nome?: string
+          note?: string | null
+          prezzo_centesimi?: number | null
           stato?: "da_comprare" | "comprato"
         }
         Relationships: [
@@ -322,6 +328,8 @@ export type Database = {
           fatto: boolean
           id: string
           lista_id: string
+          note: string | null
+          prezzo_centesimi: number | null
           testo: string
         }
         Insert: {
@@ -331,6 +339,8 @@ export type Database = {
           fatto?: boolean
           id?: string
           lista_id: string
+          note?: string | null
+          prezzo_centesimi?: number | null
           testo: string
         }
         Update: {
@@ -340,6 +350,8 @@ export type Database = {
           fatto?: boolean
           id?: string
           lista_id?: string
+          note?: string | null
+          prezzo_centesimi?: number | null
           testo?: string
         }
         Relationships: [

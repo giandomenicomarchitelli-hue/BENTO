@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId } from 'react';
 
 import {
-  aggiornaStatoArticolo,
+  aggiornaArticolo,
   aggiungiArticolo,
   eliminaArticolo,
   listaArticoli,
@@ -55,16 +55,17 @@ export function useArticoliSpesa(gruppoId: string | null) {
     onSuccess: invalida,
   });
 
-  const aggiornaStato = useMutation({
+  const aggiorna = useMutation({
     mutationFn: ({
       id,
-      stato,
-      compratoDaMembroId,
+      ...campi
     }: {
       id: string
-      stato: ArticoloSpesa['stato']
-      compratoDaMembroId?: string | null
-    }) => aggiornaStatoArticolo(id, stato, compratoDaMembroId ?? null),
+      stato?: ArticoloSpesa['stato']
+      compratoDa?: string | null
+      prezzoCentesimi?: number | null
+      note?: string | null
+    }) => aggiornaArticolo(id, campi),
     onSuccess: invalida,
   });
 
@@ -78,7 +79,7 @@ export function useArticoliSpesa(gruppoId: string | null) {
     isLoading: query.isLoading,
     error: query.error,
     aggiungi,
-    aggiornaStato,
+    aggiorna,
     elimina,
   };
 }
