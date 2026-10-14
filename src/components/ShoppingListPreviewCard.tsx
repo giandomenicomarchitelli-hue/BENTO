@@ -28,11 +28,19 @@ export function ShoppingListPreviewCard({ articoli, caricando, errore, onPress }
   return (
     <GlassCard onPress={onPress}>
       <View style={styles.intestazione}>
+        <View style={[styles.iconaContenitore, { backgroundColor: `${accenti.ciano}1F` }]}>
+          <Feather name="shopping-cart" size={18} color={accenti.ciano} />
+        </View>
         <View style={styles.titoliIntestazione}>
-          <View style={[styles.iconaContenitore, { backgroundColor: `${accenti.ciano}1F` }]}>
-            <Feather name="shopping-cart" size={18} color={accenti.ciano} />
-          </View>
           <Text style={styles.titolo}>Lista della spesa</Text>
+          {/* Stessa lettura di lista-spesa.tsx ("X di Y comprati"), accanto
+              al badge "X/Y" per togliere ogni ambiguità sul verso del
+              rapporto (comprati su totale, non il contrario). */}
+          {!caricando && !errore && articoli.length > 0 && (
+            <Text style={styles.sottotitolo}>
+              {comprati.length} di {articoli.length} comprati
+            </Text>
+          )}
         </View>
         {!caricando && !errore && articoli.length > 0 && (
           <Badge testo={`${comprati.length}/${articoli.length}`} tono="blu" />
@@ -80,9 +88,6 @@ const styles = StyleSheet.create({
   },
   titoliIntestazione: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spaziatura.sm,
   },
   iconaContenitore: {
     width: 32,
@@ -95,6 +100,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: bento.testoPrimario,
+  },
+  sottotitolo: {
+    fontSize: 12,
+    color: bento.testoMuto,
+    marginTop: 1,
   },
   stato: {
     alignSelf: 'flex-start',

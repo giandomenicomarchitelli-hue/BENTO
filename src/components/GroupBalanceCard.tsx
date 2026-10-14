@@ -19,6 +19,38 @@ type Props = {
   onPress: () => void;
 };
 
+/**
+ * Posizione netta di un membro date le transazioni già semplificate da
+ * calcolaSaldi (src/calcolo/saldi.ts): positivo = a credito (gli altri gli
+ * devono), negativo = a debito, 0 = in pari. Nessun calcolo finanziario
+ * nuovo - solo la somma delle transazioni dove il membro compare, stessa
+ * direzione (da = debitore, a = creditore) già usata in /saldi. Esportata
+ * come funzione pura, separata dalla UI, per poterla testare a parte da
+ * dashboard.tsx (vedi GroupBalanceCard.test.ts).
+ */
+export function calcolaPosizionePersonale(
+  transazioni: { da: string; a: string; importoCentesimi: number }[],
+  membroId: string
+): number {
+  return transazioni.reduce((totale, t) => {
+    if (t.a === membroId) {
+      return totale + t.importoCentesimi;
+    }
+    if (t.da === membroId) {
+      return totale - t.importoCentesimi;
+    }
+    return totale;
+  }, 0);
+}
+
+/** Etichetta e segno da mostrare per una posizione netta diversa da zero (lo zero si gestisce a parte, vedi il componente). */
+export function etichettaPosizione(nettoCentesimi: number): { testo: string; aCredito: boolean } {
+  return {
+    aCredito: nettoCentesimi > 0,
+    testo: `${nettoCentesimi > 0 ? 'Ti devono' : 'Devi'} ${formattaEuro(Math.abs(nettoCentesimi))}`,
+  };
+}
+
 /** Il saldo personale nel gruppo attivo, con ingresso a "Saldi e spese". */
 export function GroupBalanceCard({ nettoCentesimi, caricando, errore, onPress }: Props) {
   return (
@@ -35,10 +67,7 @@ export function GroupBalanceCard({ nettoCentesimi, caricando, errore, onPress }:
             <Text style={styles.sottotitolo}>Sei in pari con tutti</Text>
           ) : (
             <View style={styles.rigaPillola}>
-              <BalancePill
-                aCredito={nettoCentesimi > 0}
-                testo={`${nettoCentesimi > 0 ? 'Ti devono' : 'Devi'} ${formattaEuro(Math.abs(nettoCentesimi))}`}
-              />
+              <BalancePill {...etichettaPosizione(nettoCentesimi)} />
             </View>
           )}
         </View>

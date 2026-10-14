@@ -5,7 +5,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { esci } from '@/api/auth';
 import { BentoScreen } from '@/components/BentoScreen';
 import { GlassListRow } from '@/components/GlassListRow';
-import { GroupBalanceCard } from '@/components/GroupBalanceCard';
+import { calcolaPosizionePersonale, GroupBalanceCard } from '@/components/GroupBalanceCard';
 import { GroupHeader } from '@/components/GroupHeader';
 import { MemberAvatarRow } from '@/components/MemberAvatarRow';
 import { QuickActionRow, type QuickAction } from '@/components/QuickActionRow';
@@ -33,24 +33,16 @@ export default function Dashboard() {
   const { transazioni, isLoading: saldiInCaricamento, error: erroreSaldi } =
     useSaldi(gruppoAttivoId);
 
-  // Posizione netta dell'utente in QUESTO gruppo: somma delle transazioni
-  // già semplificate da useSaldi (calcolaSaldi) dove è coinvolto - nessun
-  // nuovo calcolo finanziario, solo un'addizione sui valori che il motore
-  // di saldi ha già prodotto, stessa direzione/segno usati in /saldi.
+  // Posizione netta dell'utente in QUESTO gruppo - vedi
+  // calcolaPosizionePersonale in GroupBalanceCard.tsx (testata a parte in
+  // GroupBalanceCard.test.ts) per cosa fa e perché non è un nuovo calcolo
+  // finanziario.
   const ilMioMembro = membriAttivi.find((m) => m.utente_id === utenteId);
   const mioNettoCentesimi = useMemo(() => {
     if (ilMioMembro === undefined) {
       return null;
     }
-    return transazioni.reduce((totale, t) => {
-      if (t.a === ilMioMembro.id) {
-        return totale + t.importoCentesimi;
-      }
-      if (t.da === ilMioMembro.id) {
-        return totale - t.importoCentesimi;
-      }
-      return totale;
-    }, 0);
+    return calcolaPosizionePersonale(transazioni, ilMioMembro.id);
   }, [transazioni, ilMioMembro]);
 
   // Si arriva qui solo scegliendo un gruppo dall'elenco gruppi; senza un

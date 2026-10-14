@@ -15,7 +15,7 @@ type Props = {
 /** Riga cliccabile in stile vetro (icona + titolo + freccia), per elenchi di destinazioni semplici. */
 export function GlassListRow({ icona, accento, titolo, onPress }: Props) {
   return (
-    <GlassCard onPress={onPress} style={styles.card}>
+    <GlassCard onPress={onPress} elevazione="bassa" style={styles.card}>
       <View style={styles.riga}>
         <IconBadge icona={icona} colore={accento} dimensione={36} />
         <Text style={styles.titolo} numberOfLines={1}>

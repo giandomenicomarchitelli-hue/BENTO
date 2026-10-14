@@ -1,7 +1,7 @@
 import { BlurView } from 'expo-blur';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { bento, elevazione, raggio, vetro } from '@/theme/tokens';
+import { bento, elevazione as elevazioneToken, raggio, vetro } from '@/theme/tokens';
 
 type Props = {
   children: React.ReactNode;
@@ -9,6 +9,13 @@ type Props = {
   /** 'alta' per una superficie leggermente più opaca/bianca (es. la card in evidenza). */
   variante?: 'base' | 'alta';
   intensita?: 'bassa' | 'media' | 'alta';
+  /**
+   * Profondità dell'ombra (token `elevazione` in theme/tokens.ts). 'bassa'
+   * per righe secondarie dentro un elenco (es. GlassListRow), dove
+   * un'ombra piena come le card principali risulterebbe troppo pesante e
+   * appiattirebbe la gerarchia visiva tra contenuto primario e di supporto.
+   */
+  elevazione?: 'bassa' | 'media' | 'alta';
   style?: StyleProp<ViewStyle>;
 };
 
@@ -31,10 +38,11 @@ export function GlassCard({
   onPress,
   variante = 'base',
   intensita = 'media',
+  elevazione = 'media',
   style,
 }: Props) {
   return (
-    <View style={[styles.ombra, style]}>
+    <View style={[styles.ombra, elevazioneToken[elevazione], style]}>
       <Pressable
         onPress={onPress}
         disabled={onPress === undefined}
@@ -63,7 +71,6 @@ export function GlassCard({
 const styles = StyleSheet.create({
   ombra: {
     borderRadius: raggio.xl,
-    ...elevazione.media,
   },
   clip: {
     borderRadius: raggio.xl,

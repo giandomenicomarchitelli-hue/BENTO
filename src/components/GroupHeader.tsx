@@ -1,6 +1,5 @@
 import { Feather } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Gruppo } from '@/api/gruppi';
 import { iconaPerTipoGruppo } from '@/components/GroupPreviewCard';
@@ -15,16 +14,17 @@ type Props = {
 };
 
 /**
- * Intestazione personalizzata di un gruppo: sostituisce l'intestazione
- * nativa di Stack (nascosta per questa schermata, vedi dashboard.tsx),
- * quindi copre da sé la safe area superiore.
+ * Intestazione personalizzata di un gruppo: va dentro un BentoScreen con
+ * `senzaIntestazione`, che da solo copre già la safe area superiore
+ * (vedi dashboard.tsx) - questo componente non deve applicare di nuovo
+ * `inset.top`, altrimenti lo spazio sotto la status bar raddoppia (bug
+ * corretto in questa revisione: niente useSafeAreaInsets qui).
  */
 export function GroupHeader({ gruppo, onIndietro, onImpostazioni, onEsci }: Props) {
-  const inset = useSafeAreaInsets();
   const stile = iconaPerTipoGruppo(gruppo.tipo);
 
   return (
-    <View style={[styles.contenitore, { paddingTop: inset.top + spaziatura.sm }]}>
+    <View style={styles.contenitore}>
       <View style={styles.rigaAlta}>
         <Pressable onPress={onIndietro} hitSlop={8} style={styles.bottoneIcona}>
           <Feather name="chevron-left" size={22} color={bento.testoPrimario} />
