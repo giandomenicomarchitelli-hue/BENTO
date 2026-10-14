@@ -20,6 +20,11 @@ const perTipo: Record<Gruppo['tipo'], { icona: keyof typeof Feather.glyphMap; co
   altro: { icona: 'grid', colore: accenti.viola },
 };
 
+/** Icona e colore d'accento per il tipo di un gruppo - condivisa con GroupHeader. */
+export function iconaPerTipoGruppo(tipo: Gruppo['tipo']) {
+  return perTipo[tipo];
+}
+
 /**
  * Anteprima di un gruppo reale: il tipo resta leggibile dall'icona/colore,
  * mentre il testo secondario mostra da quando esiste il gruppo (dato già
@@ -27,7 +32,7 @@ const perTipo: Record<Gruppo['tipo'], { icona: keyof typeof Feather.glyphMap; co
  * ripetere il tipo a parole.
  */
 export function GroupPreviewCard({ gruppo, onPress }: Props) {
-  const stile = perTipo[gruppo.tipo];
+  const stile = iconaPerTipoGruppo(gruppo.tipo);
   const dal = format(new Date(gruppo.creato_il), 'd MMM yyyy', { locale: it });
 
   return (

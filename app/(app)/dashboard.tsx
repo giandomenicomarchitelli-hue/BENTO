@@ -1,27 +1,57 @@
 import { Redirect, useRouter } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { useMemo } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { esci } from '@/api/auth';
-import { ActionTile } from '@/components/ActionTile';
-import { ListGroup } from '@/components/ListGroup';
-import { ListRow } from '@/components/ListRow';
-import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
+import { BentoScreen } from '@/components/BentoScreen';
+import { GlassListRow } from '@/components/GlassListRow';
+import { GroupBalanceCard } from '@/components/GroupBalanceCard';
+import { GroupHeader } from '@/components/GroupHeader';
+import { MemberAvatarRow } from '@/components/MemberAvatarRow';
+import { QuickActionRow, type QuickAction } from '@/components/QuickActionRow';
+import { SectionHeader } from '@/components/SectionHeader';
+import { ShoppingListPreviewCard } from '@/components/ShoppingListPreviewCard';
 import { useArticoliSpesa } from '@/hooks/useArticoliSpesa';
+import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useListe } from '@/hooks/useListe';
-import { colori } from '@/theme/tokens';
+import { useSaldi } from '@/hooks/useSaldi';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
+import { accenti, bento, spaziatura } from '@/theme/tokens';
 
 export default function Dashboard() {
   const router = useRouter();
-  const email = useAuthStore((stato) => stato.session?.user.email);
+  const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
-  const { gruppo, isLoading } = useGruppoAttivo();
+  const { gruppo, membriAttivi, isLoading } = useGruppoAttivo();
   const { liste } = useListe(gruppoAttivoId);
-  const { articoli } = useArticoliSpesa(gruppoAttivoId);
-  const listeInHome = liste.filter((l) => l.mostra_in_home);
-  const daComprare = articoli.filter((a) => a.stato === 'da_comprare').length;
+  const {
+    articoli,
+    isLoading: articoliInCaricamento,
+    error: erroreArticoli,
+  } = useArticoliSpesa(gruppoAttivoId);
+  const { transazioni, isLoading: saldiInCaricamento, error: erroreSaldi } =
+    useSaldi(gruppoAttivoId);
+
+  // Posizione netta dell'utente in QUESTO gruppo: somma delle transazioni
+  // già semplificate da useSaldi (calcolaSaldi) dove è coinvolto - nessun
+  // nuovo calcolo finanziario, solo un'addizione sui valori che il motore
+  // di saldi ha già prodotto, stessa direzione/segno usati in /saldi.
+  const ilMioMembro = membriAttivi.find((m) => m.utente_id === utenteId);
+  const mioNettoCentesimi = useMemo(() => {
+    if (ilMioMembro === undefined) {
+      return null;
+    }
+    return transazioni.reduce((totale, t) => {
+      if (t.a === ilMioMembro.id) {
+        return totale + t.importoCentesimi;
+      }
+      if (t.da === ilMioMembro.id) {
+        return totale - t.importoCentesimi;
+      }
+      return totale;
+    }, 0);
+  }, [transazioni, ilMioMembro]);
 
   // Si arriva qui solo scegliendo un gruppo dall'elenco gruppi; senza un
   // gruppo attivo selezionato (es. link diretto, o store appena resettato)
@@ -33,49 +63,92 @@ export default function Dashboard() {
   if (isLoading || gruppo === null) {
     return (
       <View style={styles.centrato}>
-        <ActivityIndicator />
+        <ActivityIndicator color={bento.testoPrimario} />
       </View>
     );
   }
 
-  const inizialeAvatar = email !== undefined ? email.charAt(0).toUpperCase() : '?';
+  const listeInHome = liste.filter((l) => l.mostra_in_home);
+
+  function tornaIndietro() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      // Nessuna cronologia di navigazione (es. link diretto a /dashboard,
+      // ricaricamento della pagina su web): si torna comunque in un posto
+      // sicuro invece di restare bloccati o uscire dall'app.
+      router.replace('/gruppi');
+    }
+  }
+
+  function apriImpostazioni() {
+    router.push('/gruppo');
+  }
+
+  const azioniRapide: QuickAction[] = [
+    {
+      icona: 'shopping-cart',
+      accento: accenti.ciano,
+      etichetta: 'Lista spesa',
+      onPress: () => router.push('/lista-spesa'),
+    },
+    {
+      icona: 'plus-circle',
+      accento: accenti.indaco,
+      etichetta: 'Nuova spesa',
+      onPress: () => router.push('/spese/nuova'),
+    },
+    {
+      icona: 'list',
+      accento: accenti.viola,
+      etichetta: 'Liste',
+      onPress: () => router.push('/liste'),
+    },
+  ];
 
   return (
-    <View style={styles.contenitore}>
-      <View style={styles.intestazione}>
-        <View>
-          <Text style={styles.etichettaGruppo}>Gruppo</Text>
-          <Text style={styles.nomeGruppo}>{gruppo.nome}</Text>
-        </View>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarTesto}>{inizialeAvatar}</Text>
-        </View>
-      </View>
+    <BentoScreen senzaIntestazione>
+      <GroupHeader
+        gruppo={gruppo}
+        onIndietro={tornaIndietro}
+        onImpostazioni={apriImpostazioni}
+        onEsci={() => esci()}
+      />
 
-      <View style={styles.azioniPrimarie}>
-        <ActionTile
-          icona="shopping-cart"
-          titolo="Lista della spesa"
-          sottotitolo={daComprare === 1 ? '1 articolo da comprare' : `${daComprare} articoli da comprare`}
-          variante="primaria"
-          onPress={() => router.push('/lista-spesa')}
-        />
-        <ActionTile
-          icona="repeat"
-          titolo="Saldi e spese"
-          sottotitolo="Chi deve cosa a chi"
-          onPress={() => router.push('/saldi')}
-        />
-      </View>
+      {membriAttivi.length > 0 && (
+        <MemberAvatarRow membri={membriAttivi} onPress={apriImpostazioni} />
+      )}
+
+      <GroupBalanceCard
+        nettoCentesimi={mioNettoCentesimi}
+        caricando={saldiInCaricamento}
+        errore={erroreSaldi !== null && erroreSaldi !== undefined}
+        onPress={() => router.push('/saldi')}
+      />
+
+      <QuickActionRow azioni={azioniRapide} />
+
+      <ShoppingListPreviewCard
+        articoli={articoli}
+        caricando={articoliInCaricamento}
+        errore={erroreArticoli !== null && erroreArticoli !== undefined}
+        onPress={() => router.push('/lista-spesa')}
+      />
 
       <View style={styles.sezione}>
-        <Text style={styles.titoloSezione}>Le tue liste</Text>
-        <ListGroup>
-          <ListRow icona="list" titolo="Tutte le liste" onPress={() => router.push('/liste')} />
+        <SectionHeader titolo="Le tue liste" />
+        <View style={styles.elencoListe}>
+          <GlassListRow
+            icona="list"
+            accento={accenti.viola}
+            titolo="Tutte le liste"
+            onPress={() => router.push('/liste')}
+          />
           {listeInHome.map((lista) => (
-            <ListRow
+            <GlassListRow
               key={lista.id}
               icona="file-text"
+              accento={accenti.ciano}
               titolo={lista.nome}
               onPress={() =>
                 router.push({
@@ -85,116 +158,23 @@ export default function Dashboard() {
               }
             />
           ))}
-        </ListGroup>
+        </View>
       </View>
-
-      <View style={styles.sezione}>
-        <Text style={styles.titoloSezione}>Gruppo</Text>
-        <ListGroup>
-          <ListRow icona="users" titolo="Il tuo gruppo" onPress={() => router.push('/gruppo')} />
-        </ListGroup>
-      </View>
-
-      <View style={styles.spaziatore} />
-
-      <View style={styles.piePagina}>
-        {email !== undefined && (
-          <Text style={styles.email} numberOfLines={1}>
-            {email}
-          </Text>
-        )}
-        <Pressable style={styles.bottoneEsci} onPress={() => esci()}>
-          <Feather name="log-out" size={15} color={colori.rosso600} />
-          <Text style={styles.testoEsci}>Esci</Text>
-        </Pressable>
-      </View>
-    </View>
+    </BentoScreen>
   );
 }
 
 const styles = StyleSheet.create({
   centrato: {
     flex: 1,
+    backgroundColor: bento.sfondo,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  contenitore: {
-    flex: 1,
-    backgroundColor: colori.sfondoApp,
-    padding: 20,
-    paddingTop: 24,
-    gap: 28,
-  },
-  intestazione: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  etichettaGruppo: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colori.inchiostro500,
-  },
-  nomeGruppo: {
-    marginTop: 4,
-    fontSize: 26,
-    fontWeight: '700',
-    color: colori.inchiostro900,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colori.blu100,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarTesto: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colori.blu700,
-  },
-  azioniPrimarie: {
-    flexDirection: 'row',
-    gap: 12,
   },
   sezione: {
-    gap: 10,
+    gap: spaziatura.md,
   },
-  titoloSezione: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colori.inchiostro500,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  spaziatore: {
-    flex: 1,
-  },
-  piePagina: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 14,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colori.inchiostro150,
-  },
-  email: {
-    flex: 1,
-    fontSize: 12.5,
-    color: colori.inchiostro500,
-    marginRight: 12,
-  },
-  bottoneEsci: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  testoEsci: {
-    fontSize: 13.5,
-    fontWeight: '600',
-    color: colori.rosso600,
+  elencoListe: {
+    gap: spaziatura.sm,
   },
 });
