@@ -1,4 +1,6 @@
 import { Feather } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { Gruppo } from '@/api/gruppi';
@@ -7,20 +9,26 @@ import { IconBadge } from '@/components/IconBadge';
 import { accenti, bento, tipografia } from '@/theme/tokens';
 
 type Props = {
-  gruppo: Pick<Gruppo, 'nome' | 'tipo'>;
+  gruppo: Pick<Gruppo, 'nome' | 'tipo' | 'creato_il'>;
   onPress: () => void;
 };
 
-const perTipo: Record<Gruppo['tipo'], { icona: keyof typeof Feather.glyphMap; colore: string; etichetta: string }> = {
-  casa: { icona: 'home', colore: accenti.menta, etichetta: 'Casa' },
-  viaggio: { icona: 'map-pin', colore: accenti.ciano, etichetta: 'Viaggio' },
-  ufficio: { icona: 'briefcase', colore: accenti.indaco, etichetta: 'Ufficio' },
-  altro: { icona: 'grid', colore: accenti.viola, etichetta: 'Altro' },
+const perTipo: Record<Gruppo['tipo'], { icona: keyof typeof Feather.glyphMap; colore: string }> = {
+  casa: { icona: 'home', colore: accenti.menta },
+  viaggio: { icona: 'map-pin', colore: accenti.ciano },
+  ufficio: { icona: 'briefcase', colore: accenti.indaco },
+  altro: { icona: 'grid', colore: accenti.viola },
 };
 
-/** Anteprima di un gruppo reale (nome + tipo), un tocco per entrarci. */
+/**
+ * Anteprima di un gruppo reale: il tipo resta leggibile dall'icona/colore,
+ * mentre il testo secondario mostra da quando esiste il gruppo (dato già
+ * nella riga caricata da useMieiGruppi, nessuna query in più) invece di
+ * ripetere il tipo a parole.
+ */
 export function GroupPreviewCard({ gruppo, onPress }: Props) {
   const stile = perTipo[gruppo.tipo];
+  const dal = format(new Date(gruppo.creato_il), 'd MMM yyyy', { locale: it });
 
   return (
     <GlassCard onPress={onPress} style={styles.card}>
@@ -30,7 +38,7 @@ export function GroupPreviewCard({ gruppo, onPress }: Props) {
           <Text style={styles.nome} numberOfLines={1}>
             {gruppo.nome}
           </Text>
-          <Text style={styles.tipo}>{stile.etichetta}</Text>
+          <Text style={styles.tipo}>Dal {dal}</Text>
         </View>
         <Feather name="chevron-right" size={18} color={bento.testoMuto} />
       </View>

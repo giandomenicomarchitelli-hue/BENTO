@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: raggio.xl,
-    padding: 24,
+    padding: 20,
   },
   etichetta: {
     fontSize: 12,
@@ -81,25 +81,25 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
   },
   valore: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '800',
     color: '#fff',
-    marginTop: 4,
+    marginTop: 2,
   },
   caricamento: {
     alignSelf: 'flex-start',
-    marginTop: spaziatura.sm,
+    marginTop: spaziatura.xs,
   },
   descrizione: {
     fontSize: 13,
     fontWeight: '500',
     color: 'rgba(255,255,255,0.85)',
-    marginTop: 4,
+    marginTop: 2,
   },
   righeAzioni: {
     flexDirection: 'row',
     gap: spaziatura.sm,
-    marginTop: spaziatura.lg,
+    marginTop: spaziatura.md,
   },
   pillola: {
     paddingVertical: 10,

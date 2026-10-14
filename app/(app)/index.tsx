@@ -42,6 +42,9 @@ export default function Homepage() {
     router.push('/dashboard');
   }
 
+  // Tre scorciatoie, non quattro: "i tuoi gruppi" è già la destinazione
+  // della card hero e della sezione gruppi qui sotto, ripeterla qui
+  // sarebbe un'azione di navigazione duplicata.
   const azioniRapide: QuickAction[] = [
     {
       icona: 'plus-circle',
@@ -56,12 +59,6 @@ export default function Homepage() {
       onPress: () => router.push('/onboarding/unisciti-a-gruppo'),
     },
     {
-      icona: 'users',
-      accento: accenti.indaco,
-      etichetta: 'I tuoi gruppi',
-      onPress: () => router.push('/gruppi'),
-    },
-    {
       icona: 'repeat',
       accento: accenti.oro,
       etichetta: 'I miei saldi',
@@ -70,7 +67,7 @@ export default function Homepage() {
   ];
 
   return (
-    <BentoScreen>
+    <BentoScreen senzaIntestazione>
       <View style={styles.intestazione}>
         <View>
           <Text style={styles.marchio}>bento</Text>
@@ -100,7 +97,7 @@ export default function Homepage() {
         </GlassCard>
       ) : (
         <HeroBalanceCard
-          etichetta="I tuoi gruppi"
+          etichetta="I tuoi spazi condivisi"
           valore={gruppi.length}
           caricandoValore={gruppiInCaricamento}
           descrizione={
@@ -110,21 +107,16 @@ export default function Homepage() {
                 ? gruppi[0].nome
                 : 'Casa, viaggi, ufficio e altro'
           }
-          azioni={[
-            { etichetta: 'Vedi saldi', onPress: () => router.push('/saldi-personali') },
-            {
-              etichetta: 'Nuovo gruppo',
-              variante: 'secondaria',
-              onPress: () => router.push('/onboarding/crea-gruppo'),
-            },
-          ]}
+          azioni={[{ etichetta: 'I tuoi gruppi', onPress: () => router.push('/gruppi') }]}
         />
       )}
 
       <QuickActionRow azioni={azioniRapide} />
 
       <View style={styles.sezione}>
-        <SectionHeader titolo="I tuoi gruppi" azione={{ etichetta: 'Vedi tutti', onPress: () => router.push('/gruppi') }} />
+        {/* Senza "Vedi tutti": la card hero sopra porta già a /gruppi, un
+            secondo link alla stessa destinazione qui sarebbe ridondante. */}
+        <SectionHeader titolo="I tuoi gruppi" />
 
         {gruppi.length === 0 ? (
           <GlassCard>
