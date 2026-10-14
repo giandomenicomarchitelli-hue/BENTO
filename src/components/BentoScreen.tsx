@@ -1,7 +1,7 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { coloriScuri, spaziatura } from '@/theme/tokens';
+import { bento, spaziatura } from '@/theme/tokens';
 
 type Props = {
   children: React.ReactNode;
@@ -10,10 +10,10 @@ type Props = {
 };
 
 /**
- * Involucro di base per una schermata del tema scuro: sfondo navy pieno
- * (anche sotto la safe area, cosi' non c'e' mai una striscia chiara ai
- * bordi) e padding inferiore pari alla safe area, per non far finire il
- * contenuto a ridosso dell'home indicator su iOS.
+ * Involucro di base per una schermata del tema Bento: sfondo off-white
+ * pieno (anche sotto la safe area, cosi' non c'e' mai una striscia
+ * diversa ai bordi) e padding inferiore pari alla safe area, per non far
+ * finire il contenuto a ridosso dell'home indicator su iOS.
  */
 export function BentoScreen({ children, scroll = true }: Props) {
   const inset = useSafeAreaInsets();
@@ -40,7 +40,7 @@ export function BentoScreen({ children, scroll = true }: Props) {
 const styles = StyleSheet.create({
   contenitore: {
     flex: 1,
-    backgroundColor: coloriScuri.sfondo,
+    backgroundColor: bento.sfondo,
   },
   contenuto: {
     flexGrow: 1,

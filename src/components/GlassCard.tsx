@@ -1,12 +1,12 @@
 import { BlurView } from 'expo-blur';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { coloriScuri, elevazione, raggio, vetro } from '@/theme/tokens';
+import { bento, elevazione, raggio, vetro } from '@/theme/tokens';
 
 type Props = {
   children: React.ReactNode;
   onPress?: () => void;
-  /** 'alta' per una superficie leggermente più chiara (es. card dentro un'altra card). */
+  /** 'alta' per una superficie leggermente più opaca/bianca (es. la card in evidenza). */
   variante?: 'base' | 'alta';
   intensita?: 'bassa' | 'media' | 'alta';
   style?: StyleProp<ViewStyle>;
@@ -19,11 +19,12 @@ const intensitaBlur = {
 };
 
 /**
- * Superficie "vetro" di base del tema scuro: blur + tinta navy translucida
- * + bordo sottile luminoso. Il blur da solo non porta la tinta del brand,
- * quindi sotto c'è sempre un overlay di colore - su web/Android senza un
- * buon supporto del blur nativo la card resta comunque leggibile, solo
- * meno sfocata (expo-blur degrada già da sé in quel caso).
+ * Superficie "vetro" di base del tema chiaro: bianco translucido + blur
+ * leggero + bordo sottile + ombra morbida. Il blur qui è puramente
+ * decorativo (intensità bassa per design, non per limite tecnico) - su
+ * web/Android senza un buon supporto la card resta comunque perfettamente
+ * leggibile come superficie bianca semi-trasparente (expo-blur degrada da
+ * sé in quel caso, non serve un fallback aggiuntivo).
  */
 export function GlassCard({
   children,
@@ -41,16 +42,18 @@ export function GlassCard({
       >
         <BlurView
           intensity={intensitaBlur[intensita]}
-          tint="dark"
+          tint="light"
           style={StyleSheet.absoluteFill}
         />
         <View
           style={[
             StyleSheet.absoluteFill,
-            { backgroundColor: variante === 'alta' ? vetro.superficieAlta : vetro.superficie },
+            {
+              backgroundColor:
+                variante === 'alta' ? bento.superficieTranslucida : bento.superficieMuta,
+            },
           ]}
         />
-        <View style={styles.riflesso} />
         <View style={styles.contenuto}>{children}</View>
       </Pressable>
     </View>
@@ -65,19 +68,11 @@ const styles = StyleSheet.create({
   clip: {
     borderRadius: raggio.xl,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: coloriScuri.bordo,
+    borderColor: bento.bordoSoft,
     overflow: 'hidden',
   },
   premuta: {
     opacity: 0.85,
-  },
-  riflesso: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: StyleSheet.hairlineWidth * 2,
-    backgroundColor: vetro.riflesso,
   },
   contenuto: {
     padding: 20,

@@ -1,12 +1,13 @@
 /**
  * Design token centrali dell'app: colori, tipografia, spaziature, raggi.
  *
- * Il tema scuro "Liquid Glass" (coloriScuri, accenti, vetro, elevazione,
- * movimento) è additivo: nessuno dei token esistenti sopra è stato
- * rimosso o rinominato, le schermate già migrate (dashboard, gruppo,
- * lista-spesa, saldi, la vecchia home) continuano a funzionare invariate.
- * Le nuove schermate "Bento" (componenti in src/components/Glass*.tsx,
- * Bento*.tsx) usano invece i token scuri qui sotto.
+ * Il tema "Hybrid Liquid Glass" (bento, accenti, semantica, gradienti,
+ * vetro, elevazione, movimento, più le aggiunte a raggio/tipografia) è
+ * additivo: nessuno dei token esistenti sopra è stato rimosso o
+ * rinominato, le schermate già migrate (dashboard, gruppo, lista-spesa,
+ * saldi) continuano a usare `colori` invariato. Le nuove schermate in
+ * stile Bento (componenti in src/components/Glass*.tsx, Bento*.tsx,
+ * Hero/Group/QuickAction/ecc.) usano invece i token qui sotto.
  */
 
 export const colori = {
@@ -74,90 +75,117 @@ export const tipografia = {
 };
 
 /**
- * Tema scuro "Liquid Glass": palette navy profonda, superfici translucide,
- * quattro colori d'accento legati alle quattro aree dell'app (finanza,
- * attività, liste, gruppi - lo stesso schema dell'icona a quattro
- * quadranti). Non sostituisce `colori` (chiaro, usato dalle schermate già
- * esistenti) - è il tema delle nuove schermate in stile Bento.
+ * Tema "Hybrid Liquid Glass": sfondi off-white, superfici bianche/
+ * translucide, bordi sottili, ombre morbide. Non sostituisce `colori`
+ * (usato dalle schermate già esistenti: dashboard, gruppo, lista-spesa,
+ * saldi) - è la palette delle nuove schermate in stile Bento.
  */
-export const coloriScuri = {
-  sfondo: '#101827',
-  // Leggermente più profondo del background, per gradienti/zone di
-  // transizione (es. dietro una card vetro, in fondo a uno scroll).
-  sfondoProfondo: '#0B111C',
-  superficie: '#1D2A40',
-  superficieAlta: '#26354F',
+export const bento = {
+  sfondo: '#F6F8FC',
+  sfondoAlt: '#EEF3FA',
+  superficieForte: '#FFFFFF',
+  superficieTranslucida: 'rgba(255,255,255,0.78)',
+  superficieMuta: 'rgba(255,255,255,0.62)',
 
-  testoPrimario: '#F8FAFC',
-  testoSecondario: '#AAB9D0',
-  // Per testo/icone disabilitati o puramente decorativi sul tema scuro.
-  testoTerziario: '#6B7A94',
+  bordoSoft: 'rgba(148,163,184,0.16)',
+  bordoForte: 'rgba(148,163,184,0.24)',
 
-  bordo: 'rgba(248,250,252,0.10)',
-  bordoForte: 'rgba(248,250,252,0.18)',
+  testoPrimario: '#0F172A',
+  testoSecondario: '#475569',
+  testoMuto: '#94A3B8',
+  // Per testo/icone su una superficie scura (es. dentro la hero card col
+  // gradiente) - l'unico punto dove su questo tema chiaro serve testo chiaro.
+  testoSuScuro: '#F8FAFC',
 } as const;
 
 /**
- * Colori d'accento delle quattro aree dell'app. Solo identità visiva /
- * branding (icone, badge di sezione, tinte decorative) - MAI per indicare
- * un importo a credito/debito: quello resta sempre `colori.verde700` /
- * `colori.rosso600` (vedi nota in cima al file), così il significato di
- * "verde = mi deve, rosso = devo" non si confonde mai con un colore di
- * sezione che non ha nulla a che fare coi saldi.
+ * Sei colori d'accento del brand. Solo identità visiva (badge, icone,
+ * dettagli decorativi) - MAI per indicare un importo a credito/debito:
+ * quello usa sempre `semantica.successo`/`semantica.pericolo` qui sotto
+ * (o, nelle schermate non ancora migrate, `colori.verde700`/`rosso600`),
+ * così "verde = mi deve, rosso = devo" non si confonde mai con un colore
+ * puramente decorativo.
  */
 export const accenti = {
-  finanza: '#F5BF42',
-  attivita: '#A98CF4',
-  liste: '#44BFEA',
-  gruppi: '#48CDA4',
+  oro: '#F5BF42',
+  viola: '#A98CF4',
+  ciano: '#44BFEA',
+  menta: '#48CDA4',
+  rosa: '#F35BA6',
+  indaco: '#6D6AF8',
 } as const;
 
 /**
- * Superfici "vetro": colore di base translucido da mettere sotto un
- * BlurView (il blur da solo non porta la tinta navy del brand) più i
- * livelli di intensità del blur stesso. Bordo sottile a parte in
- * `coloriScuri.bordo` - il contorno è ciò che separa davvero una card
- * vetro dallo sfondo quando il blur non è disponibile.
+ * Colori semantici (stato/esito), ognuno con una variante "soft" per
+ * sfondi di badge/pillole. `successo`/`pericolo` sono la semantica
+ * finanziaria del tema Bento (mi deve / devo) - stesso significato di
+ * `colori.verde700`/`rosso600`, tonalità leggermente diversa perché
+ * pensata per stare su superfici chiare translucide.
+ */
+export const semantica = {
+  successo: '#16A34A',
+  successoSoft: '#DCFCE7',
+  pericolo: '#DC2626',
+  pericoloSoft: '#FEE2E2',
+  avviso: '#D97706',
+  avvisoSoft: '#FEF3C7',
+  info: '#2563EB',
+  infoSoft: '#DBEAFE',
+} as const;
+
+/**
+ * Gradienti di marchio. `gradienteHero` (viola→magenta, 2 toni) esiste
+ * già e resta invariato per il componente GradientCard; questi sono i
+ * nuovi gradienti a 3 toni del tema Hybrid Liquid Glass.
+ */
+export const gradienti = {
+  hero: ['#6D6AF8', '#A98CF4', '#F35BA6'],
+  menta: ['#67E8C8', '#48CDA4'],
+  ciano: ['#67D8F4', '#44BFEA'],
+} as const;
+
+/**
+ * Superfici "vetro" per il tema chiaro: colore di base translucido da
+ * mettere sotto un BlurView (`bento.superficieTranslucida`/`superficieMuta`
+ * sono già pensate per questo) più i livelli di intensità del blur.
+ * Bordo sottile a parte in `bento.bordoSoft` - il contorno è ciò che
+ * separa davvero una card vetro dallo sfondo quando il blur non è
+ * disponibile o è molto leggero, com'è voluto su un tema chiaro.
  */
 export const vetro = {
-  superficie: 'rgba(29,42,64,0.55)',
-  superficieAlta: 'rgba(38,53,79,0.65)',
-  // Overlay chiaro per un effetto vetro "a specchio" su una superficie
-  // scura (bordo superiore luminoso, tipico del liquid glass).
-  riflesso: 'rgba(248,250,252,0.06)',
-
-  intensitaBassa: 25,
-  intensitaMedia: 45,
-  intensitaAlta: 70,
+  intensitaBassa: 15,
+  intensitaMedia: 30,
+  intensitaAlta: 50,
 } as const;
 
 /**
  * Ombre/elevazione cross-platform: iOS legge shadowColor/Offset/
  * Opacity/Radius, Android legge solo `elevation`, web (react-native-web)
  * traduce entrambe approssimativamente in box-shadow. Pensate per il
- * tema scuro (ombre più profonde, altrimenti invisibili su sfondo navy).
+ * tema chiaro: ombre morbide e poco opache, altrimenti su sfondo
+ * off-white risultano pesanti invece che eleganti.
  */
 export const elevazione = {
   bassa: {
-    shadowColor: '#000000',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.06,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 2,
   },
   media: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 6,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 5,
   },
   alta: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 10,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.12,
+    shadowRadius: 32,
+    elevation: 9,
   },
 } as const;
 

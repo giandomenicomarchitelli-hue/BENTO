@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
-import { coloriScuri, gradienteHero, raggio, vetro } from '@/theme/tokens';
+import { bento, gradienti, raggio } from '@/theme/tokens';
 
 type Props = {
   etichetta: string;
@@ -11,7 +11,7 @@ type Props = {
   disabilitato?: boolean;
 };
 
-/** Bottone del tema scuro, in tre varianti: primario (gradiente), vetro (secondario), testo (ghost). */
+/** Bottone del tema Bento, in tre varianti: primario (gradiente), vetro (secondario), testo (ghost). */
 export function BentoButton({
   etichetta,
   onPress,
@@ -22,7 +22,7 @@ export function BentoButton({
   const nonAttivo = disabilitato || caricando;
 
   const contenuto = caricando ? (
-    <ActivityIndicator color={variante === 'testo' ? coloriScuri.testoPrimario : '#fff'} />
+    <ActivityIndicator color={variante === 'primario' ? '#fff' : bento.testoPrimario} />
   ) : (
     <Text
       style={[
@@ -40,7 +40,7 @@ export function BentoButton({
       <Pressable onPress={onPress} disabled={nonAttivo}>
         {({ pressed }) => (
           <LinearGradient
-            colors={gradienteHero}
+            colors={gradienti.hero}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[styles.base, (pressed || nonAttivo) && styles.premuto]}
@@ -87,9 +87,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   baseVetro: {
-    backgroundColor: vetro.superficieAlta,
+    backgroundColor: bento.superficieTranslucida,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: coloriScuri.bordoForte,
+    borderColor: bento.bordoForte,
   },
   baseTesto: {
     paddingVertical: 10,
@@ -105,10 +105,10 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   testoVetro: {
-    color: coloriScuri.testoPrimario,
+    color: bento.testoPrimario,
   },
   testoGhost: {
-    color: coloriScuri.testoSecondario,
+    color: bento.testoSecondario,
     fontWeight: '600',
   },
 });

@@ -1,26 +1,35 @@
 import { Feather } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import type { Gruppo } from '@/api/gruppi';
 import { esci } from '@/api/auth';
 import { BentoButton } from '@/components/BentoButton';
 import { BentoScreen } from '@/components/BentoScreen';
 import { GlassCard } from '@/components/GlassCard';
-import { GlassTile } from '@/components/GlassTile';
+import { GroupPreviewCard } from '@/components/GroupPreviewCard';
+import { HeroBalanceCard } from '@/components/HeroBalanceCard';
+import { IconBadge } from '@/components/IconBadge';
+import { QuickActionRow, type QuickAction } from '@/components/QuickActionRow';
+import { SectionHeader } from '@/components/SectionHeader';
 import { useMieiGruppi } from '@/hooks/useMieiGruppi';
 import { useProfilo } from '@/hooks/useProfilo';
-import { accenti, coloriScuri, spaziatura, tipografia } from '@/theme/tokens';
+import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
+import { accenti, bento, spaziatura, tipografia } from '@/theme/tokens';
+
+const ANTEPRIMA_MASSIMA = 3;
 
 export default function Homepage() {
   const router = useRouter();
   const { profilo, isLoading: profiloInCaricamento } = useProfilo();
   const { gruppi, isLoading: gruppiInCaricamento, error: erroreGruppi } = useMieiGruppi();
+  const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
 
   // Serve un nome utente fisso prima di poter fare qualunque cosa.
   if (profiloInCaricamento) {
     return (
       <View style={styles.centrato}>
-        <ActivityIndicator color={coloriScuri.testoPrimario} />
+        <ActivityIndicator color={bento.testoPrimario} />
       </View>
     );
   }
@@ -28,65 +37,113 @@ export default function Homepage() {
     return <Redirect href="/crea-profilo" />;
   }
 
-  const sottotitoloGruppi =
-    gruppi.length === 0
-      ? 'Non fai ancora parte di nessun gruppo'
-      : gruppi.length === 1
-        ? gruppi[0].nome
-        : 'Casa, viaggi, ufficio e altro';
+  function apriGruppo(gruppo: Gruppo) {
+    impostaGruppoAttivo(gruppo.id);
+    router.push('/dashboard');
+  }
+
+  const azioniRapide: QuickAction[] = [
+    {
+      icona: 'plus-circle',
+      accento: accenti.menta,
+      etichetta: 'Crea gruppo',
+      onPress: () => router.push('/onboarding/crea-gruppo'),
+    },
+    {
+      icona: 'user-plus',
+      accento: accenti.ciano,
+      etichetta: 'Unisciti',
+      onPress: () => router.push('/onboarding/unisciti-a-gruppo'),
+    },
+    {
+      icona: 'users',
+      accento: accenti.indaco,
+      etichetta: 'I tuoi gruppi',
+      onPress: () => router.push('/gruppi'),
+    },
+    {
+      icona: 'repeat',
+      accento: accenti.oro,
+      etichetta: 'I miei saldi',
+      onPress: () => router.push('/saldi-personali'),
+    },
+  ];
 
   return (
     <BentoScreen>
+      <View style={styles.intestazione}>
+        <View>
+          <Text style={styles.marchio}>bento</Text>
+          <Text style={styles.payoff}>Everything, together.</Text>
+        </View>
+        <View style={styles.azioniIntestazione}>
+          <Pressable onPress={() => router.push('/profilo')} hitSlop={8}>
+            <IconBadge icona="user" colore={accenti.indaco} dimensione={40} />
+          </Pressable>
+          <Pressable onPress={() => esci()} hitSlop={8} style={styles.bottoneEsci}>
+            <Feather name="log-out" size={16} color={bento.testoMuto} />
+          </Pressable>
+        </View>
+      </View>
+
       <View>
-        <Text style={styles.marchio}>BENTO · EVERYTHING, TOGETHER</Text>
         <Text style={styles.saluto}>Ciao, {profilo.nome_utente}</Text>
+        <Text style={styles.sottoSaluto}>Ecco una panoramica dei tuoi gruppi.</Text>
       </View>
 
       {erroreGruppi ? (
         <GlassCard>
           <View style={styles.rigaErrore}>
-            <Feather name="alert-circle" size={18} color={coloriScuri.testoSecondario} />
+            <Feather name="alert-circle" size={18} color={bento.testoSecondario} />
             <Text style={styles.testoErrore}>Non riesco a caricare i tuoi gruppi al momento.</Text>
           </View>
         </GlassCard>
       ) : (
-        <GlassCard onPress={() => router.push('/gruppi')} variante="alta">
-          <Text style={styles.etichettaHero}>I MIEI GRUPPI</Text>
-          {gruppiInCaricamento ? (
-            <ActivityIndicator color={coloriScuri.testoPrimario} style={styles.caricamentoHero} />
-          ) : (
-            <Text style={styles.numeroHero}>{gruppi.length}</Text>
-          )}
-          <Text style={styles.dettaglioHero}>{sottotitoloGruppi}</Text>
-        </GlassCard>
+        <HeroBalanceCard
+          etichetta="I tuoi gruppi"
+          valore={gruppi.length}
+          caricandoValore={gruppiInCaricamento}
+          descrizione={
+            gruppi.length === 0
+              ? 'Non fai ancora parte di nessun gruppo'
+              : gruppi.length === 1
+                ? gruppi[0].nome
+                : 'Casa, viaggi, ufficio e altro'
+          }
+          azioni={[
+            { etichetta: 'Vedi saldi', onPress: () => router.push('/saldi-personali') },
+            {
+              etichetta: 'Nuovo gruppo',
+              variante: 'secondaria',
+              onPress: () => router.push('/onboarding/crea-gruppo'),
+            },
+          ]}
+        />
       )}
 
-      <View style={styles.righeTile}>
-        <GlassTile
-          icona="users"
-          accento={accenti.gruppi}
-          titolo="I tuoi gruppi"
-          sottotitolo="Spesa, spese e liste"
-          onPress={() => router.push('/gruppi')}
-        />
-        <GlassTile
-          icona="repeat"
-          accento={accenti.finanza}
-          titolo="I miei saldi"
-          sottotitolo="Con tutte le persone"
-          onPress={() => router.push('/saldi-personali')}
-        />
-      </View>
+      <QuickActionRow azioni={azioniRapide} />
 
-      <View style={styles.spaziatore} />
+      <View style={styles.sezione}>
+        <SectionHeader titolo="I tuoi gruppi" azione={{ etichetta: 'Vedi tutti', onPress: () => router.push('/gruppi') }} />
 
-      <View style={styles.piePagina}>
-        <BentoButton
-          variante="testo"
-          etichetta={profilo.nome_utente}
-          onPress={() => router.push('/profilo')}
-        />
-        <BentoButton variante="testo" etichetta="Esci" onPress={() => esci()} />
+        {gruppi.length === 0 ? (
+          <GlassCard>
+            <View style={styles.vuoto}>
+              <IconBadge icona="users" colore={accenti.indaco} dimensione={44} />
+              <Text style={styles.testoVuoto}>Non fai ancora parte di nessun gruppo.</Text>
+              <BentoButton
+                etichetta="Crea un gruppo"
+                onPress={() => router.push('/onboarding/crea-gruppo')}
+              />
+            </View>
+          </GlassCard>
+        ) : (
+          <View style={styles.listaGruppi}>
+            {gruppi.slice(0, ANTEPRIMA_MASSIMA).map((gruppo) => (
+              <GroupPreviewCard key={gruppo.id} gruppo={gruppo} onPress={() => apriGruppo(gruppo)} />
+            ))}
+          </View>
+        )}
       </View>
     </BentoScreen>
   );
@@ -95,18 +152,45 @@ export default function Homepage() {
 const styles = StyleSheet.create({
   centrato: {
     flex: 1,
-    backgroundColor: coloriScuri.sfondo,
+    backgroundColor: bento.sfondo,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  intestazione: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
   marchio: {
-    ...tipografia.didascalia,
-    color: coloriScuri.testoSecondario,
+    fontSize: 20,
+    fontWeight: '800',
+    color: bento.testoPrimario,
+  },
+  payoff: {
+    fontSize: 12,
+    color: bento.testoMuto,
+    marginTop: 1,
+  },
+  azioniIntestazione: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spaziatura.sm,
+  },
+  bottoneEsci: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   saluto: {
     ...tipografia.display,
-    color: coloriScuri.testoPrimario,
-    marginTop: 4,
+    fontSize: 28,
+    color: bento.testoPrimario,
+  },
+  sottoSaluto: {
+    fontSize: 14,
+    color: bento.testoSecondario,
+    marginTop: 2,
   },
   rigaErrore: {
     flexDirection: 'row',
@@ -115,40 +199,23 @@ const styles = StyleSheet.create({
   },
   testoErrore: {
     flex: 1,
-    color: coloriScuri.testoSecondario,
+    color: bento.testoSecondario,
     fontSize: 14,
   },
-  etichettaHero: {
-    ...tipografia.didascalia,
-    color: coloriScuri.testoSecondario,
-  },
-  numeroHero: {
-    ...tipografia.display,
-    color: coloriScuri.testoPrimario,
-    marginTop: 4,
-  },
-  caricamentoHero: {
-    alignSelf: 'flex-start',
-    marginTop: spaziatura.sm,
-  },
-  dettaglioHero: {
-    fontSize: 13,
-    color: coloriScuri.testoSecondario,
-    marginTop: 4,
-  },
-  righeTile: {
-    flexDirection: 'row',
+  sezione: {
     gap: spaziatura.md,
   },
-  spaziatore: {
-    flex: 1,
-  },
-  piePagina: {
-    flexDirection: 'row',
+  vuoto: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: spaziatura.lg,
-    borderTopWidth: 1,
-    borderTopColor: coloriScuri.bordo,
+    gap: spaziatura.md,
+    paddingVertical: spaziatura.md,
+  },
+  testoVuoto: {
+    fontSize: 14,
+    color: bento.testoSecondario,
+    textAlign: 'center',
+  },
+  listaGruppi: {
+    gap: spaziatura.sm,
   },
 });
