@@ -18,7 +18,15 @@ export const colori = {
 
   rosso600: '#c0392b',
   verde700: '#2e7d32',
+
+  // Gradiente "hero": per le card in evidenza (es. saldo aggregato in
+  // Homepage), non per l'uso diffuso - il blu resta il colore primario
+  // dell'app.
+  viola600: '#7c3aed',
+  magenta600: '#db2777',
 } as const;
+
+export const gradienteHero = ['#7c3aed', '#db2777'] as const;
 
 export const spaziatura = {
   xs: 4,

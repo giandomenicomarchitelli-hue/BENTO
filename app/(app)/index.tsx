@@ -1,12 +1,18 @@
-import { Link, Redirect } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
+import { Link, Redirect, useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { esci } from '@/api/auth';
+import { GradientCard } from '@/components/GradientCard';
+import { ListGroup } from '@/components/ListGroup';
+import { ListRow } from '@/components/ListRow';
 import { useProfilo } from '@/hooks/useProfilo';
 import { useSaldiAggregati } from '@/hooks/useSaldiAggregati';
 import { formattaEuro } from '@/lib/formato';
+import { colori, spaziatura, tipografia } from '@/theme/tokens';
 
 export default function Homepage() {
+  const router = useRouter();
   const { profilo, isLoading: profiloInCaricamento } = useProfilo();
   const { persone: personeConSaldo } = useSaldiAggregati();
 
@@ -22,42 +28,50 @@ export default function Homepage() {
     return <Redirect href="/crea-profilo" />;
   }
 
+  const inPari = personeConSaldo.length === 0;
+  // Saldo netto complessivo: crediti meno debiti su tutte le persone.
+  const nettoComplessivoCentesimi = personeConSaldo.reduce((t, p) => t + p.nettoCentesimi, 0);
+
   return (
     <View style={styles.contenitore}>
-      <Text style={styles.titolo}>Bento</Text>
-      <Text style={styles.payoff}>Everything, together.</Text>
-
-      <View style={styles.scelte}>
-        <Link href="/gruppi" asChild>
-          <Pressable style={styles.carta}>
-            <Text style={styles.testoCarta}>I tuoi gruppi</Text>
-            <Text style={styles.dettaglioCarta}>
-              Spesa, spese e liste dei gruppi a cui partecipi
-            </Text>
-          </Pressable>
-        </Link>
-
-        <Link href="/saldi-personali" asChild>
-          <Pressable style={StyleSheet.flatten([styles.carta, styles.cartaSaldi])}>
-            <Text style={[styles.testoCarta, styles.testoCartaSaldi]}>I miei saldi</Text>
-            <Text style={[styles.dettaglioCarta, styles.dettaglioCartaSaldi]}>
-              {personeConSaldo.length === 0
-                ? 'Sei in pari con tutti'
-                : personeConSaldo.length === 1
-                  ? `Hai un saldo aperto con ${personeConSaldo[0].nome} (${formattaEuro(Math.abs(personeConSaldo[0].nettoCentesimi))}), sommato su tutti i gruppi in comune`
-                  : `Hai saldi aperti con ${personeConSaldo.length} persone, sommati su tutti i gruppi in comune`}
-            </Text>
-          </Pressable>
-        </Link>
+      <View style={styles.intestazione}>
+        <Text style={styles.titolo}>Bento</Text>
+        <Text style={styles.payoff}>Everything, together.</Text>
       </View>
 
-      <Link href="/profilo" style={styles.linkProfilo}>
-        {profilo.nome_utente}
+      <Link href="/saldi-personali" asChild>
+        <GradientCard style={styles.cardSaldo}>
+          <Text style={styles.etichettaSaldo}>I MIEI SALDI</Text>
+          <Text style={styles.importoSaldo}>
+            {inPari ? 'Sei in pari' : formattaEuro(Math.abs(nettoComplessivoCentesimi))}
+          </Text>
+          <Text style={styles.dettaglioSaldo}>
+            {inPari
+              ? 'Nessun saldo aperto in nessun gruppo'
+              : personeConSaldo.length === 1
+                ? `${nettoComplessivoCentesimi >= 0 ? 'Ti deve' : 'Devi a'} ${personeConSaldo[0].nome}, su tutti i gruppi in comune`
+                : `Con ${personeConSaldo.length} persone, sommato su tutti i gruppi in comune`}
+          </Text>
+        </GradientCard>
       </Link>
 
-      <Text style={styles.bottoneEsci} onPress={() => esci()}>
-        Esci
-      </Text>
+      <View style={styles.sezione}>
+        <ListGroup>
+          <ListRow icona="users" titolo="I tuoi gruppi" onPress={() => router.push('/gruppi')} />
+        </ListGroup>
+      </View>
+
+      <View style={styles.spaziatore} />
+
+      <View style={styles.piePagina}>
+        <Link href="/profilo" style={styles.linkProfilo}>
+          {profilo.nome_utente}
+        </Link>
+        <Pressable style={styles.bottoneEsci} onPress={() => esci()}>
+          <Feather name="log-out" size={15} color={colori.rosso600} />
+          <Text style={styles.testoEsci}>Esci</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -70,60 +84,74 @@ const styles = StyleSheet.create({
   },
   contenitore: {
     flex: 1,
-    padding: 24,
-    justifyContent: 'center',
+    backgroundColor: colori.sfondoApp,
+    padding: spaziatura.xl,
+    paddingTop: spaziatura.xxl,
+    gap: spaziatura.xxl,
+  },
+  intestazione: {
+    alignItems: 'center',
   },
   titolo: {
-    fontSize: 26,
-    fontWeight: '700',
-    textAlign: 'center',
+    ...tipografia.titolo,
+    color: colori.inchiostro900,
   },
   payoff: {
-    fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
-    marginTop: 4,
-    marginBottom: 32,
-  },
-  scelte: {
-    gap: 16,
-  },
-  carta: {
-    backgroundColor: '#2d6cdf',
-    borderRadius: 12,
-    padding: 20,
-  },
-  cartaSaldi: {
-    backgroundColor: '#eaf0fd',
-  },
-  testoCarta: {
-    fontSize: 19,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  testoCartaSaldi: {
-    color: '#2d6cdf',
-  },
-  dettaglioCarta: {
+    marginTop: 2,
     fontSize: 13,
-    color: '#e4ecfc',
-    marginTop: 6,
+    fontWeight: '500',
+    color: colori.inchiostro500,
   },
-  dettaglioCartaSaldi: {
-    color: '#4a76c4',
+  cardSaldo: {
+    gap: 4,
+  },
+  etichettaSaldo: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  importoSaldo: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#fff',
+    marginTop: 2,
+  },
+  dettaglioSaldo: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 4,
+  },
+  sezione: {
+    gap: 10,
+  },
+  spaziatore: {
+    flex: 1,
+  },
+  piePagina: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colori.inchiostro150,
   },
   linkProfilo: {
-    marginTop: 40,
-    alignSelf: 'center',
-    color: '#2d6cdf',
+    color: colori.blu600,
     fontSize: 14,
     fontWeight: '600',
   },
   bottoneEsci: {
-    marginTop: 16,
-    alignSelf: 'center',
-    color: '#c0392b',
-    fontSize: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  testoEsci: {
+    fontSize: 13.5,
     fontWeight: '600',
+    color: colori.rosso600,
   },
 });
