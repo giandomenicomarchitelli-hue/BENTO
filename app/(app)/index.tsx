@@ -8,14 +8,11 @@ import { ListGroup } from '@/components/ListGroup';
 import { ListRow } from '@/components/ListRow';
 import { useMieiGruppi } from '@/hooks/useMieiGruppi';
 import { useProfilo } from '@/hooks/useProfilo';
-import { useSaldiAggregati } from '@/hooks/useSaldiAggregati';
-import { formattaEuro } from '@/lib/formato';
 import { colori, spaziatura, tipografia } from '@/theme/tokens';
 
 export default function Homepage() {
   const router = useRouter();
   const { profilo, isLoading: profiloInCaricamento } = useProfilo();
-  const { persone: personeConSaldo } = useSaldiAggregati();
   const { gruppi } = useMieiGruppi();
 
   // Serve un nome utente fisso prima di poter fare qualunque cosa.
@@ -29,10 +26,6 @@ export default function Homepage() {
   if (profilo === null) {
     return <Redirect href="/crea-profilo" />;
   }
-
-  const inPari = personeConSaldo.length === 0;
-  // Saldo netto complessivo: crediti meno debiti su tutte le persone.
-  const nettoComplessivoCentesimi = personeConSaldo.reduce((t, p) => t + p.nettoCentesimi, 0);
 
   return (
     <View style={styles.contenitore}>
@@ -59,12 +52,7 @@ export default function Homepage() {
         <ListGroup>
           <ListRow
             icona="repeat"
-            titolo="I miei saldi"
-            meta={
-              inPari
-                ? 'Sei in pari'
-                : formattaEuro(Math.abs(nettoComplessivoCentesimi))
-            }
+            titolo="I MIEI SALDI"
             onPress={() => router.push('/saldi-personali')}
           />
         </ListGroup>
