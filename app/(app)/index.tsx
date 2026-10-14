@@ -1,25 +1,26 @@
 import { Feather } from '@expo/vector-icons';
-import { Link, Redirect, useRouter } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Redirect, useRouter } from 'expo-router';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { esci } from '@/api/auth';
-import { GradientCard } from '@/components/GradientCard';
-import { ListGroup } from '@/components/ListGroup';
-import { ListRow } from '@/components/ListRow';
+import { BentoButton } from '@/components/BentoButton';
+import { BentoScreen } from '@/components/BentoScreen';
+import { GlassCard } from '@/components/GlassCard';
+import { GlassTile } from '@/components/GlassTile';
 import { useMieiGruppi } from '@/hooks/useMieiGruppi';
 import { useProfilo } from '@/hooks/useProfilo';
-import { colori, spaziatura, tipografia } from '@/theme/tokens';
+import { accenti, coloriScuri, spaziatura, tipografia } from '@/theme/tokens';
 
 export default function Homepage() {
   const router = useRouter();
   const { profilo, isLoading: profiloInCaricamento } = useProfilo();
-  const { gruppi } = useMieiGruppi();
+  const { gruppi, isLoading: gruppiInCaricamento, error: erroreGruppi } = useMieiGruppi();
 
   // Serve un nome utente fisso prima di poter fare qualunque cosa.
   if (profiloInCaricamento) {
     return (
       <View style={styles.centrato}>
-        <ActivityIndicator />
+        <ActivityIndicator color={coloriScuri.testoPrimario} />
       </View>
     );
   }
@@ -27,101 +28,117 @@ export default function Homepage() {
     return <Redirect href="/crea-profilo" />;
   }
 
+  const sottotitoloGruppi =
+    gruppi.length === 0
+      ? 'Non fai ancora parte di nessun gruppo'
+      : gruppi.length === 1
+        ? gruppi[0].nome
+        : 'Casa, viaggi, ufficio e altro';
+
   return (
-    <View style={styles.contenitore}>
-      <View style={styles.intestazione}>
-        <Text style={styles.titolo}>Bento</Text>
-        <Text style={styles.payoff}>Everything, together.</Text>
+    <BentoScreen>
+      <View>
+        <Text style={styles.marchio}>BENTO · EVERYTHING, TOGETHER</Text>
+        <Text style={styles.saluto}>Ciao, {profilo.nome_utente}</Text>
       </View>
 
-      <Link href="/gruppi" asChild>
-        <GradientCard style={styles.cardHero}>
+      {erroreGruppi ? (
+        <GlassCard>
+          <View style={styles.rigaErrore}>
+            <Feather name="alert-circle" size={18} color={coloriScuri.testoSecondario} />
+            <Text style={styles.testoErrore}>Non riesco a caricare i tuoi gruppi al momento.</Text>
+          </View>
+        </GlassCard>
+      ) : (
+        <GlassCard onPress={() => router.push('/gruppi')} variante="alta">
           <Text style={styles.etichettaHero}>I MIEI GRUPPI</Text>
-          <Text style={styles.importoHero}>{gruppi.length}</Text>
-          <Text style={styles.dettaglioHero}>
-            {gruppi.length === 0
-              ? 'Non fai ancora parte di nessun gruppo'
-              : gruppi.length === 1
-                ? gruppi[0].nome
-                : 'Casa, viaggi, ufficio e altro'}
-          </Text>
-        </GradientCard>
-      </Link>
+          {gruppiInCaricamento ? (
+            <ActivityIndicator color={coloriScuri.testoPrimario} style={styles.caricamentoHero} />
+          ) : (
+            <Text style={styles.numeroHero}>{gruppi.length}</Text>
+          )}
+          <Text style={styles.dettaglioHero}>{sottotitoloGruppi}</Text>
+        </GlassCard>
+      )}
 
-      <View style={styles.sezione}>
-        <ListGroup>
-          <ListRow
-            icona="repeat"
-            titolo="I MIEI SALDI"
-            onPress={() => router.push('/saldi-personali')}
-          />
-        </ListGroup>
+      <View style={styles.righeTile}>
+        <GlassTile
+          icona="users"
+          accento={accenti.gruppi}
+          titolo="I tuoi gruppi"
+          sottotitolo="Spesa, spese e liste"
+          onPress={() => router.push('/gruppi')}
+        />
+        <GlassTile
+          icona="repeat"
+          accento={accenti.finanza}
+          titolo="I miei saldi"
+          sottotitolo="Con tutte le persone"
+          onPress={() => router.push('/saldi-personali')}
+        />
       </View>
 
       <View style={styles.spaziatore} />
 
       <View style={styles.piePagina}>
-        <Link href="/profilo" style={styles.linkProfilo}>
-          {profilo.nome_utente}
-        </Link>
-        <Pressable style={styles.bottoneEsci} onPress={() => esci()}>
-          <Feather name="log-out" size={15} color={colori.rosso600} />
-          <Text style={styles.testoEsci}>Esci</Text>
-        </Pressable>
+        <BentoButton
+          variante="testo"
+          etichetta={profilo.nome_utente}
+          onPress={() => router.push('/profilo')}
+        />
+        <BentoButton variante="testo" etichetta="Esci" onPress={() => esci()} />
       </View>
-    </View>
+    </BentoScreen>
   );
 }
 
 const styles = StyleSheet.create({
   centrato: {
     flex: 1,
+    backgroundColor: coloriScuri.sfondo,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  contenitore: {
-    flex: 1,
-    backgroundColor: colori.sfondoApp,
-    padding: spaziatura.xl,
-    paddingTop: spaziatura.xxl,
-    gap: spaziatura.xxl,
+  marchio: {
+    ...tipografia.didascalia,
+    color: coloriScuri.testoSecondario,
   },
-  intestazione: {
+  saluto: {
+    ...tipografia.display,
+    color: coloriScuri.testoPrimario,
+    marginTop: 4,
+  },
+  rigaErrore: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: spaziatura.sm,
   },
-  titolo: {
-    ...tipografia.titolo,
-    color: colori.inchiostro900,
-  },
-  payoff: {
-    marginTop: 2,
-    fontSize: 13,
-    fontWeight: '500',
-    color: colori.inchiostro500,
-  },
-  cardHero: {
-    gap: 4,
+  testoErrore: {
+    flex: 1,
+    color: coloriScuri.testoSecondario,
+    fontSize: 14,
   },
   etichettaHero: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-    color: 'rgba(255,255,255,0.8)',
+    ...tipografia.didascalia,
+    color: coloriScuri.testoSecondario,
   },
-  importoHero: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: '#fff',
-    marginTop: 2,
+  numeroHero: {
+    ...tipografia.display,
+    color: coloriScuri.testoPrimario,
+    marginTop: 4,
+  },
+  caricamentoHero: {
+    alignSelf: 'flex-start',
+    marginTop: spaziatura.sm,
   },
   dettaglioHero: {
     fontSize: 13,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.85)',
+    color: coloriScuri.testoSecondario,
     marginTop: 4,
   },
-  sezione: {
-    gap: 10,
+  righeTile: {
+    flexDirection: 'row',
+    gap: spaziatura.md,
   },
   spaziatore: {
     flex: 1,
@@ -130,25 +147,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 14,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colori.inchiostro150,
-  },
-  linkProfilo: {
-    color: colori.blu600,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  bottoneEsci: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  testoEsci: {
-    fontSize: 13.5,
-    fontWeight: '600',
-    color: colori.rosso600,
+    paddingTop: spaziatura.lg,
+    borderTopWidth: 1,
+    borderTopColor: coloriScuri.bordo,
   },
 });
