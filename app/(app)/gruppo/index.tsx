@@ -15,6 +15,7 @@ import { rinominaGruppo } from '@/api/gruppi';
 import { esciDalGruppo } from '@/api/membri';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useInvalidaMieiGruppi } from '@/hooks/useMieiGruppi';
+import { useSaldi } from '@/hooks/useSaldi';
 import { confermaAzione } from '@/lib/conferma';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
@@ -22,6 +23,7 @@ import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 export default function Gruppo() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
   const { gruppo, membri, membriAttivi, isLoading, ricarica } = useGruppoAttivo();
+  const { transazioni, isLoading: saldiInCaricamento } = useSaldi(gruppoAttivoId);
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
   const invalidaMieiGruppi = useInvalidaMieiGruppi();
@@ -48,11 +50,24 @@ export default function Gruppo() {
   }
 
   const ilMioMembro = membri.find((m) => m.utente_id === utenteId);
+  const hoUnSaldoAperto = transazioni.some(
+    (t) => t.da === ilMioMembro?.id || t.a === ilMioMembro?.id
+  );
 
   const confermaUscita = async () => {
     if (ilMioMembro === undefined) {
       return;
     }
+
+    if (hoUnSaldoAperto) {
+      await confermaAzione(
+        'Non puoi uscire dal gruppo',
+        'Hai un saldo aperto con uno o più membri. Saldalo da "Saldi e spese" prima di uscire.',
+        'OK'
+      );
+      return;
+    }
+
     const conferma = await confermaAzione(
       'Uscire dal gruppo?',
       `Non farai più parte di "${gruppo.nome}" e non vedrai più le sue spese e la sua lista della spesa.`,
@@ -161,7 +176,11 @@ export default function Gruppo() {
         </Text>
       ))}
 
-      <Pressable style={styles.bottoneEsci} onPress={confermaUscita} disabled={uscendo}>
+      <Pressable
+        style={styles.bottoneEsci}
+        onPress={confermaUscita}
+        disabled={uscendo || saldiInCaricamento}
+      >
         {uscendo ? (
           <ActivityIndicator color="#c0392b" />
         ) : (
