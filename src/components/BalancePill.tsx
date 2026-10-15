@@ -6,6 +6,8 @@ type Props = {
   /** true = a credito (mi deve, verde), false = a debito (devo, rosso). */
   aCredito: boolean;
   testo: string;
+  /** true per un'evidenza maggiore (es. hero del saldo), stessa semantica e colori. */
+  grande?: boolean;
 };
 
 /**
@@ -14,10 +16,24 @@ type Props = {
  * non introdurre qui un colore diverso per "sembrare" più in tema con una
  * sezione: il significato credito/debito deve restare riconoscibile ovunque.
  */
-export function BalancePill({ aCredito, testo }: Props) {
+export function BalancePill({ aCredito, testo, grande = false }: Props) {
   return (
-    <View style={[styles.pillola, { backgroundColor: aCredito ? semantica.successoSoft : semantica.pericoloSoft }]}>
-      <Text style={[styles.testo, { color: aCredito ? semantica.successo : semantica.pericolo }]}>{testo}</Text>
+    <View
+      style={[
+        styles.pillola,
+        grande && styles.pillolaGrande,
+        { backgroundColor: aCredito ? semantica.successoSoft : semantica.pericoloSoft },
+      ]}
+    >
+      <Text
+        style={[
+          styles.testo,
+          grande && styles.testoGrande,
+          { color: aCredito ? semantica.successo : semantica.pericolo },
+        ]}
+      >
+        {testo}
+      </Text>
     </View>
   );
 }
@@ -29,8 +45,15 @@ const styles = StyleSheet.create({
     borderRadius: raggio.pillola,
     alignSelf: 'flex-start',
   },
+  pillolaGrande: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
   testo: {
     fontSize: 13,
     fontWeight: '700',
+  },
+  testoGrande: {
+    fontSize: 18,
   },
 });

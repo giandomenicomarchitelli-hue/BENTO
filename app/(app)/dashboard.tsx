@@ -5,12 +5,12 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { esci } from '@/api/auth';
 import { BentoScreen } from '@/components/BentoScreen';
 import { GlassListRow } from '@/components/GlassListRow';
-import { calcolaPosizionePersonale, GroupBalanceCard } from '@/components/GroupBalanceCard';
+import { GlassTile } from '@/components/GlassTile';
+import { calcolaPosizionePersonale } from '@/components/GroupBalanceCard';
+import { GroupBalanceHero } from '@/components/GroupBalanceHero';
 import { GroupHeader } from '@/components/GroupHeader';
 import { MemberAvatarRow } from '@/components/MemberAvatarRow';
-import { QuickActionRow, type QuickAction } from '@/components/QuickActionRow';
 import { SectionHeader } from '@/components/SectionHeader';
-import { ShoppingListPreviewCard } from '@/components/ShoppingListPreviewCard';
 import { useArticoliSpesa } from '@/hooks/useArticoliSpesa';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useListe } from '@/hooks/useListe';
@@ -24,7 +24,7 @@ export default function Dashboard() {
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
   const { gruppo, membriAttivi, isLoading } = useGruppoAttivo();
-  const { liste } = useListe(gruppoAttivoId);
+  const { liste, isLoading: listeInCaricamento } = useListe(gruppoAttivoId);
   const {
     articoli,
     isLoading: articoliInCaricamento,
@@ -36,7 +36,8 @@ export default function Dashboard() {
   // Posizione netta dell'utente in QUESTO gruppo - vedi
   // calcolaPosizionePersonale in GroupBalanceCard.tsx (testata a parte in
   // GroupBalanceCard.test.ts) per cosa fa e perché non è un nuovo calcolo
-  // finanziario.
+  // finanziario. Nessun cambiamento qui rispetto alla Fase 2.1: solo il
+  // componente che la mostra (GroupBalanceHero) è nuovo.
   const ilMioMembro = membriAttivi.find((m) => m.utente_id === utenteId);
   const mioNettoCentesimi = useMemo(() => {
     if (ilMioMembro === undefined) {
@@ -62,6 +63,27 @@ export default function Dashboard() {
 
   const listeInHome = liste.filter((l) => l.mostra_in_home);
 
+  const pendenti = articoli.filter((a) => a.stato === 'da_comprare').length;
+  const erroreArticoliBool = erroreArticoli !== null && erroreArticoli !== undefined;
+  // "Tutto comprato" ha senso solo se la lista non è vuota - altrimenti si
+  // lascerebbe intendere che c'era qualcosa da comprare quando in realtà
+  // non è mai stato aggiunto nulla.
+  const sottotitoloSpesa = articoliInCaricamento || erroreArticoliBool
+    ? undefined
+    : articoli.length === 0
+      ? 'Lista vuota'
+      : pendenti === 0
+        ? 'Tutto comprato'
+        : `${pendenti} ${pendenti === 1 ? 'articolo da comprare' : 'articoli da comprare'}`;
+
+  const sottotitoloGruppo = `${membriAttivi.length} ${membriAttivi.length === 1 ? 'membro' : 'membri'}`;
+
+  const sottotitoloListe = listeInCaricamento
+    ? undefined
+    : liste.length === 0
+      ? 'Nessuna lista'
+      : `${liste.length} ${liste.length === 1 ? 'lista' : 'liste'}`;
+
   function tornaIndietro() {
     if (router.canGoBack()) {
       router.back();
@@ -77,27 +99,6 @@ export default function Dashboard() {
     router.push('/gruppo');
   }
 
-  const azioniRapide: QuickAction[] = [
-    {
-      icona: 'shopping-cart',
-      accento: accenti.ciano,
-      etichetta: 'Lista spesa',
-      onPress: () => router.push('/lista-spesa'),
-    },
-    {
-      icona: 'plus-circle',
-      accento: accenti.indaco,
-      etichetta: 'Nuova spesa',
-      onPress: () => router.push('/spese/nuova'),
-    },
-    {
-      icona: 'list',
-      accento: accenti.viola,
-      etichetta: 'Liste',
-      onPress: () => router.push('/liste'),
-    },
-  ];
-
   return (
     <BentoScreen senzaIntestazione>
       <GroupHeader
@@ -111,47 +112,69 @@ export default function Dashboard() {
         <MemberAvatarRow membri={membriAttivi} onPress={apriImpostazioni} />
       )}
 
-      <GroupBalanceCard
+      <GroupBalanceHero
         nettoCentesimi={mioNettoCentesimi}
         caricando={saldiInCaricamento}
         errore={erroreSaldi !== null && erroreSaldi !== undefined}
         onPress={() => router.push('/saldi')}
       />
 
-      <QuickActionRow azioni={azioniRapide} />
-
-      <ShoppingListPreviewCard
-        articoli={articoli}
-        caricando={articoliInCaricamento}
-        errore={erroreArticoli !== null && erroreArticoli !== undefined}
-        onPress={() => router.push('/lista-spesa')}
-      />
-
-      <View style={styles.sezione}>
-        <SectionHeader titolo="Le tue liste" />
-        <View style={styles.elencoListe}>
-          <GlassListRow
-            icona="list"
+      <View style={styles.griglia}>
+        <View style={styles.rigaGriglia}>
+          <GlassTile
+            icona="shopping-cart"
+            accento={accenti.ciano}
+            titolo="Lista spesa"
+            sottotitolo={sottotitoloSpesa}
+            onPress={() => router.push('/lista-spesa')}
+          />
+          <GlassTile
+            icona="users"
             accento={accenti.viola}
-            titolo="Tutte le liste"
+            titolo="Gruppo"
+            sottotitolo={sottotitoloGruppo}
+            onPress={apriImpostazioni}
+          />
+        </View>
+        <View style={styles.rigaGriglia}>
+          <GlassTile
+            icona="check-square"
+            accento={accenti.menta}
+            titolo="Faccende"
+            sottotitolo="Presto disponibile"
+            badge="Presto"
+          />
+          <GlassTile
+            icona="list"
+            accento={accenti.oro}
+            titolo="Liste"
+            sottotitolo={sottotitoloListe}
             onPress={() => router.push('/liste')}
           />
-          {listeInHome.map((lista) => (
-            <GlassListRow
-              key={lista.id}
-              icona="file-text"
-              accento={accenti.ciano}
-              titolo={lista.nome}
-              onPress={() =>
-                router.push({
-                  pathname: '/liste/[id]',
-                  params: { id: lista.id, nome: lista.nome, conPrezzi: lista.con_prezzi ? '1' : '0' },
-                })
-              }
-            />
-          ))}
         </View>
       </View>
+
+      {listeInHome.length > 0 && (
+        <View style={styles.sezione}>
+          <SectionHeader titolo="In evidenza" />
+          <View style={styles.elencoListe}>
+            {listeInHome.map((lista) => (
+              <GlassListRow
+                key={lista.id}
+                icona="file-text"
+                accento={accenti.oro}
+                titolo={lista.nome}
+                onPress={() =>
+                  router.push({
+                    pathname: '/liste/[id]',
+                    params: { id: lista.id, nome: lista.nome, conPrezzi: lista.con_prezzi ? '1' : '0' },
+                  })
+                }
+              />
+            ))}
+          </View>
+        </View>
+      )}
     </BentoScreen>
   );
 }
@@ -162,6 +185,13 @@ const styles = StyleSheet.create({
     backgroundColor: bento.sfondo,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  griglia: {
+    gap: spaziatura.md,
+  },
+  rigaGriglia: {
+    flexDirection: 'row',
+    gap: spaziatura.md,
   },
   sezione: {
     gap: spaziatura.md,
