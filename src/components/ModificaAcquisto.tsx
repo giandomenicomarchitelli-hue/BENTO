@@ -50,7 +50,7 @@ export function ModificaAcquisto({
   async function annullaAcquisto() {
     const conferma = await confermaAzione(
       'Annullare l’acquisto?',
-      `"${nome}" tornerà tra gli articoli da comprare. Prezzo e note andranno persi.`,
+      `"${nome}" tornerà tra gli articoli da comprare. Prezzo e note andranno persi. Se hai registrato una spesa per questo acquisto, annullarlo qui non la annulla: resterà comunque nei saldi del gruppo.`,
       'Annulla acquisto'
     );
     if (conferma) {
@@ -77,6 +77,9 @@ export function ModificaAcquisto({
             {prezzoCentesimi !== null ? formattaEuro(prezzoCentesimi) : 'Non segnato'}
           </Text>
         )}
+        <Text style={styles.notaPrezzo}>
+          Modificare questo importo non modifica le spese già registrate.
+        </Text>
       </View>
 
       <View style={styles.campo}>
@@ -143,6 +146,11 @@ const styles = StyleSheet.create({
   },
   valore: {
     fontSize: 17,
+  },
+  notaPrezzo: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 2,
   },
   input: {
     borderWidth: 1,

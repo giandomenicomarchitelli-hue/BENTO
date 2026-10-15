@@ -1,87 +1,18 @@
-import { Feather } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
-import { useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
 
 import type { ArticoloSpesa } from '@/api/articoliSpesa';
-import { Badge } from '@/components/Badge';
+import { BentoScreen } from '@/components/BentoScreen';
+import { IconBadge } from '@/components/IconBadge';
+import { SectionHeader } from '@/components/SectionHeader';
+import { ShoppingListAddForm } from '@/components/ShoppingListAddForm';
+import { ShoppingListHeader } from '@/components/ShoppingListHeader';
+import { ShoppingListRow } from '@/components/ShoppingListRow';
 import { useArticoliSpesa } from '@/hooks/useArticoliSpesa';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
-import { formattaEuro } from '@/lib/formato';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
-import { colori, raggio, spaziatura, tipografia } from '@/theme/tokens';
-
-function RigaArticolo({
-  articolo,
-  nomeCompratore,
-  onTocca,
-  onApriModifica,
-  onElimina,
-}: {
-  articolo: ArticoloSpesa;
-  nomeCompratore: string | null;
-  onTocca: () => void;
-  onApriModifica: () => void;
-  onElimina: () => void;
-}) {
-  const comprato = articolo.stato === 'comprato';
-
-  const contenuto = (
-    <>
-      <View style={[styles.casella, comprato && styles.caselladSelezionata]}>
-        {comprato && <Feather name="check" size={14} color="#fff" />}
-      </View>
-      <View style={styles.testiArticolo}>
-        <Text style={[styles.nomeArticolo, comprato && styles.nomeArticoloComprato]}>
-          {articolo.nome}
-        </Text>
-        {comprato ? (
-          <Text style={styles.compratoDa}>
-            {nomeCompratore !== null ? `Comprato da ${nomeCompratore}` : 'Comprato'}
-            {articolo.prezzo_centesimi !== null
-              ? ` · ${formattaEuro(articolo.prezzo_centesimi)}`
-              : ''}
-          </Text>
-        ) : (
-          articolo.note !== null &&
-          articolo.note !== '' && <Text style={styles.compratoDa}>{articolo.note}</Text>
-        )}
-      </View>
-    </>
-  );
-
-  return (
-    <View style={styles.riga}>
-      {comprato ? (
-        <>
-          {contenuto}
-          <Pressable onPress={onApriModifica} hitSlop={8} style={styles.bottoneAltro}>
-            <Feather name="more-vertical" size={18} color={colori.inchiostro500} />
-          </Pressable>
-        </>
-      ) : (
-        <Pressable
-          style={({ pressed }) => [styles.rigaCliccabile, pressed && styles.rigaPremuta]}
-          onPress={onTocca}
-        >
-          {contenuto}
-        </Pressable>
-      )}
-      <Pressable onPress={onElimina} hitSlop={8}>
-        <Feather name="trash-2" size={16} color={colori.inchiostro300} />
-      </Pressable>
-    </View>
-  );
-}
+import { accenti, bento, semantica, spaziatura, tipografia } from '@/theme/tokens';
 
 export default function ListaSpesa() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
@@ -94,232 +25,146 @@ export default function ListaSpesa() {
 }
 
 function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
-  const { membri } = useGruppoAttivo();
+  const { gruppo, membri } = useGruppoAttivo();
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
-  const { articoli, isLoading, aggiungi, elimina } = useArticoliSpesa(gruppoAttivoId);
-  const [nuovoArticolo, setNuovoArticolo] = useState('');
-  const [nuovaNota, setNuovaNota] = useState('');
+  const { articoli, isLoading, error, aggiungi, elimina } = useArticoliSpesa(gruppoAttivoId);
 
   const ilMioMembroId = membri.find((m) => m.utente_id === utenteId)?.id ?? null;
 
-  function aggiungiArticoloAllaLista() {
-    const nome = nuovoArticolo.trim();
-    if (nome === '' || ilMioMembroId === null) {
+  function aggiungiArticoloAllaLista(nome: string, nota: string | null) {
+    if (ilMioMembroId === null) {
       return;
     }
-    aggiungi.mutate({
-      nome,
-      creatoDaMembroId: ilMioMembroId,
-      note: nuovaNota.trim() === '' ? null : nuovaNota.trim(),
+    aggiungi.mutate({ nome, creatoDaMembroId: ilMioMembroId, note: nota });
+  }
+
+  function tornaIndietro() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/gruppi');
+    }
+  }
+
+  function apriRegistraSpesa(articolo: ArticoloSpesa) {
+    // Segnare comprato NON avviene qui: si apre solo il form di
+    // registrazione spesa esistente, che decide lui (con un'azione
+    // esplicita dell'utente) se creare una spesa e segnare comprato, o
+    // segnare comprato senza spesa. Vedi spese/nuova.tsx.
+    router.push({
+      pathname: '/spese/nuova',
+      params: {
+        articoloId: articolo.id,
+        nomeArticolo: articolo.nome,
+        notaEsistente: articolo.note ?? undefined,
+      },
     });
-    setNuovoArticolo('');
-    setNuovaNota('');
   }
 
   const daComprare = articoli.filter((a) => a.stato === 'da_comprare');
   const comprati = articoli.filter((a) => a.stato === 'comprato');
-  const elencoOrdinato = [...daComprare, ...comprati];
+
+  const sezioni = [
+    ...(daComprare.length > 0 ? [{ titolo: 'Da comprare', dati: daComprare }] : []),
+    ...(comprati.length > 0 ? [{ titolo: 'Comprati', dati: comprati }] : []),
+  ];
 
   return (
-    <View style={styles.contenitore}>
-      <View style={styles.intestazione}>
-        <View>
-          <Text style={styles.titolo}>Lista della spesa</Text>
-          {articoli.length > 0 && (
-            <Text style={styles.sottotitolo}>
-              {comprati.length} di {articoli.length} comprati
-            </Text>
-          )}
-        </View>
-        {articoli.length > 0 && (
-          <Badge testo={`${comprati.length}/${articoli.length}`} tono="blu" />
-        )}
-      </View>
-
-      <View style={styles.formAggiungi}>
-        <View style={styles.rigaInput}>
-          <TextInput
-            style={styles.input}
-            placeholder="Aggiungi un articolo"
-            placeholderTextColor={colori.inchiostro300}
-            value={nuovoArticolo}
-            onChangeText={setNuovoArticolo}
-            onSubmitEditing={aggiungiArticoloAllaLista}
-            returnKeyType="next"
-          />
-          <Pressable style={styles.bottoneAggiungi} onPress={aggiungiArticoloAllaLista}>
-            <Feather name="plus" size={20} color="#fff" />
-          </Pressable>
-        </View>
-        <TextInput
-          style={styles.inputNota}
-          placeholder="Note (opzionale, es. la marca)"
-          placeholderTextColor={colori.inchiostro300}
-          value={nuovaNota}
-          onChangeText={setNuovaNota}
-          onSubmitEditing={aggiungiArticoloAllaLista}
-          returnKeyType="done"
+    <BentoScreen senzaIntestazione scroll={false}>
+      <View style={styles.sezioneFissa}>
+        <ShoppingListHeader
+          nomeGruppo={gruppo?.nome ?? null}
+          totale={articoli.length}
+          comprati={comprati.length}
+          onIndietro={tornaIndietro}
         />
+        <ShoppingListAddForm onAggiungi={aggiungiArticoloAllaLista} />
       </View>
 
       {isLoading ? (
-        <ActivityIndicator style={styles.caricamento} />
-      ) : elencoOrdinato.length === 0 ? (
-        <Text style={styles.vuoto}>Nessun articolo in lista.</Text>
+        <View style={styles.statoContenitore}>
+          <ActivityIndicator color={bento.testoPrimario} />
+        </View>
+      ) : error !== null && error !== undefined ? (
+        <View style={styles.statoContenitore}>
+          <IconBadge icona="alert-circle" colore={semantica.pericolo} dimensione={48} />
+          <Text style={styles.statoTesto}>Non riesco a caricare la lista al momento.</Text>
+        </View>
+      ) : articoli.length === 0 ? (
+        <View style={styles.statoContenitore}>
+          <IconBadge icona="shopping-cart" colore={accenti.ciano} dimensione={48} />
+          <Text style={styles.statoTitolo}>Lista della spesa vuota</Text>
+          <Text style={styles.statoTesto}>
+            Aggiungi il primo articolo dal campo qui sopra.
+          </Text>
+        </View>
       ) : (
-        <FlatList
-          data={elencoOrdinato}
+        <SectionList
+          sections={sezioni.map((s) => ({ title: s.titolo, data: s.dati }))}
           keyExtractor={(articolo) => articolo.id}
           style={styles.elenco}
+          contentContainerStyle={styles.contenutoElenco}
+          stickySectionHeadersEnabled={false}
+          renderSectionHeader={({ section }) => (
+            <View style={styles.intestazioneSezione}>
+              <SectionHeader titolo={section.title} />
+            </View>
+          )}
           renderItem={({ item }) => (
-            <RigaArticolo
-              articolo={item}
-              nomeCompratore={membri.find((m) => m.id === item.comprato_da)?.nome ?? null}
-              onTocca={() => {
-                // Segnare comprato apre il form per registrare la spesa
-                // (o saltarlo, se non si vuole registrare nulla). La nota
-                // già presente si passa cosi' il form parte precompilato
-                // invece di perderla se non la si ritocca.
-                router.push({
-                  pathname: '/spese/nuova',
-                  params: {
-                    articoloId: item.id,
-                    nomeArticolo: item.nome,
-                    notaEsistente: item.note ?? undefined,
-                  },
-                });
-              }}
-              onApriModifica={() =>
-                router.push({ pathname: '/articoli/[id]', params: { id: item.id } })
-              }
-              onElimina={() => elimina.mutate(item.id)}
-            />
+            <View style={styles.rigaContenitore}>
+              <ShoppingListRow
+                articolo={item}
+                nomeCompratore={membri.find((m) => m.id === item.comprato_da)?.nome ?? null}
+                onTocca={() => apriRegistraSpesa(item)}
+                onApriModifica={() =>
+                  router.push({ pathname: '/articoli/[id]', params: { id: item.id } })
+                }
+                onElimina={() => elimina.mutate(item.id)}
+              />
+            </View>
           )}
         />
       )}
-    </View>
+    </BentoScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  contenitore: {
-    flex: 1,
-    backgroundColor: colori.sfondoApp,
-    padding: spaziatura.lg,
-    gap: spaziatura.md,
-  },
-  intestazione: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  titolo: {
-    ...tipografia.titolo,
-    fontSize: 22,
-    color: colori.inchiostro900,
-  },
-  sottotitolo: {
-    marginTop: 2,
-    fontSize: 13,
-    color: colori.inchiostro500,
-  },
-  formAggiungi: {
-    gap: spaziatura.sm,
-  },
-  rigaInput: {
-    flexDirection: 'row',
-    gap: spaziatura.sm,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: colori.superficie,
-    borderWidth: 1,
-    borderColor: colori.inchiostro150,
-    borderRadius: raggio.sm,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: colori.inchiostro900,
-  },
-  inputNota: {
-    backgroundColor: colori.superficie,
-    borderWidth: 1,
-    borderColor: colori.inchiostro150,
-    borderRadius: raggio.sm,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: colori.inchiostro900,
-  },
-  bottoneAggiungi: {
-    width: 44,
-    height: 44,
-    borderRadius: raggio.sm,
-    backgroundColor: colori.blu600,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  caricamento: {
-    marginTop: 24,
-  },
-  vuoto: {
-    textAlign: 'center',
-    color: colori.inchiostro500,
-    marginTop: 24,
+  sezioneFissa: {
+    paddingHorizontal: spaziatura.xl,
+    gap: spaziatura.lg,
   },
   elenco: {
     flex: 1,
   },
-  riga: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spaziatura.md,
-    backgroundColor: colori.superficie,
-    borderRadius: raggio.md,
-    paddingVertical: 12,
-    paddingHorizontal: spaziatura.md,
+  contenutoElenco: {
+    paddingHorizontal: spaziatura.xl,
+    paddingTop: spaziatura.lg,
+    paddingBottom: spaziatura.xl,
+  },
+  intestazioneSezione: {
+    marginBottom: spaziatura.sm,
+    marginTop: spaziatura.sm,
+  },
+  rigaContenitore: {
     marginBottom: spaziatura.sm,
   },
-  rigaCliccabile: {
+  statoContenitore: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spaziatura.md,
-  },
-  rigaPremuta: {
-    opacity: 0.7,
-  },
-  bottoneAltro: {
-    padding: 4,
-  },
-  casella: {
-    width: 24,
-    height: 24,
-    borderRadius: 7,
-    borderWidth: 1.5,
-    borderColor: colori.blu600,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: spaziatura.xxl,
+    gap: spaziatura.sm,
   },
-  caselladSelezionata: {
-    backgroundColor: colori.blu600,
-    borderColor: colori.blu600,
+  statoTitolo: {
+    ...tipografia.corpo,
+    fontSize: 17,
+    color: bento.testoPrimario,
+    marginTop: spaziatura.sm,
   },
-  testiArticolo: {
-    flex: 1,
-  },
-  nomeArticolo: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colori.inchiostro900,
-  },
-  nomeArticoloComprato: {
-    textDecorationLine: 'line-through',
-    color: colori.inchiostro300,
-  },
-  compratoDa: {
-    fontSize: 12,
-    color: colori.inchiostro500,
-    marginTop: 2,
+  statoTesto: {
+    fontSize: 14,
+    color: bento.testoSecondario,
+    textAlign: 'center',
   },
 });

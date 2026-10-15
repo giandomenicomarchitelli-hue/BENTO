@@ -8,7 +8,7 @@ export default function AppLayout() {
       <Stack.Screen name="crea-profilo" options={{ title: 'Nome utente' }} />
       <Stack.Screen name="profilo" options={{ title: 'Il mio profilo' }} />
       <Stack.Screen name="dashboard" options={{ headerShown: false }} />
-      <Stack.Screen name="lista-spesa" options={{ title: 'Lista della spesa' }} />
+      <Stack.Screen name="lista-spesa" options={{ headerShown: false }} />
       <Stack.Screen name="articoli/[id]" options={{ title: 'Articolo' }} />
       <Stack.Screen name="voci/[id]" options={{ title: 'Voce' }} />
       <Stack.Screen name="spese/nuova" options={{ title: 'Nuova spesa' }} />
