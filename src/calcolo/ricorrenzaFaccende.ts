@@ -188,34 +188,31 @@ function costruisciPeriodoGiorno(giornoISO: string, fusoOrario: string): Periodo
   };
 }
 
-function costruisciPeriodoSettimana(
-  lunediISO: string,
-  giornoSettimana: number | null,
-  fusoOrario: string
-): PeriodoOccorrenza {
+/**
+ * `giornoSettimana` è solo il giorno previsto/preferito, mostrato
+ * all'utente come indicazione di quando conviene farla - NON la scadenza
+ * reale: la faccenda resta completabile per tutta la settimana (fino a
+ * domenica sera), altrimenti basterebbe che il giorno preferito passasse
+ * perché l'attività diventi scaduta a metà settimana, anche se il periodo
+ * è tutt'altro che finito (bug corretto in questa revisione - vedi
+ * ricorrenzaFaccende.test.ts).
+ */
+function costruisciPeriodoSettimana(lunediISO: string, fusoOrario: string): PeriodoOccorrenza {
   const domenicaISO = aggiungiGiorni(lunediISO, 6);
-  const giornoScadenza = aggiungiGiorni(lunediISO, (giornoSettimana ?? 7) - 1);
   return {
     periodoInizio: lunediISO,
     periodoFine: domenicaISO,
-    scadenza: fineGiornoISO(giornoScadenza, fusoOrario),
+    scadenza: fineGiornoISO(domenicaISO, fusoOrario),
   };
 }
 
-function costruisciPeriodoMese(
-  primoGiornoISO: string,
-  giornoMese: number | null,
-  fusoOrario: string
-): PeriodoOccorrenza {
+/** Stesso ragionamento di costruisciPeriodoSettimana: `giornoMese` è solo indicativo, la scadenza reale è la fine del mese. */
+function costruisciPeriodoMese(primoGiornoISO: string, fusoOrario: string): PeriodoOccorrenza {
   const ultimoGiornoISO = fineMeseISO(primoGiornoISO);
-  const { anno, mese } = scomponiISO(primoGiornoISO);
-  const ultimoGiornoNumero = Number(ultimoGiornoISO.slice(-2));
-  const giornoClampato = Math.min(giornoMese ?? ultimoGiornoNumero, ultimoGiornoNumero);
-  const giornoScadenzaISO = `${anno}-${String(mese).padStart(2, '0')}-${String(giornoClampato).padStart(2, '0')}`;
   return {
     periodoInizio: primoGiornoISO,
     periodoFine: ultimoGiornoISO,
-    scadenza: fineGiornoISO(giornoScadenzaISO, fusoOrario),
+    scadenza: fineGiornoISO(ultimoGiornoISO, fusoOrario),
   };
 }
 
@@ -267,7 +264,7 @@ export function calcolaPeriodiMancanti(
 
     const risultati: PeriodoOccorrenza[] = [];
     while (cursore <= limite && risultati.length < MAX_PERIODI_PER_SINCRONIZZAZIONE) {
-      risultati.push(costruisciPeriodoSettimana(cursore, definizione.giornoSettimana, fusoOrario));
+      risultati.push(costruisciPeriodoSettimana(cursore, fusoOrario));
       cursore = aggiungiGiorni(cursore, 7);
     }
     return risultati;
@@ -280,7 +277,7 @@ export function calcolaPeriodiMancanti(
 
   const risultati: PeriodoOccorrenza[] = [];
   while (cursore <= limite && risultati.length < MAX_PERIODI_PER_SINCRONIZZAZIONE) {
-    risultati.push(costruisciPeriodoMese(cursore, definizione.giornoMese, fusoOrario));
+    risultati.push(costruisciPeriodoMese(cursore, fusoOrario));
     cursore = aggiungiMesi(cursore, 1);
   }
   return risultati;

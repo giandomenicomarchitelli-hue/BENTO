@@ -108,7 +108,7 @@ describe('calcolaPeriodiMancanti - giornaliera', () => {
 });
 
 describe('calcolaPeriodiMancanti - settimanale', () => {
-  it('genera un\'occorrenza per settimana (lunedì-domenica), con scadenza sul giorno preferito', () => {
+  it('genera un\'occorrenza per settimana (lunedì-domenica), con scadenza sempre a fine settimana', () => {
     // 2026-01-07 (creazione) è mercoledì; la settimana corrente parte lunedì 2026-01-05.
     const def = definizione({
       frequenza: 'settimanale',
@@ -119,15 +119,27 @@ describe('calcolaPeriodiMancanti - settimanale', () => {
 
     expect(periodi.map((p) => p.periodoInizio)).toEqual(['2026-01-05', '2026-01-12', '2026-01-19']);
     expect(periodi.map((p) => p.periodoFine)).toEqual(['2026-01-11', '2026-01-18', '2026-01-25']);
-    // Scadenza sempre sul martedì di quella settimana.
-    expect(dataLocaleISO(new Date(periodi[0].scadenza), FUSO_ROMA)).toBe('2026-01-06');
-    expect(dataLocaleISO(new Date(periodi[1].scadenza), FUSO_ROMA)).toBe('2026-01-13');
+    // La scadenza è sempre la domenica della settimana, MAI il giorno
+    // preferito (martedì qui sopra): un giorno preferito già passato non
+    // deve far scadere la faccenda a metà settimana (bug corretto in
+    // questa revisione).
+    expect(dataLocaleISO(new Date(periodi[0].scadenza), FUSO_ROMA)).toBe('2026-01-11');
+    expect(dataLocaleISO(new Date(periodi[1].scadenza), FUSO_ROMA)).toBe('2026-01-18');
   });
 
-  it('senza un giorno preferito, la scadenza è la domenica della settimana', () => {
-    const def = definizione({ frequenza: 'settimanale', creatoIl: '2026-01-07T08:00:00.000Z' });
-    const [primo] = calcolaPeriodiMancanti(def, null, '2026-01-07', FUSO_ROMA);
-    expect(dataLocaleISO(new Date(primo.scadenza), FUSO_ROMA)).toBe('2026-01-11');
+  it('il giorno preferito è solo indicativo: con o senza, la scadenza resta la domenica della settimana', () => {
+    const conGiornoPreferito = definizione({
+      frequenza: 'settimanale',
+      creatoIl: '2026-01-07T08:00:00.000Z',
+      giornoSettimana: 1, // lunedì, già passato rispetto a "oggi" in questo test
+    });
+    const senzaGiornoPreferito = definizione({ frequenza: 'settimanale', creatoIl: '2026-01-07T08:00:00.000Z' });
+
+    const [conGiorno] = calcolaPeriodiMancanti(conGiornoPreferito, null, '2026-01-07', FUSO_ROMA);
+    const [senzaGiorno] = calcolaPeriodiMancanti(senzaGiornoPreferito, null, '2026-01-07', FUSO_ROMA);
+
+    expect(dataLocaleISO(new Date(conGiorno.scadenza), FUSO_ROMA)).toBe('2026-01-11');
+    expect(dataLocaleISO(new Date(senzaGiorno.scadenza), FUSO_ROMA)).toBe('2026-01-11');
   });
 
   it('non duplica la settimana già generata', () => {
@@ -157,11 +169,24 @@ describe('calcolaPeriodiMancanti - mensile', () => {
     expect(periodi.map((p) => p.periodoInizio)).toEqual(['2026-11-01', '2026-12-01', '2027-01-01']);
   });
 
-  it('un giorno del mese scelto oltre la fine di un mese corto viene limitato all\'ultimo giorno disponibile', () => {
+  it('il giorno del mese scelto è solo indicativo: la scadenza è sempre l\'ultimo giorno del mese, anche se il giorno preferito è già passato o non esiste in un mese corto', () => {
+    // Aprile ha solo 30 giorni: un giorno preferito "31" non deve mai far
+    // scadere la faccenda prima della fine del mese, né farla sconfinare a
+    // maggio.
     const def = definizione({ frequenza: 'mensile', creatoIl: '2026-04-01T08:00:00.000Z', giornoMese: 31 });
     const [periodoAprile] = calcolaPeriodiMancanti(def, null, '2026-04-01', FUSO_ROMA);
-    // Aprile ha solo 30 giorni: la scadenza non deve "sconfinare" a maggio.
     expect(dataLocaleISO(new Date(periodoAprile.scadenza), FUSO_ROMA)).toBe('2026-04-30');
+
+    // Un giorno preferito "1", già passato se generato a metà mese, non
+    // deve far scadere la faccenda a inizio mese (bug corretto in questa
+    // revisione): resta completabile fino alla fine del mese.
+    const defGiornoPassato = definizione({
+      frequenza: 'mensile',
+      creatoIl: '2026-04-01T08:00:00.000Z',
+      giornoMese: 1,
+    });
+    const [periodoGiornoPassato] = calcolaPeriodiMancanti(defGiornoPassato, null, '2026-04-17', FUSO_ROMA);
+    expect(dataLocaleISO(new Date(periodoGiornoPassato.scadenza), FUSO_ROMA)).toBe('2026-04-30');
   });
 
   it('non duplica il mese già generato', () => {
