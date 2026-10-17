@@ -46,3 +46,6 @@ supabase/.temp/
 
 # Config locale per l'avvio del dev server da Claude Code
 .claude/
+
+# Cache/stato interno degli strumenti agente (non codice del progetto)
+.agents/

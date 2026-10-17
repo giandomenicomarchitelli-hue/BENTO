@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Bento — Home vassoio (concept, solo riferimento visivo)</title>
+<style>
+body{margin:0}
+*{box-sizing:border-box}
+button{font-family:inherit;text-align:left;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div style="width:390px;height:844px;background:#F6F8FC;position:relative;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif">
+
+  <div style="position:absolute;inset:0;overflow:auto;padding:30px 20px 170px;display:flex;flex-direction:column;gap:14px">
+
+    <!-- Intestazione -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between">
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:1px;color:#94A3B8;text-transform:uppercase">bento</div>
+        <div style="font-size:26px;font-weight:800;color:#0F172A;letter-spacing:-0.3px;margin-top:3px">Ciao, Giando</div>
+      </div>
+      <button type="button" aria-label="Apri profilo" style="all:unset;cursor:pointer;width:42px;height:42px;border-radius:14px;background:#ECEBFE;display:flex;align-items:center;justify-content:center">
+        <span style="font-size:15px;font-weight:700;color:#5B55E8">G</span>
+      </button>
+    </div>
+
+    <!-- Scomparto grande: saldo del gruppo -->
+    <button type="button" aria-label="Apri saldi e spese del gruppo" style="all:unset;cursor:pointer;border-radius:28px;padding:22px;display:flex;flex-direction:column;gap:6px;background:linear-gradient(135deg,#6D6AF8,#A98CF4,#F35BA6);box-shadow:0 14px 28px rgba(109,106,248,0.3)">
+      <span style="font-size:11px;font-weight:700;letter-spacing:0.8px;color:rgba(255,255,255,0.78);text-transform:uppercase">Casa Giando &amp; Vale</span>
+      <span style="font-size:33px;font-weight:800;color:#ffffff;letter-spacing:-0.4px;margin-top:2px">Ti devono 32,50&nbsp;€</span>
+      <span style="font-size:13px;color:rgba(255,255,255,0.88);font-weight:500;margin-top:1px">Aggiornato dopo l'ultima spesa di Vale</span>
+    </button>
+
+    <!-- Riga: lista spesa + gruppo -->
+    <div style="display:flex;gap:14px">
+      <button type="button" aria-label="Apri lista della spesa, 7 articoli" style="all:unset;cursor:pointer;flex:1;min-height:132px;border-radius:24px;background:#E3F6FC;padding:18px;display:flex;flex-direction:column;justify-content:space-between">
+        <span style="width:36px;height:36px;border-radius:11px;background:#CFEFFA;display:flex;align-items:center;justify-content:center;color:#0E7490">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle><path d="M3 4h2l2.6 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H6"></path></svg>
+        </span>
+        <span>
+          <span style="display:block;font-size:24px;font-weight:800;color:#0F172A">7</span>
+          <span style="display:block;font-size:12.5px;font-weight:600;color:#3A4150;margin-top:1px">articoli da comprare</span>
+        </span>
+      </button>
+
+      <button type="button" aria-label="Apri impostazioni del gruppo, 2 persone" style="all:unset;cursor:pointer;flex:1;min-height:132px;border-radius:24px;background:#ECEBFE;padding:18px;display:flex;flex-direction:column;justify-content:space-between">
+        <span style="width:36px;height:36px;border-radius:11px;background:#DAD8FD;display:flex;align-items:center;justify-content:center;color:#4C46D1">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.5 19v-1a3.8 3.8 0 0 0-3.8-3.8H6.8A3.8 3.8 0 0 0 3 18v1"></path><circle cx="9.1" cy="7.2" r="3"></circle><path d="M21 19v-1a3.3 3.3 0 0 0-2.4-3.2"></path><path d="M15.8 4.3a3 3 0 0 1 0 5.8"></path></svg>
+        </span>
+        <span>
+          <span style="display:block;font-size:14px;font-weight:700;color:#0F172A">Il tuo gruppo</span>
+          <span style="display:block;font-size:12.5px;font-weight:600;color:#3A4150;margin-top:1px">2 persone</span>
+        </span>
+      </button>
+    </div>
+
+    <!-- Riga: faccende (presto) + liste -->
+    <div style="display:flex;gap:14px">
+      <button type="button" aria-label="Faccende, funzione in arrivo" style="all:unset;cursor:pointer;flex:1;min-height:122px;border-radius:24px;background:#E3FBF2;padding:18px;display:flex;flex-direction:column;justify-content:space-between;position:relative">
+        <span style="position:absolute;top:14px;right:14px;font-size:10px;font-weight:700;letter-spacing:0.3px;color:#0F9D71;background:#CFF5E4;border-radius:999px;padding:3px 9px">PRESTO</span>
+        <span style="width:36px;height:36px;border-radius:11px;background:#CFF5E4;display:flex;align-items:center;justify-content:center;color:#0F9D71">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="17" rx="4"></rect><path d="M8 12.5l2.2 2.2L16 9"></path></svg>
+        </span>
+        <span>
+          <span style="display:block;font-size:14px;font-weight:700;color:#0F172A">Faccende</span>
+          <span style="display:block;font-size:12.5px;font-weight:600;color:#3A4150;margin-top:1px">Punti &amp; sfida</span>
+        </span>
+      </button>
+
+      <button type="button" aria-label="Apri tutte le liste" style="all:unset;cursor:pointer;flex:1;min-height:122px;border-radius:24px;background:#FFF6E0;padding:18px;display:flex;flex-direction:column;justify-content:space-between">
+        <span style="width:36px;height:36px;border-radius:11px;background:#FBEBC2;display:flex;align-items:center;justify-content:center;color:#B9780A">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><circle cx="4" cy="6" r="1"></circle><circle cx="4" cy="12" r="1"></circle><circle cx="4" cy="18" r="1"></circle></svg>
+        </span>
+        <span>
+          <span style="display:block;font-size:14px;font-weight:700;color:#0F172A">Le tue liste</span>
+          <span style="display:block;font-size:12.5px;font-weight:600;color:#3A4150;margin-top:1px">3 liste</span>
+        </span>
+      </button>
+    </div>
+
+    <!-- Sezione sotto il vassoio: liste in evidenza -->
+    <div style="margin-top:6px;display:flex;flex-direction:column;gap:9px">
+      <span style="font-size:12px;font-weight:700;letter-spacing:0.4px;color:#64748B;text-transform:uppercase;padding:0 2px">In evidenza</span>
+
+      <button type="button" aria-label="Apri lista Spesa settimanale" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.72);border:1px solid rgba(148,163,184,0.18);border-radius:18px;padding:14px 16px">
+        <span style="width:30px;height:30px;border-radius:9px;background:#E3F6FC;display:flex;align-items:center;justify-content:center;color:#0E7490;flex-shrink:0">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18M7 12h10M10 17h4"></path></svg>
+        </span>
+        <span style="flex:1;font-size:14.5px;font-weight:600;color:#0F172A">Spesa settimanale</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"></polyline></svg>
+      </button>
+
+      <button type="button" aria-label="Apri lista Viaggio a Napoli" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.72);border:1px solid rgba(148,163,184,0.18);border-radius:18px;padding:14px 16px">
+        <span style="width:30px;height:30px;border-radius:9px;background:#FDE7F1;display:flex;align-items:center;justify-content:center;color:#C2267F;flex-shrink:0">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18M7 12h10M10 17h4"></path></svg>
+        </span>
+        <span style="flex:1;font-size:14.5px;font-weight:600;color:#0F172A">Viaggio a Napoli</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"></polyline></svg>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Barra persistente in linguaggio naturale: un passo dall'input vocale di fase 2 -->
+  <div style="position:absolute;left:18px;right:18px;bottom:30px;border-radius:26px;background:#0F172A;padding:7px 7px 7px 20px;display:flex;align-items:center;gap:10px;box-shadow:0 18px 34px rgba(15,23,42,0.32)">
+    <button type="button" aria-label="Scrivi cosa hai fatto" style="all:unset;cursor:pointer;flex:1;color:rgba(255,255,255,0.56);font-size:14.5px;font-weight:500">Dimmi cosa hai fatto…</button>
+    <button type="button" aria-label="Parla per raccontare cosa hai fatto" style="all:unset;cursor:pointer;width:42px;height:42px;border-radius:999px;background:#6D6AF8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
+    </button>
+  </div>
+
+</div>
+</body>
+</html>

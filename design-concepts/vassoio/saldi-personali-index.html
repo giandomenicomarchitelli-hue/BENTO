@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Bento — I miei saldi (il vassoio) (concept, solo riferimento visivo)</title>
+<style>
+body{margin:0}
+*{box-sizing:border-box}
+button{font-family:inherit;text-align:left;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div style="width:390px;height:844px;background:#F6F8FC;position:relative;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif">
+
+  <div style="position:absolute;inset:0;overflow:auto;padding:26px 20px 36px;display:flex;flex-direction:column;gap:16px">
+
+    <!-- Intestazione -->
+    <div style="display:flex;align-items:center;gap:12px">
+      <button type="button" aria-label="Torna indietro" style="all:unset;cursor:pointer;width:38px;height:38px;border-radius:13px;background:#FFF6E0;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#B9780A">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style="font-size:20px;font-weight:800;color:#0F172A;letter-spacing:-0.2px">I miei saldi</div>
+    </div>
+
+    <span style="font-size:13px;font-weight:500;color:#3A4150;padding:0 2px;line-height:1.4">Saldo netto con ogni persona, sommato su tutti i gruppi in comune.</span>
+
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <button type="button" aria-label="Apri saldo con Vale" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.72);border:1px solid rgba(148,163,184,0.18);border-radius:18px;padding:14px 16px">
+        <span style="width:36px;height:36px;border-radius:999px;background:#F35BA6;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="font-size:13.5px;font-weight:700;color:#ffffff">V</span>
+        </span>
+        <span style="flex:1;font-size:14.5px;color:#0F172A"><span style="font-weight:700">Vale</span> ti deve</span>
+        <span style="font-size:15.5px;font-weight:800;color:#2E7D32">32,50 €</span>
+      </button>
+
+      <button type="button" aria-label="Apri saldo con Marco" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.72);border:1px solid rgba(148,163,184,0.18);border-radius:18px;padding:14px 16px">
+        <span style="width:36px;height:36px;border-radius:999px;background:#0F9D71;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="font-size:13.5px;font-weight:700;color:#ffffff">M</span>
+        </span>
+        <span style="flex:1;font-size:14.5px;color:#0F172A">Devi a <span style="font-weight:700">Marco</span></span>
+        <span style="font-size:15.5px;font-weight:800;color:#C0392B">5,00 €</span>
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>
