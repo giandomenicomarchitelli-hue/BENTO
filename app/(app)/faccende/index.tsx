@@ -53,6 +53,14 @@ const FREQUENZE: Frequenza[] = ['giornaliera', 'settimanale', 'mensile', 'person
 
 type Filtro = 'oggi' | 'settimana' | 'mese' | 'da_fare' | 'completate';
 
+/** Messaggio leggibile da un errore di rete/Supabase, senza assumere una forma precisa. */
+function messaggioErrore(errore: unknown): string {
+  if (errore instanceof Error && errore.message.trim() !== '') {
+    return errore.message;
+  }
+  return 'Qualcosa è andato storto. Riprova.';
+}
+
 export default function Faccende() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
 
@@ -318,6 +326,7 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
             onPress={() => attiva.mutate()}
             caricando={attiva.isPending}
           />
+          {attiva.isError && <Text style={styles.testoErrore}>{messaggioErrore(attiva.error)}</Text>}
         </View>
       </BentoScreen>
     );
@@ -400,6 +409,12 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
                   : null;
               const completandoQuesta = completa.isPending && completa.variables === occorrenza.id;
               const annullandoQuesta = annullaCompletamento.isPending && annullaCompletamento.variables === occorrenza.id;
+              const erroreCompletamento =
+                completa.isError && completa.variables === occorrenza.id ? completa.error : null;
+              const erroreAnnullamento =
+                annullaCompletamento.isError && annullaCompletamento.variables === occorrenza.id
+                  ? annullaCompletamento.error
+                  : null;
 
               return (
                 <GlassCard key={occorrenza.id} elevazione="bassa">
@@ -433,6 +448,9 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
                       )}
                     </Pressable>
                   )}
+                  {erroreCompletamento !== null && (
+                    <Text style={styles.testoErroreRiga}>{messaggioErrore(erroreCompletamento)}</Text>
+                  )}
 
                   {occorrenza.stato === 'completata' && (
                     <Pressable
@@ -444,6 +462,9 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
                         {annullandoQuesta ? 'Annullamento…' : 'Annulla completamento'}
                       </Text>
                     </Pressable>
+                  )}
+                  {erroreAnnullamento !== null && (
+                    <Text style={styles.testoErroreRiga}>{messaggioErrore(erroreAnnullamento)}</Text>
                   )}
                 </GlassCard>
               );
@@ -463,12 +484,17 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
         />
 
         {!formVisibile && faccendeAttive.length === 0 && (
-          <BentoButton
-            etichetta="Carica faccende suggerite"
-            variante="vetro"
-            onPress={() => importaSuggerite.mutate()}
-            caricando={importaSuggerite.isPending}
-          />
+          <View>
+            <BentoButton
+              etichetta="Carica faccende suggerite"
+              variante="vetro"
+              onPress={() => importaSuggerite.mutate()}
+              caricando={importaSuggerite.isPending}
+            />
+            {importaSuggerite.isError && (
+              <Text style={styles.testoErrore}>{messaggioErrore(importaSuggerite.error)}</Text>
+            )}
+          </View>
         )}
 
         {formVisibile && (
@@ -608,6 +634,9 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
             </View>
 
             {erroreForm !== null && <Text style={styles.testoErrore}>{erroreForm}</Text>}
+            {erroreForm === null && (crea.isError || aggiorna.isError) && (
+              <Text style={styles.testoErrore}>{messaggioErrore(crea.error ?? aggiorna.error)}</Text>
+            )}
 
             <BentoButton
               etichetta={idInModifica !== null ? 'Salva modifiche' : 'Aggiungi faccenda'}
@@ -632,6 +661,7 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
                 </Pressable>
               </View>
             ))}
+            {archivia.isError && <Text style={styles.testoErrore}>{messaggioErrore(archivia.error)}</Text>}
           </View>
         )}
       </View>
@@ -901,6 +931,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: semantica.pericolo,
     textAlign: 'center',
+    marginTop: spaziatura.xs,
+  },
+  testoErroreRiga: {
+    fontSize: 12.5,
+    color: semantica.pericolo,
+    marginTop: spaziatura.xs,
   },
   elencoDefinizioni: {
     gap: spaziatura.xs,
