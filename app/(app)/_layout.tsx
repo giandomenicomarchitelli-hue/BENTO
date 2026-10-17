@@ -19,6 +19,7 @@ export default function AppLayout() {
       <Stack.Screen name="liste/index" options={{ title: 'Liste' }} />
       <Stack.Screen name="liste/[id]" options={{ title: 'Lista' }} />
       <Stack.Screen name="gruppo/index" options={{ title: 'Il tuo gruppo' }} />
+      <Stack.Screen name="faccende/index" options={{ title: 'Faccende' }} />
       <Stack.Screen name="onboarding/crea-gruppo" options={{ title: 'Crea un gruppo' }} />
       <Stack.Screen
         name="onboarding/unisciti-a-gruppo"

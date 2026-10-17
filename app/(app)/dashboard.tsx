@@ -141,8 +141,8 @@ export default function Dashboard() {
             icona="check-square"
             accento={accenti.menta}
             titolo="Faccende"
-            sottotitolo="Presto disponibile"
-            badge="Presto"
+            sottotitolo="Punti e classifica"
+            onPress={() => router.push('/faccende')}
           />
           <GlassTile
             icona="list"

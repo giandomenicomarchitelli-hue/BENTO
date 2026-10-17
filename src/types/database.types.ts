@@ -4,9 +4,20 @@
  *
  *   supabase gen types typescript --project-id iajucwiivgjguyowywwb > src/types/database.types.ts
  *
- * Uniche modifiche manuali: i campi `tipo` (gruppi) e `stato` (articoli_spesa)
- * sono ristretti alle union letterali corrispondenti ai CHECK del DB — il
+ * Modifiche manuali: i campi `tipo` (gruppi) e `stato` (articoli_spesa) sono
+ * ristretti alle union letterali corrispondenti ai CHECK del DB — il
  * generatore li tipizza come `string` perché non sono enum Postgres reali.
+ *
+ * Le tabelle/funzioni del modulo Faccende (`faccende`, `occorrenze_faccende`,
+ * `storico_faccende`, `impostazioni_faccende`, `completa_occorrenza`,
+ * `annulla_completamento_occorrenza`, `importa_faccende_suggerite`) sono
+ * state aggiunte qui a mano, scritte per corrispondere esattamente alle
+ * migration 00000000000013/00000000000014: le migration non sono ancora
+ * state applicate al progetto Supabase collegato in questa sessione (nessun
+ * Docker/Supabase locale disponibile per verificarle prima). Dopo averle
+ * applicate, rigenerare questo file con il comando sopra e verificare che
+ * coincida con quanto scritto a mano (stessi nomi, stessi tipi) - gli altri
+ * campi/stato restano invariati.
  */
 
 export type Json =
@@ -111,6 +122,85 @@ export type Database = {
           },
         ]
       }
+      faccende: {
+        Row: {
+          aggiornata_il: string
+          assegnata_a: string | null
+          attiva: boolean
+          creato_da: string | null
+          creato_il: string
+          descrizione: string | null
+          durata_stimata_minuti: number | null
+          frequenza: "giornaliera" | "settimanale" | "mensile" | "personalizzata" | "una_tantum"
+          gruppo_id: string
+          id: string
+          intervallo_ricorrenza: number | null
+          nome: string
+          origine_punteggio: "stima_automatica" | "manuale"
+          parametri_ricorrenza: Json
+          punti: number
+          sforzo: "basso" | "medio" | "alto"
+        }
+        Insert: {
+          aggiornata_il?: string
+          assegnata_a?: string | null
+          attiva?: boolean
+          creato_da?: string | null
+          creato_il?: string
+          descrizione?: string | null
+          durata_stimata_minuti?: number | null
+          frequenza: "giornaliera" | "settimanale" | "mensile" | "personalizzata" | "una_tantum"
+          gruppo_id: string
+          id?: string
+          intervallo_ricorrenza?: number | null
+          nome: string
+          origine_punteggio?: "stima_automatica" | "manuale"
+          parametri_ricorrenza?: Json
+          punti: number
+          sforzo?: "basso" | "medio" | "alto"
+        }
+        Update: {
+          aggiornata_il?: string
+          assegnata_a?: string | null
+          attiva?: boolean
+          creato_da?: string | null
+          creato_il?: string
+          descrizione?: string | null
+          durata_stimata_minuti?: number | null
+          frequenza?: "giornaliera" | "settimanale" | "mensile" | "personalizzata" | "una_tantum"
+          gruppo_id?: string
+          id?: string
+          intervallo_ricorrenza?: number | null
+          nome?: string
+          origine_punteggio?: "stima_automatica" | "manuale"
+          parametri_ricorrenza?: Json
+          punti?: number
+          sforzo?: "basso" | "medio" | "alto"
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faccende_assegnata_a_fkey"
+            columns: ["assegnata_a"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faccende_creato_da_fkey"
+            columns: ["creato_da"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faccende_gruppo_id_fkey"
+            columns: ["gruppo_id"]
+            isOneToOne: false
+            referencedRelation: "gruppi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gruppi: {
         Row: {
           codice_invito: string
@@ -137,6 +227,32 @@ export type Database = {
           tipo?: "casa" | "viaggio" | "ufficio" | "altro"
         }
         Relationships: []
+      }
+      impostazioni_faccende: {
+        Row: {
+          creato_il: string
+          fuso_orario: string
+          gruppo_id: string
+        }
+        Insert: {
+          creato_il?: string
+          fuso_orario?: string
+          gruppo_id: string
+        }
+        Update: {
+          creato_il?: string
+          fuso_orario?: string
+          gruppo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impostazioni_faccende_gruppo_id_fkey"
+            columns: ["gruppo_id"]
+            isOneToOne: true
+            referencedRelation: "gruppi"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       liste: {
         Row: {
@@ -211,6 +327,70 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "membri_gruppo_id_fkey"
+            columns: ["gruppo_id"]
+            isOneToOne: false
+            referencedRelation: "gruppi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      occorrenze_faccende: {
+        Row: {
+          completata_da: string | null
+          completata_il: string | null
+          creato_il: string
+          faccenda_id: string
+          gruppo_id: string
+          id: string
+          periodo_fine: string
+          periodo_inizio: string
+          punti_previsti: number
+          scadenza: string
+          stato: "da_fare" | "completata" | "scaduta"
+        }
+        Insert: {
+          completata_da?: string | null
+          completata_il?: string | null
+          creato_il?: string
+          faccenda_id: string
+          gruppo_id: string
+          id?: string
+          periodo_fine: string
+          periodo_inizio: string
+          punti_previsti: number
+          scadenza: string
+          stato?: "da_fare" | "completata" | "scaduta"
+        }
+        Update: {
+          completata_da?: string | null
+          completata_il?: string | null
+          creato_il?: string
+          faccenda_id?: string
+          gruppo_id?: string
+          id?: string
+          periodo_fine?: string
+          periodo_inizio?: string
+          punti_previsti?: number
+          scadenza?: string
+          stato?: "da_fare" | "completata" | "scaduta"
+        }
+        Relationships: [
+          {
+            foreignKeyName: "occorrenze_faccende_completata_da_fkey"
+            columns: ["completata_da"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "occorrenze_faccende_faccenda_id_fkey"
+            columns: ["faccenda_id"]
+            isOneToOne: false
+            referencedRelation: "faccende"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "occorrenze_faccende_gruppo_id_fkey"
             columns: ["gruppo_id"]
             isOneToOne: false
             referencedRelation: "gruppi"
@@ -320,6 +500,58 @@ export type Database = {
           },
         ]
       }
+      storico_faccende: {
+        Row: {
+          creato_il: string
+          gruppo_id: string
+          id: string
+          membro_id: string | null
+          occorrenza_id: string
+          punti: number
+          tipo_evento: "completata" | "annullata"
+        }
+        Insert: {
+          creato_il?: string
+          gruppo_id: string
+          id?: string
+          membro_id?: string | null
+          occorrenza_id: string
+          punti: number
+          tipo_evento: "completata" | "annullata"
+        }
+        Update: {
+          creato_il?: string
+          gruppo_id?: string
+          id?: string
+          membro_id?: string | null
+          occorrenza_id?: string
+          punti?: number
+          tipo_evento?: "completata" | "annullata"
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storico_faccende_gruppo_id_fkey"
+            columns: ["gruppo_id"]
+            isOneToOne: false
+            referencedRelation: "gruppi"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "storico_faccende_membro_id_fkey"
+            columns: ["membro_id"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "storico_faccende_occorrenza_id_fkey"
+            columns: ["occorrenza_id"]
+            isOneToOne: false
+            referencedRelation: "occorrenze_faccende"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voci_lista: {
         Row: {
           aggiornato_il: string
@@ -376,6 +608,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      annulla_completamento_occorrenza: {
+        Args: { p_occorrenza_id: string }
+        Returns: undefined
+      }
+      completa_occorrenza: {
+        Args: { p_occorrenza_id: string }
+        Returns: undefined
+      }
       crea_spesa: {
         Args: {
           p_data: string
@@ -388,6 +628,10 @@ export type Database = {
         Returns: string
       }
       e_membro_di: { Args: { p_gruppo_id: string }; Returns: boolean }
+      importa_faccende_suggerite: {
+        Args: { p_gruppo_id: string }
+        Returns: number
+      }
       unisciti_a_gruppo: {
         Args: { p_codice_invito: string }
         Returns: string
