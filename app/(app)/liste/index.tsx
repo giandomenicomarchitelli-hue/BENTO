@@ -102,6 +102,10 @@ function ListeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
         </Pressable>
       </View>
 
+      <Pressable style={styles.riga} onPress={() => router.push('/sfide')}>
+        <Text style={styles.nomeLista}>Sfide del gruppo</Text>
+      </Pressable>
+
       {isLoading ? (
         <ActivityIndicator style={styles.caricamento} />
       ) : liste.length === 0 ? (

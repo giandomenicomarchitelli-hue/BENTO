@@ -1,11 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId } from 'react';
 
-import { annullaSfida, creaSfida, listaSfide, ripetiSfida, scadiTurniSfida, type Sfida } from '@/api/sfide';
+import {
+  annullaSfida,
+  creaSfida,
+  listaSfideConStato,
+  ripetiSfida,
+  scadiTurniSfida,
+  type SfidaConStato,
+} from '@/api/sfide';
 import { supabase } from '@/lib/supabase';
 
 /**
- * Elenco delle sfide del gruppo, con Realtime e mutazioni di
+ * Elenco delle sfide del gruppo (con lo stato del turno corrente e se ho
+ * già votato - necessario per raggruppare la pagina sfide/index.tsx senza
+ * una query per sfida, Task 16), Realtime e mutazioni di
  * creazione/ripetizione/annullamento/sincronizzazione scadenze.
  *
  * sfide_turni non ha una colonna gruppo_id diretta (vedi design doc §1 e
@@ -23,7 +32,7 @@ export function useSfide(gruppoId: string | null) {
   const query = useQuery({
     queryKey: chiaveQuery,
     enabled: gruppoId !== null,
-    queryFn: () => listaSfide(gruppoId as string),
+    queryFn: () => listaSfideConStato(gruppoId as string),
   });
 
   const invalida = () => queryClient.invalidateQueries({ queryKey: chiaveQuery });
@@ -70,7 +79,7 @@ export function useSfide(gruppoId: string | null) {
   });
 
   return {
-    sfide: query.data ?? ([] as Sfida[]),
+    sfide: query.data ?? ([] as SfidaConStato[]),
     isLoading: query.isLoading,
     error: query.error,
     crea,

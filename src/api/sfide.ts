@@ -19,6 +19,62 @@ export async function listaSfide(gruppoId: string): Promise<Sfida[]> {
   return data;
 }
 
+export type SfidaConStato = {
+  sfida: Sfida;
+  turnoCorrente: TurnoSfida | undefined;
+  hoGiaVotatoNelTurnoCorrente: boolean;
+};
+
+/**
+ * Come listaSfide, ma con lo stato del turno corrente e se IO ho già
+ * votato - per raggruppare l'elenco (in attesa del mio voto / attive /
+ * spareggi / concluse) senza una query per sfida. Sempre 3 query fisse
+ * indipendentemente da quante sfide ha il gruppo: tutte le sfide, tutti i
+ * loro turni in un'unica query con `in()`, e i MIEI voti (RLS li limita
+ * comunque alle sole righe proprie, su qualunque turno) per sapere in
+ * quali turni ho già votato.
+ */
+export async function listaSfideConStato(gruppoId: string): Promise<SfidaConStato[]> {
+  const sfide = await listaSfide(gruppoId);
+  if (sfide.length === 0) {
+    return [];
+  }
+
+  const [turniRes, votiRes] = await Promise.all([
+    supabase
+      .from('sfide_turni')
+      .select()
+      .in('sfida_id', sfide.map((s) => s.id))
+      .order('numero_turno', { ascending: true }),
+    supabase.from('sfide_voti').select('turno_id'),
+  ]);
+
+  if (turniRes.error) {
+    throw turniRes.error;
+  }
+  if (votiRes.error) {
+    throw votiRes.error;
+  }
+
+  const turniPerSfida = new Map<string, TurnoSfida[]>();
+  for (const turno of turniRes.data) {
+    const lista = turniPerSfida.get(turno.sfida_id) ?? [];
+    lista.push(turno);
+    turniPerSfida.set(turno.sfida_id, lista);
+  }
+  const turniVotati = new Set(votiRes.data.map((v) => v.turno_id));
+
+  return sfide.map((sfida) => {
+    const turni = turniPerSfida.get(sfida.id) ?? [];
+    const turnoCorrente = turni[turni.length - 1];
+    return {
+      sfida,
+      turnoCorrente,
+      hoGiaVotatoNelTurnoCorrente: turnoCorrente !== undefined && turniVotati.has(turnoCorrente.id),
+    };
+  });
+}
+
 /**
  * Tutti i dati di una sfida per la sua pagina di dettaglio, aggregati con
  * più query in parallelo (stesso pattern di useGruppoAttivo) - non
