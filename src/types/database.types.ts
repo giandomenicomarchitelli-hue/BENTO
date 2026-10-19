@@ -1028,9 +1028,14 @@ export type Database = {
     Views: {
       sfide_turni_progresso: {
         Row: {
-          partecipanti_totali: number
-          partecipanti_votanti: number
-          turno_id: string
+          // Postgres non può garantire staticamente che le colonne di una
+          // vista siano non-null (anche se qui, nella pratica, lo sono
+          // sempre: count(*) non è mai null, turno_id viene da una chiave
+          // primaria) - confermato da `supabase gen types` dopo aver
+          // applicato la migration, che le marca tutte nullable.
+          partecipanti_totali: number | null
+          partecipanti_votanti: number | null
+          turno_id: string | null
         }
         Relationships: []
       }
