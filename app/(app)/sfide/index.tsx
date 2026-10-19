@@ -1,4 +1,5 @@
 import { Redirect, router } from 'expo-router';
+import { useEffect } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { SfidaConStato } from '@/api/sfide';
@@ -49,7 +50,16 @@ export default function Sfide() {
 }
 
 function SfideDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
-  const { sfide, isLoading } = useSfide(gruppoAttivoId);
+  const { sfide, isLoading, sincronizzaScadenze } = useSfide(gruppoAttivoId);
+
+  // Nessun timer: una sola sincronizzazione quando la pagina si apre
+  // (stesso principio di faccende/index.tsx) - senza questa chiamata,
+  // scadi_turni_sfida non veniva mai eseguita da nessuna pagina e
+  // nessun turno scadeva mai (scoperto in revisione finale).
+  useEffect(() => {
+    sincronizzaScadenze.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gruppoAttivoId]);
 
   if (isLoading) {
     return (

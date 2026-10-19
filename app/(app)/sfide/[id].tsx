@@ -1,8 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { it } from 'date-fns/locale';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import type { OpzioneSfida, TurnoSfida } from '@/api/sfide';
@@ -25,8 +23,27 @@ function messaggioErrore(errore: unknown): string {
   return 'Qualcosa è andato storto. Riprova.';
 }
 
+/**
+ * Sempre nel fuso fisso Europe/Rome, non in quello del dispositivo
+ * (stesso principio di sfide/nuova.tsx): senza questo, un gruppo in
+ * viaggio con il telefono su un altro fuso vedrebbe un orario diverso da
+ * quello che l'organizzatore ha effettivamente scelto.
+ */
 function formattaIstante(iso: string): string {
-  return format(new Date(iso), "d MMMM yyyy 'alle' HH:mm", { locale: it });
+  const d = new Date(iso);
+  const data = new Intl.DateTimeFormat('it-IT', {
+    timeZone: 'Europe/Rome',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(d);
+  const ora = new Intl.DateTimeFormat('it-IT', {
+    timeZone: 'Europe/Rome',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(d);
+  return `${data} alle ${ora}`;
 }
 
 function SelettoreOpzioni({
@@ -88,17 +105,116 @@ function SelettoreOpzioni({
   );
 }
 
+/**
+ * Isola lo stato di selezione del voto (3 scelte/1 scelta + proposta) in
+ * un componente a parte, montato con `key={turno.id}` dal chiamante:
+ * quando lo spareggio automatico apre un nuovo turno nella stessa
+ * transazione del voto che lo decide, la chiave diversa forza un
+ * remount con stato fresco. Senza questo, chi vota per ultimo si
+ * ritrova lo spareggio con le selezioni del turno precedente ancora
+ * caricate (fino a 3 invece di 1, o una proposta ancora attiva che lo
+ * spareggio non ammette) - scoperto in revisione finale.
+ */
+function FormVoto({
+  turno,
+  opzioniVisibili,
+  confermaVoti,
+}: {
+  turno: TurnoSfida;
+  opzioniVisibili: OpzioneSfida[];
+  confermaVoti: ReturnType<typeof useSfidaDettaglio>['confermaVoti'];
+}) {
+  const [selezionate, setSelezionate] = useState<string[]>([]);
+  const [propostaAttiva, setPropostaAttiva] = useState(false);
+  const [propostaTesto, setPropostaTesto] = useState('');
+
+  const opzioniTurno = opzioniVisibili.filter((o) => turno.opzioni_in_gara.includes(o.id));
+  const spareggio = turno.tipo_turno === 'spareggio';
+  // Per i turni a 3 scelte il massimo totale (opzioni + eventuale
+  // proposta) è sempre 3: con la proposta attiva restano 2 slot per le
+  // opzioni della lista, esattamente come in sfide/nuova.tsx. Uno
+  // spareggio non ammette mai una proposta personalizzata (coerente con
+  // 00000000000017: la RPC la rifiuterebbe comunque).
+  const maxTotale = spareggio ? 1 : 3;
+  const totaleScelte = selezionate.length + (!spareggio && propostaAttiva ? 1 : 0);
+  const formValido = spareggio
+    ? selezionate.length === 1
+    : totaleScelte === 3 && (!propostaAttiva || propostaTesto.trim() !== '');
+
+  function selezionaOpzione(id: string) {
+    const totale = selezionate.length + (!spareggio && propostaAttiva ? 1 : 0);
+    setSelezionate((prec) => {
+      if (prec.includes(id)) {
+        return prec.filter((x) => x !== id);
+      }
+      if (totale >= maxTotale) {
+        return prec;
+      }
+      return [...prec, id];
+    });
+  }
+
+  function alternaProposta() {
+    if (propostaAttiva) {
+      setPropostaAttiva(false);
+      setPropostaTesto('');
+      return;
+    }
+    if (selezionate.length >= maxTotale) {
+      return;
+    }
+    setPropostaAttiva(true);
+  }
+
+  function invia() {
+    confermaVoti.mutate({
+      turnoId: turno.id,
+      opzioniScelte: selezionate,
+      propostaPersonalizzata: !spareggio && propostaAttiva ? propostaTesto.trim() : undefined,
+    });
+  }
+
+  return (
+    <>
+      <SelettoreOpzioni
+        opzioni={opzioniTurno}
+        maxScelte={maxTotale}
+        mostraProposta={!spareggio}
+        selezionate={selezionate}
+        onToggleOpzione={selezionaOpzione}
+        propostaAttiva={!spareggio && propostaAttiva}
+        propostaTesto={propostaTesto}
+        onAlternaProposta={alternaProposta}
+        onCambiaProposta={setPropostaTesto}
+      />
+      {confermaVoti.isError && <Text style={styles.testoErrore}>{messaggioErrore(confermaVoti.error)}</Text>}
+      <BentoButton
+        etichetta={spareggio ? 'Conferma la mia scelta' : 'Conferma le mie 3 scelte'}
+        onPress={invia}
+        disabilitato={!formValido}
+        caricando={confermaVoti.isPending}
+      />
+    </>
+  );
+}
+
 export default function DettaglioSfida() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
   const { membri } = useGruppoAttivo();
   const { dettaglio, isLoading, error, confermaVoti } = useSfidaDettaglio(id ?? null);
-  const { ripeti } = useSfide(gruppoAttivoId);
+  const { ripeti, sincronizzaScadenze } = useSfide(gruppoAttivoId);
   const queryClient = useQueryClient();
 
-  const [selezionate, setSelezionate] = useState<string[]>([]);
-  const [propostaAttiva, setPropostaAttiva] = useState(false);
-  const [propostaTesto, setPropostaTesto] = useState('');
+  // Stesso principio di sfide/index.tsx: una notifica porta dritto qui,
+  // quindi anche questa pagina deve sincronizzare le scadenze alla sua
+  // apertura, non solo l'elenco.
+  useEffect(() => {
+    if (gruppoAttivoId !== null) {
+      sincronizzaScadenze.mutate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gruppoAttivoId]);
 
   if (isLoading) {
     return (
@@ -137,39 +253,6 @@ export default function DettaglioSfida() {
   const organizzatore = membri.find((m) => m.id === sfida.creata_da)?.nome ?? 'un membro';
   const opzioniPerId = new Map(opzioniVisibili.map((o) => [o.id, o]));
   const turnoCorrente: TurnoSfida | undefined = turni[turni.length - 1];
-
-  function selezionaOpzione(id: string, maxScelte: number) {
-    const totale = selezionate.length + (propostaAttiva ? 1 : 0);
-    setSelezionate((prec) => {
-      if (prec.includes(id)) {
-        return prec.filter((x) => x !== id);
-      }
-      if (totale >= maxScelte) {
-        return prec;
-      }
-      return [...prec, id];
-    });
-  }
-
-  function alternaProposta(maxScelte: number) {
-    if (propostaAttiva) {
-      setPropostaAttiva(false);
-      setPropostaTesto('');
-      return;
-    }
-    if (selezionate.length >= maxScelte) {
-      return;
-    }
-    setPropostaAttiva(true);
-  }
-
-  function invia(turnoId: string) {
-    confermaVoti.mutate({
-      turnoId,
-      opzioniScelte: selezionate,
-      propostaPersonalizzata: propostaAttiva ? propostaTesto.trim() : undefined,
-    });
-  }
 
   return (
     <BentoScreen>
@@ -246,43 +329,12 @@ export default function DettaglioSfida() {
             {hoGiaVotatoNelTurnoCorrente ? (
               <Text style={styles.testoStato}>Hai già votato. In attesa degli altri.</Text>
             ) : (
-              (() => {
-                const opzioniTurno = opzioniVisibili.filter((o) => turnoCorrente.opzioni_in_gara.includes(o.id));
-                const spareggio = turnoCorrente.tipo_turno === 'spareggio';
-                // Per i turni a 3 scelte il massimo totale (opzioni + eventuale
-                // proposta) è sempre 3: con la proposta attiva restano 2 slot
-                // per le opzioni della lista, esattamente come in sfide/nuova.tsx.
-                const maxTotale = spareggio ? 1 : 3;
-                const totaleScelte = selezionate.length + (propostaAttiva ? 1 : 0);
-                const formValido = spareggio
-                  ? selezionate.length === 1
-                  : totaleScelte === 3 && (!propostaAttiva || propostaTesto.trim() !== '');
-
-                return (
-                  <>
-                    <SelettoreOpzioni
-                      opzioni={opzioniTurno}
-                      maxScelte={maxTotale}
-                      mostraProposta={!spareggio}
-                      selezionate={selezionate}
-                      onToggleOpzione={(opzioneId) => selezionaOpzione(opzioneId, maxTotale)}
-                      propostaAttiva={propostaAttiva}
-                      propostaTesto={propostaTesto}
-                      onAlternaProposta={() => alternaProposta(maxTotale)}
-                      onCambiaProposta={setPropostaTesto}
-                    />
-                    {confermaVoti.isError && (
-                      <Text style={styles.testoErrore}>{messaggioErrore(confermaVoti.error)}</Text>
-                    )}
-                    <BentoButton
-                      etichetta={spareggio ? 'Conferma la mia scelta' : 'Conferma le mie 3 scelte'}
-                      onPress={() => invia(turnoCorrente.id)}
-                      disabilitato={!formValido}
-                      caricando={confermaVoti.isPending}
-                    />
-                  </>
-                );
-              })()
+              <FormVoto
+                key={turnoCorrente.id}
+                turno={turnoCorrente}
+                opzioniVisibili={opzioniVisibili}
+                confermaVoti={confermaVoti}
+              />
             )}
           </GlassCard>
         )}

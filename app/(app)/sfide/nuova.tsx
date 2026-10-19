@@ -2,8 +2,10 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { campoNumericoSicuro as due, dataSicura } from '@/calcolo/campiData';
 import { deduciCategoria, generaDomanda } from '@/calcolo/domandaSfida';
 import { formattaConGiorno, risolviQuando, type EsitoDatazione, type SceltaQuando } from '@/calcolo/datazioneSfida';
+import { generaIdRichiesta } from '@/calcolo/identificativi';
 import { dataLocaleISO } from '@/calcolo/ricorrenzaFaccende';
 import { BentoButton } from '@/components/BentoButton';
 import { BentoScreen } from '@/components/BentoScreen';
@@ -45,11 +47,6 @@ const SCADENZE_RAPIDE: { etichetta: string; minuti: 30 | 60 | 120 | 1440 }[] = [
   { etichetta: '2 ore', minuti: 120 },
   { etichetta: '24 ore', minuti: 1440 },
 ];
-
-function due(valore: string, fallback: number): string {
-  const n = Math.trunc(Number(valore));
-  return String(Number.isFinite(n) && n > 0 ? n : fallback).padStart(2, '0');
-}
 
 /** Campo manuale gg/mm/aaaa(/hh/min), senza alcuna libreria di calendario: nessuna nuova dipendenza UI. */
 function CampoDataOra({
@@ -174,7 +171,7 @@ function NuovaSfidaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   // "adesso" fissa il riferimento temporale per generare la domanda, e
   // richiestaId permette a crea_sfida di restare idempotente su un retry.
   const [adesso] = useState(() => new Date());
-  const [richiestaId] = useState(() => crypto.randomUUID());
+  const [richiestaId] = useState(() => generaIdRichiesta());
 
   // --- 1. Quando ---
   // "Oggi"/l'ora corrente nel fuso fisso Europe/Rome, non in quello del
@@ -196,11 +193,14 @@ function NuovaSfidaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     if (modoQuando === 'rapida') {
       return { tipo: 'rapida', valore: valoreRapido };
     }
-    const dataISO = `${due(aaaaQuando, Number(annoOggi)).padStart(4, '0').slice(-4)}-${due(mmQuando, Number(meseOggi))}-${due(ggQuando, Number(giornoOggi))}`;
+    const dataISO = `${due(aaaaQuando, Number(annoOggi), 1970, 9999).padStart(4, '0').slice(-4)}-${due(mmQuando, Number(meseOggi), 1, 12)}-${due(ggQuando, Number(giornoOggi), 1, 31)}`;
     if (modoQuando === 'data') {
       return { tipo: 'data', dataISO };
     }
-    return { tipo: 'data_ora', dataOraISO: `${dataISO}T${due(hhQuando, 12)}:${due(minQuando, 0)}` };
+    return {
+      tipo: 'data_ora',
+      dataOraISO: `${dataISO}T${due(hhQuando, 12, 0, 23)}:${due(minQuando, 0, 0, 59)}`,
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modoQuando, valoreRapido, ggQuando, mmQuando, aaaaQuando, hhQuando, minQuando]);
 
@@ -257,8 +257,13 @@ function NuovaSfidaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     if (modoScadenza === 'relativa') {
       return new Date(adesso.getTime() + minutiScadenza * 60000).toISOString();
     }
-    const dataISO = `${due(aaaaScadenza, Number(annoOggi)).padStart(4, '0').slice(-4)}-${due(mmScadenza, Number(meseOggi))}-${due(ggScadenza, Number(giornoOggi))}`;
-    return new Date(`${dataISO}T${due(hhScadenza, 12)}:${due(minScadenza, 0)}`).toISOString();
+    const dataISO = `${due(aaaaScadenza, Number(annoOggi), 1970, 9999).padStart(4, '0').slice(-4)}-${due(mmScadenza, Number(meseOggi), 1, 12)}-${due(ggScadenza, Number(giornoOggi), 1, 31)}`;
+    const data = dataSicura(`${dataISO}T${due(hhScadenza, 12, 0, 23)}:${due(minScadenza, 0, 0, 59)}`);
+    // Un valore sempre dentro i range individuali dei singoli campi
+    // (gestiti da due()) non basta a garantire un calendario valido
+    // (es. 30 febbraio): se il parsing comunque fallisce, ricade su
+    // adesso + 24 ore invece di propagare un Invalid Date.
+    return (data ?? new Date(adesso.getTime() + 24 * 3600 * 1000)).toISOString();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modoScadenza, minutiScadenza, ggScadenza, mmScadenza, aaaaScadenza, hhScadenza, minScadenza]);
 

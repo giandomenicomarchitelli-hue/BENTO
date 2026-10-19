@@ -548,6 +548,7 @@ export type Database = {
           sfida_id: string
           testo_normalizzato: string
           testo_opzione: string
+          turno_proposto_id: string | null
           voce_lista_id: string | null
         }
         Insert: {
@@ -558,6 +559,7 @@ export type Database = {
           sfida_id: string
           testo_normalizzato: string
           testo_opzione: string
+          turno_proposto_id?: string | null
           voce_lista_id?: string | null
         }
         Update: {
@@ -568,6 +570,7 @@ export type Database = {
           sfida_id?: string
           testo_normalizzato?: string
           testo_opzione?: string
+          turno_proposto_id?: string | null
           voce_lista_id?: string | null
         }
         Relationships: [
@@ -583,6 +586,13 @@ export type Database = {
             columns: ["sfida_id"]
             isOneToOne: false
             referencedRelation: "sfide_scelta"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sfide_opzioni_turno_proposto_id_fkey"
+            columns: ["turno_proposto_id"]
+            isOneToOne: false
+            referencedRelation: "sfide_turni"
             referencedColumns: ["id"]
           },
           {
