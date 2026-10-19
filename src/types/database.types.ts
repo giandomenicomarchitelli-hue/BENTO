@@ -1016,7 +1016,14 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      sfide_turni_progresso: {
+        Row: {
+          partecipanti_totali: number
+          partecipanti_votanti: number
+          turno_id: string
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _chiudi_turno_se_completo: {

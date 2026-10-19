@@ -242,3 +242,36 @@ grant select, update on public.notifiche to authenticated;
 -- arriva, che e' il segnale che la UI deve comunque ricaricare).
 alter publication supabase_realtime add table
   public.sfide_scelta, public.sfide_turni, public.sfide_turno_risultati, public.notifiche;
+
+-- Vista di supporto per "quante persone hanno già votato in questo
+-- turno" senza mai esporre membro_id -> opzione_id (solo aggregati) -
+-- serve a leggiSfidaCompleta (src/api/sfide.ts, Task 8) per mostrare
+-- "2 di 3 hanno votato" senza che nessuno possa leggere i voti altrui.
+-- Le sue sottoquery leggono sfide_voti/sfide_partecipanti senza
+-- passare dalle loro RLS (la vista corre con i privilegi di chi l'ha
+-- creata, non con security_invoker): è l'unico modo sanzionato di
+-- calcolare l'aggregato, dato che sfide_voti_select limita ogni
+-- membro alle proprie sole righe. L'autorizzazione di chi può
+-- interrogare la vista resta comunque legata all'utente reale che
+-- esegue la query, tramite auth.uid() dentro e_membro_di() nella
+-- clausola where sotto (le viste non supportano "create policy" come
+-- le tabelle, questa where è l'equivalente). La vista non seleziona
+-- mai membro_id/opzione_id: solo due numeri, quindi non viola la
+-- segretezza del voto.
+create view public.sfide_turni_progresso as
+select
+  t.id as turno_id,
+  (
+    select count(*) from public.sfide_partecipanti p
+    join public.membri m on m.id = p.membro_id
+    where p.sfida_id = t.sfida_id and m.uscito_il is null
+  ) as partecipanti_totali,
+  (
+    select count(distinct v.membro_id) from public.sfide_voti v
+    where v.turno_id = t.id
+  ) as partecipanti_votanti
+from public.sfide_turni t
+join public.sfide_scelta s on s.id = t.sfida_id
+where e_membro_di(s.gruppo_id);
+
+grant select on public.sfide_turni_progresso to authenticated;
