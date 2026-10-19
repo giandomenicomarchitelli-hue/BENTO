@@ -49,3 +49,4 @@ supabase/.temp/
 
 # Cache/stato interno degli strumenti agente (non codice del progetto)
 .agents/
+.superpowers/
