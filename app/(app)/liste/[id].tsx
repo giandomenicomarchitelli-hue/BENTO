@@ -129,6 +129,14 @@ export default function DettaglioLista() {
             returnKeyType="done"
           />
         )}
+        {voci.length >= 3 && (
+          <Pressable
+            style={styles.bottoneSfida}
+            onPress={() => router.push({ pathname: '/sfide/nuova', params: { listaId: id } })}
+          >
+            <Text style={styles.testoBottoneSfida}>Inizia sfida</Text>
+          </Pressable>
+        )}
       </View>
 
       {isLoading ? (
@@ -217,6 +225,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 22,
     lineHeight: 24,
+  },
+  bottoneSfida: {
+    borderWidth: 1,
+    borderColor: '#2d6cdf',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  testoBottoneSfida: {
+    color: '#2d6cdf',
+    fontSize: 15,
+    fontWeight: '600',
   },
   caricamento: {
     marginTop: 24,
