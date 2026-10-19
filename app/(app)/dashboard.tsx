@@ -15,6 +15,7 @@ import { useArticoliSpesa } from '@/hooks/useArticoliSpesa';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useListe } from '@/hooks/useListe';
 import { useSaldi } from '@/hooks/useSaldi';
+import { useSfide } from '@/hooks/useSfide';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { accenti, bento, spaziatura } from '@/theme/tokens';
@@ -32,6 +33,7 @@ export default function Dashboard() {
   } = useArticoliSpesa(gruppoAttivoId);
   const { transazioni, isLoading: saldiInCaricamento, error: erroreSaldi } =
     useSaldi(gruppoAttivoId);
+  const { sfide, isLoading: sfideInCaricamento } = useSfide(gruppoAttivoId);
 
   // Posizione netta dell'utente in QUESTO gruppo - vedi
   // calcolaPosizionePersonale in GroupBalanceCard.tsx (testata a parte in
@@ -83,6 +85,13 @@ export default function Dashboard() {
     : liste.length === 0
       ? 'Nessuna lista'
       : `${liste.length} ${liste.length === 1 ? 'lista' : 'liste'}`;
+
+  const sfideAttive = sfide.filter((s) => s.sfida.stato === 'in_corso').length;
+  const sottotitoloSfide = sfideInCaricamento
+    ? undefined
+    : sfideAttive === 0
+      ? 'Nessuna sfida attiva'
+      : `${sfideAttive} ${sfideAttive === 1 ? 'attiva' : 'attive'}`;
 
   function tornaIndietro() {
     if (router.canGoBack()) {
@@ -150,6 +159,15 @@ export default function Dashboard() {
             titolo="Liste"
             sottotitolo={sottotitoloListe}
             onPress={() => router.push('/liste')}
+          />
+        </View>
+        <View style={styles.rigaGriglia}>
+          <GlassTile
+            icona="award"
+            accento={accenti.rosa}
+            titolo="Sfide"
+            sottotitolo={sottotitoloSfide}
+            onPress={() => router.push('/sfide')}
           />
         </View>
       </View>
