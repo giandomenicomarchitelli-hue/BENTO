@@ -19,6 +19,28 @@ export function leggiParametroRicorrenza(
   return typeof valore === 'number' ? valore : null;
 }
 
+/**
+ * Legge i giorni della settimana preferiti da parametri_ricorrenza.
+ * Gestisce sia il formato nuovo (giorni_settimana: number[]) sia il
+ * legacy (giorno_settimana: number) per compatibilità con dati vecchi.
+ */
+export function leggiGiorniSettimana(
+  parametri: Database['public']['Tables']['faccende']['Row']['parametri_ricorrenza']
+): number[] | null {
+  if (parametri === null || typeof parametri !== 'object' || Array.isArray(parametri)) {
+    return null;
+  }
+  const raw = parametri as Record<string, unknown>;
+  if (Array.isArray(raw.giorni_settimana)) {
+    const giorni = raw.giorni_settimana.filter((v): v is number => typeof v === 'number');
+    return giorni.length > 0 ? giorni : null;
+  }
+  if (typeof raw.giorno_settimana === 'number') {
+    return [raw.giorno_settimana];
+  }
+  return null;
+}
+
 export async function listaFaccende(gruppoId: string): Promise<Faccenda[]> {
   const { data, error } = await supabase
     .from('faccende')
@@ -38,7 +60,7 @@ interface CreaFaccendaParams {
   descrizione?: string | null;
   frequenza: Frequenza;
   intervalloRicorrenza?: number | null;
-  giornoSettimana?: number | null;
+  giorniSettimana?: number[] | null;
   giornoMese?: number | null;
   durataStimataMinuti?: number | null;
   sforzo: Sforzo;
@@ -49,9 +71,9 @@ interface CreaFaccendaParams {
 }
 
 export async function creaFaccenda(params: CreaFaccendaParams): Promise<Faccenda> {
-  const parametriRicorrenza: Record<string, number> = {};
-  if (params.giornoSettimana !== undefined && params.giornoSettimana !== null) {
-    parametriRicorrenza.giorno_settimana = params.giornoSettimana;
+  const parametriRicorrenza: Record<string, number | number[]> = {};
+  if (params.giorniSettimana !== undefined && params.giorniSettimana !== null && params.giorniSettimana.length > 0) {
+    parametriRicorrenza.giorni_settimana = params.giorniSettimana;
   }
   if (params.giornoMese !== undefined && params.giornoMese !== null) {
     parametriRicorrenza.giorno_mese = params.giornoMese;
@@ -88,7 +110,7 @@ interface AggiornaFaccendaParams {
   descrizione?: string | null;
   frequenza?: Frequenza;
   intervalloRicorrenza?: number | null;
-  giornoSettimana?: number | null;
+  giorniSettimana?: number[] | null;
   giornoMese?: number | null;
   durataStimataMinuti?: number | null;
   sforzo?: Sforzo;
@@ -113,10 +135,10 @@ export async function aggiornaFaccenda(params: AggiornaFaccendaParams): Promise<
   if (params.assegnataA !== undefined) payload.assegnata_a = params.assegnataA;
   if (params.attiva !== undefined) payload.attiva = params.attiva;
 
-  if (params.giornoSettimana !== undefined || params.giornoMese !== undefined) {
-    const parametriRicorrenza: Record<string, number> = {};
-    if (params.giornoSettimana !== undefined && params.giornoSettimana !== null) {
-      parametriRicorrenza.giorno_settimana = params.giornoSettimana;
+  if (params.giorniSettimana !== undefined || params.giornoMese !== undefined) {
+    const parametriRicorrenza: Record<string, number | number[]> = {};
+    if (params.giorniSettimana !== undefined && params.giorniSettimana !== null && params.giorniSettimana.length > 0) {
+      parametriRicorrenza.giorni_settimana = params.giorniSettimana;
     }
     if (params.giornoMese !== undefined && params.giornoMese !== null) {
       parametriRicorrenza.giorno_mese = params.giornoMese;
@@ -155,6 +177,14 @@ export async function attivaModuloFaccende(gruppoId: string): Promise<Impostazio
     throw error;
   }
   return data;
+}
+
+/** Elimina definitivamente una faccenda e tutte le sue occorrenze (cascade). */
+export async function eliminaFaccenda(faccendaId: string): Promise<void> {
+  const { error } = await supabase.from('faccende').delete().eq('id', faccendaId);
+  if (error) {
+    throw error;
+  }
 }
 
 /** Importa il catalogo di faccende suggerite nel gruppo. Restituisce quante ne ha effettivamente inserite (0 se già tutte presenti). */

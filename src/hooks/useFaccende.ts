@@ -4,6 +4,7 @@ import { useEffect, useId } from 'react';
 import {
   aggiornaFaccenda,
   creaFaccenda,
+  eliminaFaccenda,
   importaFaccendeSuggerite,
   listaFaccende,
   type Faccenda,
@@ -54,7 +55,7 @@ export function useFaccende(gruppoId: string | null) {
       descrizione?: string | null;
       frequenza: Frequenza;
       intervalloRicorrenza?: number | null;
-      giornoSettimana?: number | null;
+      giorniSettimana?: number[] | null;
       giornoMese?: number | null;
       durataStimataMinuti?: number | null;
       sforzo: Sforzo;
@@ -73,7 +74,7 @@ export function useFaccende(gruppoId: string | null) {
       descrizione?: string | null;
       frequenza?: Frequenza;
       intervalloRicorrenza?: number | null;
-      giornoSettimana?: number | null;
+      giorniSettimana?: number[] | null;
       giornoMese?: number | null;
       durataStimataMinuti?: number | null;
       sforzo?: Sforzo;
@@ -90,6 +91,11 @@ export function useFaccende(gruppoId: string | null) {
     onSuccess: invalida,
   });
 
+  const elimina = useMutation({
+    mutationFn: (id: string) => eliminaFaccenda(id),
+    onSuccess: invalida,
+  });
+
   const importaSuggerite = useMutation({
     mutationFn: () => importaFaccendeSuggerite(gruppoId as string),
     onSuccess: invalida,
@@ -102,6 +108,7 @@ export function useFaccende(gruppoId: string | null) {
     crea,
     aggiorna,
     archivia,
+    elimina,
     importaSuggerite,
   };
 }

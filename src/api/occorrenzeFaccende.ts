@@ -1,4 +1,4 @@
-import { leggiParametroRicorrenza } from '@/api/faccende';
+import { leggiGiorniSettimana, leggiParametroRicorrenza } from '@/api/faccende';
 import { calcolaPeriodiMancanti, dataLocaleISO, type DefinizioneRicorrenza } from '@/calcolo/ricorrenzaFaccende';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database.types';
@@ -74,7 +74,7 @@ export async function sincronizzaOccorrenze(gruppoId: string, fusoOrario: string
     const definizione: DefinizioneRicorrenza = {
       frequenza: faccenda.frequenza,
       intervalloRicorrenza: faccenda.intervallo_ricorrenza,
-      giornoSettimana: leggiParametroRicorrenza(faccenda.parametri_ricorrenza, 'giorno_settimana'),
+      giorniSettimana: leggiGiorniSettimana(faccenda.parametri_ricorrenza),
       giornoMese: leggiParametroRicorrenza(faccenda.parametri_ricorrenza, 'giorno_mese'),
       creatoIl: faccenda.creato_il,
     };

@@ -19,8 +19,8 @@ export interface DefinizioneRicorrenza {
   frequenza: Frequenza;
   /** "Ogni N giorni", solo per frequenza = 'personalizzata'. */
   intervalloRicorrenza: number | null;
-  /** 1 = lunedì ... 7 = domenica. Giorno preferito, solo per 'settimanale'. */
-  giornoSettimana: number | null;
+  /** 1 = lunedì ... 7 = domenica. Giorni preferiti per 'settimanale'; array vuoto o null = qualsiasi giorno. */
+  giorniSettimana: number[] | null;
   /** 1-31. Giorno preferito del mese, solo per 'mensile' (gestisce i mesi più corti). */
   giornoMese: number | null;
   /** Istante di creazione della faccenda (ISO) - ancora per la primissima occorrenza. */
@@ -189,7 +189,7 @@ function costruisciPeriodoGiorno(giornoISO: string, fusoOrario: string): Periodo
 }
 
 /**
- * `giornoSettimana` è solo il giorno previsto/preferito, mostrato
+ * `giorniSettimana` sono i giorni preferiti, mostrati
  * all'utente come indicazione di quando conviene farla - NON la scadenza
  * reale: la faccenda resta completabile per tutta la settimana (fino a
  * domenica sera), altrimenti basterebbe che il giorno preferito passasse

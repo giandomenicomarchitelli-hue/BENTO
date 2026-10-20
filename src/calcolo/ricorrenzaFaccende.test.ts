@@ -19,7 +19,7 @@ function definizione(parziale: Partial<DefinizioneRicorrenza>): DefinizioneRicor
   return {
     frequenza: 'giornaliera',
     intervalloRicorrenza: null,
-    giornoSettimana: null,
+    giorniSettimana: null,
     giornoMese: null,
     creatoIl: '2026-01-01T08:00:00.000Z',
     ...parziale,
@@ -113,7 +113,7 @@ describe('calcolaPeriodiMancanti - settimanale', () => {
     const def = definizione({
       frequenza: 'settimanale',
       creatoIl: '2026-01-07T08:00:00.000Z',
-      giornoSettimana: 2, // martedì
+      giorniSettimana: [2], // martedì
     });
     const periodi = calcolaPeriodiMancanti(def, null, '2026-01-20', FUSO_ROMA);
 
@@ -131,7 +131,7 @@ describe('calcolaPeriodiMancanti - settimanale', () => {
     const conGiornoPreferito = definizione({
       frequenza: 'settimanale',
       creatoIl: '2026-01-07T08:00:00.000Z',
-      giornoSettimana: 1, // lunedì, già passato rispetto a "oggi" in questo test
+      giorniSettimana: [1], // lunedì, già passato rispetto a "oggi" in questo test
     });
     const senzaGiornoPreferito = definizione({ frequenza: 'settimanale', creatoIl: '2026-01-07T08:00:00.000Z' });
 

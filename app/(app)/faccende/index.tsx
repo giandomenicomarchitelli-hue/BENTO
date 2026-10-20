@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Redirect } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import type { Frequenza, OrigineDelPunteggio } from '@/api/faccende';
 import { calcolaClassifica } from '@/calcolo/classificaFaccende';
@@ -84,7 +84,7 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   } = useImpostazioniFaccende(gruppoAttivoId);
   const fusoOrario = impostazioni?.fuso_orario ?? 'Europe/Rome';
 
-  const { faccende, crea, aggiorna, archivia, importaSuggerite } = useFaccende(gruppoAttivoId);
+  const { faccende, crea, aggiorna, archivia, elimina, importaSuggerite } = useFaccende(gruppoAttivoId);
   const {
     occorrenze,
     isLoading: occorrenzeInCaricamento,
@@ -113,7 +113,7 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const [descrizione, setDescrizione] = useState('');
   const [frequenza, setFrequenza] = useState<Frequenza>('giornaliera');
   const [intervalloGiorni, setIntervalloGiorni] = useState('3');
-  const [giornoSettimana, setGiornoSettimana] = useState(1);
+  const [giorniSettimana, setGiorniSettimana] = useState<number[]>([]);
   const [giornoMese, setGiornoMese] = useState('1');
   const [durata, setDurata] = useState('15');
   // null = non ancora toccato a mano: segue il suggerimento calcolato dalla
@@ -154,7 +154,7 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     setDescrizione('');
     setFrequenza('giornaliera');
     setIntervalloGiorni('3');
-    setGiornoSettimana(1);
+    setGiorniSettimana([]);
     setGiornoMese('1');
     setDurata('15');
     setSforzoManualeValore(null);
@@ -177,7 +177,13 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     setFrequenza(f.frequenza);
     setIntervalloGiorni(String(f.intervallo_ricorrenza ?? 3));
     const parametri = (f.parametri_ricorrenza ?? {}) as Record<string, unknown>;
-    setGiornoSettimana(typeof parametri.giorno_settimana === 'number' ? parametri.giorno_settimana : 1);
+    let giorniLetti: number[] = [];
+    if (Array.isArray(parametri.giorni_settimana)) {
+      giorniLetti = (parametri.giorni_settimana as unknown[]).filter((v): v is number => typeof v === 'number');
+    } else if (typeof parametri.giorno_settimana === 'number') {
+      giorniLetti = [parametri.giorno_settimana];
+    }
+    setGiorniSettimana(giorniLetti);
     setGiornoMese(String(typeof parametri.giorno_mese === 'number' ? parametri.giorno_mese : 1));
     setDurata(String(f.durata_stimata_minuti ?? 15));
     // Mostra i valori già salvati (non li marca "modificati a mano" da sé:
@@ -215,7 +221,7 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
       descrizione: descrizione.trim() === '' ? null : descrizione.trim(),
       frequenza,
       intervalloRicorrenza: frequenza === 'personalizzata' ? intervalloNum : null,
-      giornoSettimana: frequenza === 'settimanale' ? giornoSettimana : null,
+      giorniSettimana: frequenza === 'settimanale' ? (giorniSettimana.length > 0 ? giorniSettimana : null) : null,
       giornoMese: frequenza === 'mensile' ? Number(giornoMese) : null,
       durataStimataMinuti: Number.isFinite(durataNum) && durataNum > 0 ? durataNum : null,
       sforzo,
@@ -242,6 +248,26 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     if (conferma) {
       archivia.mutate(faccendaId);
     }
+  }
+
+  async function chiediEliminazione(faccendaId: string, nomeFaccenda: string) {
+    const conferma = await confermaAzione(
+      'Eliminare questa faccenda?',
+      `"${nomeFaccenda}" e tutte le sue occorrenze verranno eliminate definitivamente. Lo storico dei punti già guadagnati sarà rimosso.`,
+      'Elimina'
+    );
+    if (conferma) {
+      elimina.mutate(faccendaId);
+    }
+  }
+
+  function mostraMenuFaccenda(faccendaId: string, nomeFaccenda: string) {
+    Alert.alert(nomeFaccenda, undefined, [
+      { text: 'Modifica', onPress: () => apriModifica(faccendaId) },
+      { text: 'Archivia', onPress: () => chiediArchiviazione(faccendaId, nomeFaccenda) },
+      { text: 'Elimina', style: 'destructive', onPress: () => chiediEliminazione(faccendaId, nomeFaccenda) },
+      { text: 'Annulla', style: 'cancel' },
+    ]);
   }
 
   async function chiediAnnullamento(occorrenza: OccorrenzaFaccenda, nomeFaccenda: string) {
@@ -544,19 +570,35 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 
             {frequenza === 'settimanale' && (
               <>
-                <Text style={styles.etichettaCampo}>Giorno previsto</Text>
+                <Text style={styles.etichettaCampo}>Giorni previsti</Text>
                 <View style={styles.rigaChip}>
-                  {GIORNI_SETTIMANA.map((g, indice) => (
-                    <Pressable
-                      key={g}
-                      onPress={() => setGiornoSettimana(indice + 1)}
-                      style={[styles.chip, giornoSettimana === indice + 1 && styles.chipAttivo]}
-                    >
-                      <Text style={[styles.testoChip, giornoSettimana === indice + 1 && styles.testoChipAttivo]}>
-                        {g}
-                      </Text>
-                    </Pressable>
-                  ))}
+                  <Pressable
+                    onPress={() => setGiorniSettimana([])}
+                    style={[styles.chip, giorniSettimana.length === 0 && styles.chipAttivo]}
+                  >
+                    <Text style={[styles.testoChip, giorniSettimana.length === 0 && styles.testoChipAttivo]}>
+                      Qualsiasi
+                    </Text>
+                  </Pressable>
+                  {GIORNI_SETTIMANA.map((g, indice) => {
+                    const num = indice + 1;
+                    const selezionato = giorniSettimana.includes(num);
+                    return (
+                      <Pressable
+                        key={g}
+                        onPress={() =>
+                          setGiorniSettimana((prev) =>
+                            selezionato
+                              ? prev.filter((d) => d !== num)
+                              : [...prev, num].sort((a, b) => a - b)
+                          )
+                        }
+                        style={[styles.chip, selezionato && styles.chipAttivo]}
+                      >
+                        <Text style={[styles.testoChip, selezionato && styles.testoChipAttivo]}>{g}</Text>
+                      </Pressable>
+                    );
+                  })}
                 </View>
               </>
             )}
@@ -650,18 +692,24 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           <View style={styles.elencoDefinizioni}>
             {faccendeAttive.map((f) => (
               <View key={f.id} style={styles.rigaDefinizione}>
-                <Pressable style={styles.contenutoDefinizione} onPress={() => apriModifica(f.id)}>
+                <View style={styles.contenutoDefinizione}>
                   <Text style={styles.nomeDefinizione}>{f.nome}</Text>
                   <Text style={styles.testoMeta}>
                     {ETICHETTA_FREQUENZA[f.frequenza]} · {f.punti} pt
                   </Text>
-                </Pressable>
-                <Pressable onPress={() => chiediArchiviazione(f.id, f.nome)} hitSlop={8}>
-                  <Feather name="archive" size={18} color={bento.testoMuto} />
+                </View>
+                <Pressable
+                  onPress={() => mostraMenuFaccenda(f.id, f.nome)}
+                  hitSlop={8}
+                  style={styles.bottoneAltroDefinizione}
+                >
+                  <Feather name="more-vertical" size={18} color={bento.testoMuto} />
                 </Pressable>
               </View>
             ))}
-            {archivia.isError && <Text style={styles.testoErrore}>{messaggioErrore(archivia.error)}</Text>}
+            {(archivia.isError || elimina.isError) && (
+              <Text style={styles.testoErrore}>{messaggioErrore(archivia.error ?? elimina.error)}</Text>
+            )}
           </View>
         )}
       </View>
@@ -958,6 +1006,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: bento.testoPrimario,
+  },
+  bottoneAltroDefinizione: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   elencoStorico: {
     gap: spaziatura.sm,
