@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Redirect } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, ActivityIndicator, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import type { Frequenza, OrigineDelPunteggio } from '@/api/faccende';
 import { calcolaClassifica } from '@/calcolo/classificaFaccende';
@@ -108,6 +108,7 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const [filtro, setFiltro] = useState<Filtro>('oggi');
   const [formVisibile, setFormVisibile] = useState(false);
   const [idInModifica, setIdInModifica] = useState<string | null>(null);
+  const [menuFaccenda, setMenuFaccenda] = useState<{ id: string; nome: string } | null>(null);
 
   const [nome, setNome] = useState('');
   const [descrizione, setDescrizione] = useState('');
@@ -262,20 +263,11 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   }
 
   function mostraMenuFaccenda(faccendaId: string, nomeFaccenda: string) {
-    if (Platform.OS === 'web') {
-      // Alert.alert è uno stub no-op su react-native-web
-      const scelta = window.prompt(`${nomeFaccenda}\n\n1 - Modifica\n2 - Archivia\n3 - Elimina`);
-      if (scelta === '1') apriModifica(faccendaId);
-      else if (scelta === '2') void chiediArchiviazione(faccendaId, nomeFaccenda);
-      else if (scelta === '3') void chiediEliminazione(faccendaId, nomeFaccenda);
-      return;
-    }
-    Alert.alert(nomeFaccenda, '', [
-      { text: 'Modifica', onPress: () => apriModifica(faccendaId) },
-      { text: 'Archivia', onPress: () => void chiediArchiviazione(faccendaId, nomeFaccenda) },
-      { text: 'Elimina', style: 'destructive', onPress: () => void chiediEliminazione(faccendaId, nomeFaccenda) },
-      { text: 'Annulla', style: 'cancel' },
-    ]);
+    setMenuFaccenda({ id: faccendaId, nome: nomeFaccenda });
+  }
+
+  function chiudiMenuFaccenda() {
+    setMenuFaccenda(null);
   }
 
   async function chiediAnnullamento(occorrenza: OccorrenzaFaccenda, nomeFaccenda: string) {
@@ -367,6 +359,7 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   }
 
   return (
+    <>
     <BentoScreen>
       {/* A. Riepilogo della sfida */}
       <GlassCard>
@@ -757,6 +750,57 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
         )}
       </View>
     </BentoScreen>
+
+    {/* Bottom sheet azione faccenda — cross-platform, niente Alert.alert */}
+    <Modal
+      transparent
+      visible={menuFaccenda !== null}
+      animationType="slide"
+      onRequestClose={chiudiMenuFaccenda}
+    >
+      <Pressable style={styles.sfondoMenu} onPress={chiudiMenuFaccenda}>
+        <Pressable style={styles.foglioMenu} onPress={() => { /* blocca propagazione */ }}>
+          <Text style={styles.titoloMenu} numberOfLines={1}>{menuFaccenda?.nome}</Text>
+          <View style={styles.separatoreMenu} />
+          <Pressable
+            style={styles.voceMenu}
+            onPress={() => {
+              chiudiMenuFaccenda();
+              apriModifica(menuFaccenda!.id);
+            }}
+          >
+            <Text style={styles.testoVoceMenu}>Modifica</Text>
+          </Pressable>
+          <View style={styles.separatoreMenu} />
+          <Pressable
+            style={styles.voceMenu}
+            onPress={() => {
+              chiudiMenuFaccenda();
+              void chiediArchiviazione(menuFaccenda!.id, menuFaccenda!.nome);
+            }}
+          >
+            <Text style={styles.testoVoceMenu}>Archivia</Text>
+          </Pressable>
+          <View style={styles.separatoreMenu} />
+          <Pressable
+            style={styles.voceMenu}
+            onPress={() => {
+              chiudiMenuFaccenda();
+              void chiediEliminazione(menuFaccenda!.id, menuFaccenda!.nome);
+            }}
+          >
+            <Text style={[styles.testoVoceMenu, styles.testoEliminazione]}>Elimina</Text>
+          </Pressable>
+        </Pressable>
+
+        <Pressable style={[styles.foglioMenu, styles.foglioAnnulla]} onPress={() => { /* blocca propagazione */ }}>
+          <Pressable style={styles.voceMenu} onPress={chiudiMenuFaccenda}>
+            <Text style={[styles.testoVoceMenu, styles.testoAnnulla]}>Annulla</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+    </>
   );
 }
 
@@ -1050,5 +1094,48 @@ const styles = StyleSheet.create({
   },
   puntiNegativi: {
     color: semantica.pericolo,
+  },
+  sfondoMenu: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'flex-end',
+    paddingHorizontal: spaziatura.md,
+    paddingBottom: spaziatura.lg,
+    gap: spaziatura.xs,
+  },
+  foglioMenu: {
+    backgroundColor: bento.superficieForte,
+    borderRadius: raggio.xl,
+    overflow: 'hidden',
+  },
+  foglioAnnulla: {
+    marginTop: spaziatura.xs,
+  },
+  titoloMenu: {
+    paddingHorizontal: spaziatura.lg,
+    paddingVertical: spaziatura.md,
+    fontSize: 13,
+    color: bento.testoMuto,
+    textAlign: 'center',
+  },
+  separatoreMenu: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: bento.bordoSoft,
+    marginHorizontal: spaziatura.md,
+  },
+  voceMenu: {
+    paddingVertical: 16,
+    paddingHorizontal: spaziatura.lg,
+    alignItems: 'center',
+  },
+  testoVoceMenu: {
+    fontSize: 17,
+    color: accenti.indaco,
+  },
+  testoEliminazione: {
+    color: semantica.pericolo,
+  },
+  testoAnnulla: {
+    fontWeight: '600',
   },
 });
