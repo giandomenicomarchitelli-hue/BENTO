@@ -58,9 +58,14 @@ function RigaVoce({
           </Pressable>
         </>
       ) : (
-        <Pressable style={styles.rigaCliccabile} onPress={onTocca}>
-          {contenuto}
-        </Pressable>
+        <>
+          <Pressable style={styles.rigaCliccabile} onPress={onTocca}>
+            {contenuto}
+          </Pressable>
+          <Pressable onPress={onApriModifica} hitSlop={8} style={styles.bottoneAltro}>
+            <Feather name="more-vertical" size={18} color="#888" />
+          </Pressable>
+        </>
       )}
       <Pressable onPress={onElimina} hitSlop={8}>
         <Text style={styles.elimina}>Elimina</Text>

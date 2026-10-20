@@ -48,19 +48,23 @@ export async function aggiungiVoce(
 }
 
 /**
- * Aggiorna uno o più campi di una voce (fatta o no, prezzo e note - questi
- * ultimi due solo un promemoria sulla voce, non toccano le spese/i saldi).
+ * Aggiorna uno o più campi di una voce (fatta o no, testo, prezzo e note -
+ * prezzo e note solo un promemoria, non toccano le spese/i saldi).
  * Solo i campi passati vengono scritti.
  */
 export async function aggiornaVoce(
   voceId: string,
   campi: {
+    testo?: string;
     fatto?: boolean;
     prezzoCentesimi?: number | null;
     note?: string | null;
   }
 ): Promise<void> {
   const payload: Database['public']['Tables']['voci_lista']['Update'] = {};
+  if (campi.testo !== undefined) {
+    payload.testo = campi.testo;
+  }
   if (campi.fatto !== undefined) {
     payload.fatto = campi.fatto;
   }

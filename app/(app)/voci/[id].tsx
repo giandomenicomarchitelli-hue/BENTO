@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
 import { ModificaAcquisto } from '@/components/ModificaAcquisto';
+import { ModificaVoceDaFare } from '@/components/ModificaVoceDaFare';
 import { useVociLista } from '@/hooks/useVociLista';
 
 export default function ModificaVoce() {
@@ -27,26 +28,41 @@ export default function ModificaVoce() {
   return (
     <>
       <Stack.Screen options={{ title: voce.testo }} />
-      <ModificaAcquisto
-        nome={voce.testo}
-        prezzoCentesimi={voce.prezzo_centesimi}
-        note={voce.note}
-        salvando={aggiorna.isPending}
-        annullando={annullando}
-        onSalva={(prezzoCentesimi, note) => {
-          aggiorna.mutate({ id: voce.id, prezzoCentesimi, note });
-        }}
-        onAnnullaAcquisto={() => {
-          setAnnullando(true);
-          aggiorna.mutate(
-            { id: voce.id, fatto: false, prezzoCentesimi: null, note: null },
-            {
-              onSettled: () => setAnnullando(false),
-              onSuccess: () => router.back(),
-            }
-          );
-        }}
-      />
+
+      {voce.fatto ? (
+        <ModificaAcquisto
+          nome={voce.testo}
+          prezzoCentesimi={voce.prezzo_centesimi}
+          note={voce.note}
+          salvando={aggiorna.isPending}
+          annullando={annullando}
+          onSalva={(prezzoCentesimi, note) => {
+            aggiorna.mutate({ id: voce.id, prezzoCentesimi, note });
+          }}
+          onAnnullaAcquisto={() => {
+            setAnnullando(true);
+            aggiorna.mutate(
+              { id: voce.id, fatto: false, prezzoCentesimi: null, note: null },
+              {
+                onSettled: () => setAnnullando(false),
+                onSuccess: () => router.back(),
+              }
+            );
+          }}
+        />
+      ) : (
+        <ModificaVoceDaFare
+          testo={voce.testo}
+          note={voce.note}
+          salvando={aggiorna.isPending}
+          onSalva={(testo, note) => {
+            aggiorna.mutate(
+              { id: voce.id, testo, note },
+              { onSuccess: () => router.back() }
+            );
+          }}
+        />
+      )}
     </>
   );
 }

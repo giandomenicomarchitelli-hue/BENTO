@@ -56,6 +56,7 @@ export function useVociLista(listaId: string | null) {
       ...campi
     }: {
       id: string
+      testo?: string
       fatto?: boolean
       prezzoCentesimi?: number | null
       note?: string | null
