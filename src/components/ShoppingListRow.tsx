@@ -104,11 +104,9 @@ export function ShoppingListRow({
         )}
 
         <View style={styles.azioni}>
-          {comprato && (
-            <Pressable onPress={onApriModifica} hitSlop={10} style={styles.bottoneAzione}>
-              <Feather name="more-vertical" size={20} color={bento.testoMuto} />
-            </Pressable>
-          )}
+          <Pressable onPress={onApriModifica} hitSlop={10} style={styles.bottoneAzione}>
+            <Feather name="more-vertical" size={20} color={bento.testoMuto} />
+          </Pressable>
           <Pressable onPress={chiediEliminazione} hitSlop={10} style={styles.bottoneAzione}>
             <Feather name="trash-2" size={18} color={bento.testoMuto} />
           </Pressable>

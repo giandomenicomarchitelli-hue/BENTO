@@ -68,6 +68,7 @@ export function useArticoliSpesa(gruppoId: string | null) {
       ...campi
     }: {
       id: string
+      nome?: string
       stato?: ArticoloSpesa['stato']
       compratoDa?: string | null
       prezzoCentesimi?: number | null

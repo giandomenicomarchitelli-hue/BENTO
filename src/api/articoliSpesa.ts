@@ -56,6 +56,7 @@ export async function aggiungiArticolo(
 export async function aggiornaArticolo(
   articoloId: string,
   campi: {
+    nome?: string;
     stato?: ArticoloSpesa['stato'];
     compratoDa?: string | null;
     prezzoCentesimi?: number | null;
@@ -63,6 +64,9 @@ export async function aggiornaArticolo(
   }
 ): Promise<void> {
   const payload: Database['public']['Tables']['articoli_spesa']['Update'] = {};
+  if (campi.nome !== undefined) {
+    payload.nome = campi.nome;
+  }
   if (campi.stato !== undefined) {
     payload.stato = campi.stato;
   }

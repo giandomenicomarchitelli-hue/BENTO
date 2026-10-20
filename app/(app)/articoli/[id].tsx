@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
 import { ModificaAcquisto } from '@/components/ModificaAcquisto';
+import { ModificaArticoloDaComprare } from '@/components/ModificaArticoloDaComprare';
 import { useArticoliSpesa } from '@/hooks/useArticoliSpesa';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 
@@ -29,32 +30,47 @@ export default function ModificaArticolo() {
   return (
     <>
       <Stack.Screen options={{ title: articolo.nome }} />
-      <ModificaAcquisto
-        nome={articolo.nome}
-        prezzoCentesimi={articolo.prezzo_centesimi}
-        note={articolo.note}
-        salvando={aggiorna.isPending}
-        annullando={annullando}
-        onSalva={(prezzoCentesimi, note) => {
-          aggiorna.mutate({ id: articolo.id, prezzoCentesimi, note });
-        }}
-        onAnnullaAcquisto={() => {
-          setAnnullando(true);
-          aggiorna.mutate(
-            {
-              id: articolo.id,
-              stato: 'da_comprare',
-              compratoDa: null,
-              prezzoCentesimi: null,
-              note: null,
-            },
-            {
-              onSettled: () => setAnnullando(false),
-              onSuccess: () => router.back(),
-            }
-          );
-        }}
-      />
+
+      {articolo.stato === 'comprato' ? (
+        <ModificaAcquisto
+          nome={articolo.nome}
+          prezzoCentesimi={articolo.prezzo_centesimi}
+          note={articolo.note}
+          salvando={aggiorna.isPending}
+          annullando={annullando}
+          onSalva={(prezzoCentesimi, note) => {
+            aggiorna.mutate({ id: articolo.id, prezzoCentesimi, note });
+          }}
+          onAnnullaAcquisto={() => {
+            setAnnullando(true);
+            aggiorna.mutate(
+              {
+                id: articolo.id,
+                stato: 'da_comprare',
+                compratoDa: null,
+                prezzoCentesimi: null,
+                note: null,
+              },
+              {
+                onSettled: () => setAnnullando(false),
+                onSuccess: () => router.back(),
+              }
+            );
+          }}
+        />
+      ) : (
+        <ModificaArticoloDaComprare
+          nome={articolo.nome}
+          note={articolo.note}
+          salvando={aggiorna.isPending}
+          onSalva={(nome, note) => {
+            aggiorna.mutate(
+              { id: articolo.id, nome, note },
+              { onSuccess: () => router.back() }
+            );
+          }}
+        />
+      )}
     </>
   );
 }
