@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Redirect } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, ActivityIndicator, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import type { Frequenza, OrigineDelPunteggio } from '@/api/faccende';
 import { calcolaClassifica } from '@/calcolo/classificaFaccende';
@@ -262,10 +262,18 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   }
 
   function mostraMenuFaccenda(faccendaId: string, nomeFaccenda: string) {
-    Alert.alert(nomeFaccenda, undefined, [
+    if (Platform.OS === 'web') {
+      // Alert.alert è uno stub no-op su react-native-web
+      const scelta = window.prompt(`${nomeFaccenda}\n\n1 - Modifica\n2 - Archivia\n3 - Elimina`);
+      if (scelta === '1') apriModifica(faccendaId);
+      else if (scelta === '2') void chiediArchiviazione(faccendaId, nomeFaccenda);
+      else if (scelta === '3') void chiediEliminazione(faccendaId, nomeFaccenda);
+      return;
+    }
+    Alert.alert(nomeFaccenda, '', [
       { text: 'Modifica', onPress: () => apriModifica(faccendaId) },
-      { text: 'Archivia', onPress: () => chiediArchiviazione(faccendaId, nomeFaccenda) },
-      { text: 'Elimina', style: 'destructive', onPress: () => chiediEliminazione(faccendaId, nomeFaccenda) },
+      { text: 'Archivia', onPress: () => void chiediArchiviazione(faccendaId, nomeFaccenda) },
+      { text: 'Elimina', style: 'destructive', onPress: () => void chiediEliminazione(faccendaId, nomeFaccenda) },
       { text: 'Annulla', style: 'cancel' },
     ]);
   }
