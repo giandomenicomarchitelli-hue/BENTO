@@ -263,6 +263,8 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   }
 
   function mostraMenuFaccenda(faccendaId: string, nomeFaccenda: string) {
+    archivia.reset();
+    elimina.reset();
     setMenuFaccenda({ id: faccendaId, nome: nomeFaccenda });
   }
 
