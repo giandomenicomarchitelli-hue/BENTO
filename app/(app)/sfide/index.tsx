@@ -11,7 +11,7 @@ import { SectionHeader } from '@/components/SectionHeader';
 import { useListe } from '@/hooks/useListe';
 import { useSfide } from '@/hooks/useSfide';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
-import { accenti, bento, raggio, spaziatura } from '@/theme/tokens';
+import { bento, spaziatura } from '@/theme/tokens';
 
 type Sezione = 'in_attesa' | 'spareggi' | 'attive' | 'concluse';
 

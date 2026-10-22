@@ -40,20 +40,13 @@ export async function listaSfideConStato(gruppoId: string): Promise<SfidaConStat
     return [];
   }
 
-  const [turniRes, votiRes] = await Promise.all([
-    supabase
-      .from('sfide_turni')
-      .select()
-      .in('sfida_id', sfide.map((s) => s.id))
-      .order('numero_turno', { ascending: true }),
-    supabase.from('sfide_voti').select('turno_id'),
-  ]);
-
+  const turniRes = await supabase
+    .from('sfide_turni')
+    .select()
+    .in('sfida_id', sfide.map((s) => s.id))
+    .order('numero_turno', { ascending: true });
   if (turniRes.error) {
     throw turniRes.error;
-  }
-  if (votiRes.error) {
-    throw votiRes.error;
   }
 
   const turniPerSfida = new Map<string, TurnoSfida[]>();
@@ -61,6 +54,22 @@ export async function listaSfideConStato(gruppoId: string): Promise<SfidaConStat
     const lista = turniPerSfida.get(turno.sfida_id) ?? [];
     lista.push(turno);
     turniPerSfida.set(turno.sfida_id, lista);
+  }
+
+  // Serve solo sapere se ho votato nel turno CORRENTE di ciascuna sfida: si
+  // filtra per quei soli turno_id invece di scaricare tutti i voti di ogni
+  // turno mai giocato dall'utente (query che altrimenti cresce senza limite
+  // con la storia delle sfide).
+  const turniCorrentiIds = sfide
+    .map((s) => turniPerSfida.get(s.id)?.at(-1)?.id)
+    .filter((id): id is string => id !== undefined);
+
+  const votiRes =
+    turniCorrentiIds.length > 0
+      ? await supabase.from('sfide_voti').select('turno_id').in('turno_id', turniCorrentiIds)
+      : { data: [] as { turno_id: string }[], error: null };
+  if (votiRes.error) {
+    throw votiRes.error;
   }
   const turniVotati = new Set(votiRes.data.map((v) => v.turno_id));
 
