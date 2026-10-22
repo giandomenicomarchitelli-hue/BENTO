@@ -13,18 +13,23 @@ import { useSfide } from '@/hooks/useSfide';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { bento, spaziatura } from '@/theme/tokens';
 
-type Sezione = 'in_attesa' | 'spareggi' | 'attive' | 'concluse';
+type Sezione = 'da_accettare' | 'in_attesa' | 'spareggi' | 'attive' | 'concluse';
 
 /**
  * Una sfida va in esattamente una sezione, in quest'ordine di priorità:
  * uno stato terminale della sfida vince sempre su tutto il resto; poi un
- * turno di spareggio in corso ha una sezione propria indipendentemente
- * dal mio voto (urgente/distinto per natura); solo a quel punto conta se
- * sono io ad essere in attesa di votare o se aspetto gli altri.
+ * invito non ancora accettato/rifiutato è la sezione più urgente (niente
+ * da votare finché non si risponde); poi un turno di spareggio in corso
+ * ha una sezione propria indipendentemente dal mio voto (urgente/distinto
+ * per natura); solo a quel punto conta se sono io ad essere in attesa di
+ * votare o se aspetto gli altri.
  */
-function sezioneDi({ sfida, turnoCorrente, hoGiaVotatoNelTurnoCorrente }: SfidaConStato): Sezione {
+function sezioneDi({ sfida, turnoCorrente, hoGiaVotatoNelTurnoCorrente, mioStatoPartecipazione }: SfidaConStato): Sezione {
   if (sfida.stato !== 'in_corso') {
     return 'concluse';
+  }
+  if (mioStatoPartecipazione === 'in_attesa') {
+    return 'da_accettare';
   }
   if (turnoCorrente?.tipo_turno === 'spareggio') {
     return 'spareggi';
@@ -36,6 +41,7 @@ function sezioneDi({ sfida, turnoCorrente, hoGiaVotatoNelTurnoCorrente }: SfidaC
 }
 
 const SEZIONI: { chiave: Sezione; titolo: string }[] = [
+  { chiave: 'da_accettare', titolo: 'Inviti da accettare' },
   { chiave: 'in_attesa', titolo: 'In attesa del mio voto' },
   { chiave: 'spareggi', titolo: 'Spareggi' },
   { chiave: 'attive', titolo: 'Attive' },

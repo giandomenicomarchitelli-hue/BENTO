@@ -16,13 +16,11 @@
  * Sfida delle scelte (`sfide_scelta`, `sfide_partecipanti`, `sfide_opzioni`,
  * `sfide_turni`, `sfide_voti`, `sfide_turno_risultati`, `notifiche`,
  * `crea_sfida`, `conferma_voti`, `ripeti_sfida`, `scadi_turni_sfida`,
- * `annulla_sfida`, `_chiudi_turno_se_completo`) per corrispondere a
- * 00000000000015/00000000000016: le migration non sono ancora state
- * applicate al progetto Supabase collegato in questa sessione (nessun
- * Docker/Supabase locale disponibile per verificarle prima). Dopo averle
- * applicate, rigenerare questo file con il comando sopra e verificare che
- * coincida con quanto scritto a mano (stessi nomi, stessi tipi) - gli altri
- * campi/stato restano invariati.
+ * `annulla_sfida`, `_chiudi_turno_se_completo`, `rispondi_invito_sfida`,
+ * più le viste `sfide_turni_progresso`/`sfide_mia_partecipazione`) sono
+ * state scritte/aggiornate a mano per corrispondere esattamente alle
+ * migration 00000000000015-00000000000025, verificate con `supabase gen
+ * types` dopo ogni applicazione al progetto Supabase collegato.
  */
 
 export type Json =
@@ -357,6 +355,7 @@ export type Database = {
             | "sfida_vincitore"
             | "sfida_senza_accordo"
             | "sfida_scaduta"
+            | "sfida_rifiutata"
           titolo: string
         }
         Insert: {
@@ -376,6 +375,7 @@ export type Database = {
             | "sfida_vincitore"
             | "sfida_senza_accordo"
             | "sfida_scaduta"
+            | "sfida_rifiutata"
           titolo: string
         }
         Update: {
@@ -395,6 +395,7 @@ export type Database = {
             | "sfida_vincitore"
             | "sfida_senza_accordo"
             | "sfida_scaduta"
+            | "sfida_rifiutata"
           titolo?: string
         }
         Relationships: [
@@ -609,16 +610,19 @@ export type Database = {
           id: string
           membro_id: string
           sfida_id: string
+          stato: "in_attesa" | "accettata" | "rifiutata"
         }
         Insert: {
           id?: string
           membro_id: string
           sfida_id: string
+          stato?: "in_attesa" | "accettata" | "rifiutata"
         }
         Update: {
           id?: string
           membro_id?: string
           sfida_id?: string
+          stato?: "in_attesa" | "accettata" | "rifiutata"
         }
         Relationships: [
           {
@@ -1039,6 +1043,15 @@ export type Database = {
         }
         Relationships: []
       }
+      sfide_mia_partecipazione: {
+        Row: {
+          // Stesso motivo di sfide_turni_progresso: supabase gen types
+          // marca sempre nullable le colonne di una vista.
+          sfida_id: string | null
+          stato: "in_attesa" | "accettata" | "rifiutata" | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _chiudi_turno_se_completo: {
@@ -1099,6 +1112,10 @@ export type Database = {
       ripeti_sfida: {
         Args: { p_sfida_id: string }
         Returns: string
+      }
+      rispondi_invito_sfida: {
+        Args: { p_accetta: boolean; p_sfida_id: string }
+        Returns: undefined
       }
       scadi_turni_sfida: {
         Args: { p_gruppo_id: string }

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId } from 'react';
 
-import { confermaVoti as confermaVotiApi, leggiSfidaCompleta } from '@/api/sfide';
+import { confermaVoti as confermaVotiApi, leggiSfidaCompleta, rispondiInvitoSfida } from '@/api/sfide';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -65,10 +65,16 @@ export function useSfidaDettaglio(sfidaId: string | null) {
     onSuccess: invalida,
   });
 
+  const rispondiInvito = useMutation({
+    mutationFn: (accetta: boolean) => rispondiInvitoSfida(sfidaId as string, accetta),
+    onSuccess: invalida,
+  });
+
   return {
     dettaglio: query.data,
     isLoading: query.isLoading,
     error: query.error,
     confermaVoti,
+    rispondiInvito,
   };
 }

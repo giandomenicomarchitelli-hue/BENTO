@@ -19,10 +19,14 @@ export async function listaSfide(gruppoId: string): Promise<Sfida[]> {
   return data;
 }
 
+export type StatoPartecipazione = 'in_attesa' | 'accettata' | 'rifiutata';
+
 export type SfidaConStato = {
   sfida: Sfida;
   turnoCorrente: TurnoSfida | undefined;
   hoGiaVotatoNelTurnoCorrente: boolean;
+  /** null se non ero tra gli invitati originali (es. entrato nel gruppo dopo). */
+  mioStatoPartecipazione: StatoPartecipazione | null;
 };
 
 /**
@@ -64,14 +68,24 @@ export async function listaSfideConStato(gruppoId: string): Promise<SfidaConStat
     .map((s) => turniPerSfida.get(s.id)?.at(-1)?.id)
     .filter((id): id is string => id !== undefined);
 
-  const votiRes =
+  const [votiRes, partecipazioneRes] = await Promise.all([
     turniCorrentiIds.length > 0
-      ? await supabase.from('sfide_voti').select('turno_id').in('turno_id', turniCorrentiIds)
-      : { data: [] as { turno_id: string }[], error: null };
+      ? supabase.from('sfide_voti').select('turno_id').in('turno_id', turniCorrentiIds)
+      : Promise.resolve({ data: [] as { turno_id: string }[], error: null }),
+    supabase.from('sfide_mia_partecipazione').select('sfida_id, stato').in('sfida_id', sfide.map((s) => s.id)),
+  ]);
   if (votiRes.error) {
     throw votiRes.error;
   }
+  if (partecipazioneRes.error) {
+    throw partecipazioneRes.error;
+  }
   const turniVotati = new Set(votiRes.data.map((v) => v.turno_id));
+  const mioStatoPerSfida = new Map(
+    partecipazioneRes.data
+      .filter((p): p is { sfida_id: string; stato: StatoPartecipazione } => p.sfida_id !== null && p.stato !== null)
+      .map((p) => [p.sfida_id, p.stato])
+  );
 
   return sfide.map((sfida) => {
     const turni = turniPerSfida.get(sfida.id) ?? [];
@@ -80,6 +94,7 @@ export async function listaSfideConStato(gruppoId: string): Promise<SfidaConStat
       sfida,
       turnoCorrente,
       hoGiaVotatoNelTurnoCorrente: turnoCorrente !== undefined && turniVotati.has(turnoCorrente.id),
+      mioStatoPartecipazione: mioStatoPerSfida.get(sfida.id) ?? null,
     };
   });
 }
@@ -103,11 +118,14 @@ export async function leggiSfidaCompleta(sfidaId: string): Promise<{
   partecipantiTotali: number;
   partecipantiCheHannoVotatoNelTurnoCorrente: number;
   hoGiaVotatoNelTurnoCorrente: boolean;
+  /** null se non ero tra gli invitati originali (es. entrato nel gruppo dopo). */
+  mioStatoPartecipazione: StatoPartecipazione | null;
 }> {
-  const [sfidaRes, turniRes, opzioniRes] = await Promise.all([
+  const [sfidaRes, turniRes, opzioniRes, mioStatoRes] = await Promise.all([
     supabase.from('sfide_scelta').select().eq('id', sfidaId).maybeSingle(),
     supabase.from('sfide_turni').select().eq('sfida_id', sfidaId).order('numero_turno', { ascending: true }),
     supabase.from('sfide_opzioni').select().eq('sfida_id', sfidaId),
+    supabase.from('sfide_mia_partecipazione').select('stato').eq('sfida_id', sfidaId).maybeSingle(),
   ]);
 
   if (sfidaRes.error) {
@@ -118,6 +136,9 @@ export async function leggiSfidaCompleta(sfidaId: string): Promise<{
   }
   if (opzioniRes.error) {
     throw opzioniRes.error;
+  }
+  if (mioStatoRes.error) {
+    throw mioStatoRes.error;
   }
   if (sfidaRes.data === null) {
     throw new Error('Sfida non trovata');
@@ -153,6 +174,7 @@ export async function leggiSfidaCompleta(sfidaId: string): Promise<{
     partecipantiTotali: progressoRes.data?.partecipanti_totali ?? 0,
     partecipantiCheHannoVotatoNelTurnoCorrente: progressoRes.data?.partecipanti_votanti ?? 0,
     hoGiaVotatoNelTurnoCorrente: votiRes.data.length > 0,
+    mioStatoPartecipazione: mioStatoRes.data?.stato ?? null,
   };
 }
 
@@ -210,6 +232,18 @@ export async function confermaVoti(params: {
     p_turno_id: params.turnoId,
     p_opzioni_scelte: params.opzioniScelte,
     p_proposta_personalizzata: params.propostaPersonalizzata ?? null,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+/** Accetta o rifiuta l'invito: solo mentre non si è ancora risposto. */
+export async function rispondiInvitoSfida(sfidaId: string, accetta: boolean): Promise<void> {
+  const { error } = await supabase.rpc('rispondi_invito_sfida', {
+    p_sfida_id: sfidaId,
+    p_accetta: accetta,
   });
 
   if (error) {

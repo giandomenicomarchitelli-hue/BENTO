@@ -202,7 +202,7 @@ export default function DettaglioSfida() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
   const { membri } = useGruppoAttivo();
-  const { dettaglio, isLoading, error, confermaVoti } = useSfidaDettaglio(id ?? null);
+  const { dettaglio, isLoading, error, confermaVoti, rispondiInvito } = useSfidaDettaglio(id ?? null);
   const { ripeti, sincronizzaScadenze } = useSfide(gruppoAttivoId);
   const queryClient = useQueryClient();
 
@@ -248,6 +248,7 @@ export default function DettaglioSfida() {
     partecipantiTotali,
     partecipantiCheHannoVotatoNelTurnoCorrente,
     hoGiaVotatoNelTurnoCorrente,
+    mioStatoPartecipazione,
   } = dettaglio;
 
   const organizzatore = membri.find((m) => m.id === sfida.creata_da)?.nome ?? 'un membro';
@@ -320,23 +321,56 @@ export default function DettaglioSfida() {
         )}
 
         {sfida.stato === 'in_corso' && turnoCorrente !== undefined && turnoCorrente.stato === 'in_corso' && (
-          <GlassCard>
-            <Text style={styles.testoMeta}>Scade {formattaIstante(turnoCorrente.scadenza)}</Text>
-            <Text style={styles.testoMeta}>
-              {partecipantiCheHannoVotatoNelTurnoCorrente} di {partecipantiTotali} persone hanno votato
-            </Text>
+          mioStatoPartecipazione === 'in_attesa' ? (
+            <GlassCard>
+              <SectionHeader titolo="Ti hanno invitato a questa sfida" />
+              <Text style={styles.testoMeta}>
+                Accetta per votare le tue preferite, oppure rifiuta se non vuoi partecipare.
+              </Text>
+              {rispondiInvito.isError && (
+                <Text style={styles.testoErrore}>{messaggioErrore(rispondiInvito.error)}</Text>
+              )}
+              <View style={styles.rigaBottoniInvito}>
+                <View style={styles.bottoneInvito}>
+                  <BentoButton
+                    etichetta="Accetta"
+                    onPress={() => rispondiInvito.mutate(true)}
+                    caricando={rispondiInvito.isPending}
+                  />
+                </View>
+                <View style={styles.bottoneInvito}>
+                  <BentoButton
+                    etichetta="Rifiuta"
+                    variante="vetro"
+                    onPress={() => rispondiInvito.mutate(false)}
+                    disabilitato={rispondiInvito.isPending}
+                  />
+                </View>
+              </View>
+            </GlassCard>
+          ) : mioStatoPartecipazione === 'rifiutata' ? (
+            <GlassCard>
+              <Text style={styles.testoStato}>Hai rifiutato questa sfida.</Text>
+            </GlassCard>
+          ) : (
+            <GlassCard>
+              <Text style={styles.testoMeta}>Scade {formattaIstante(turnoCorrente.scadenza)}</Text>
+              <Text style={styles.testoMeta}>
+                {partecipantiCheHannoVotatoNelTurnoCorrente} di {partecipantiTotali} persone hanno votato
+              </Text>
 
-            {hoGiaVotatoNelTurnoCorrente ? (
-              <Text style={styles.testoStato}>Hai già votato. In attesa degli altri.</Text>
-            ) : (
-              <FormVoto
-                key={turnoCorrente.id}
-                turno={turnoCorrente}
-                opzioniVisibili={opzioniVisibili}
-                confermaVoti={confermaVoti}
-              />
-            )}
-          </GlassCard>
+              {hoGiaVotatoNelTurnoCorrente ? (
+                <Text style={styles.testoStato}>Hai già votato. In attesa degli altri.</Text>
+              ) : (
+                <FormVoto
+                  key={turnoCorrente.id}
+                  turno={turnoCorrente}
+                  opzioniVisibili={opzioniVisibili}
+                  confermaVoti={confermaVoti}
+                />
+              )}
+            </GlassCard>
+          )
         )}
       </ScrollView>
     </BentoScreen>
@@ -368,6 +402,14 @@ const styles = StyleSheet.create({
   sezioneVoto: {
     marginTop: spaziatura.sm,
     gap: spaziatura.sm,
+  },
+  rigaBottoniInvito: {
+    flexDirection: 'row',
+    gap: spaziatura.sm,
+    marginTop: spaziatura.sm,
+  },
+  bottoneInvito: {
+    flex: 1,
   },
   rigaChip: {
     flexDirection: 'row',
