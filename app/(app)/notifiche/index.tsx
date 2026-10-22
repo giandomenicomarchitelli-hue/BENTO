@@ -8,7 +8,7 @@ import { BentoScreen } from '@/components/BentoScreen';
 import { GlassCard } from '@/components/GlassCard';
 import { useNotifiche } from '@/hooks/useNotifiche';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
-import { bento, spaziatura } from '@/theme/tokens';
+import { accenti, bento, spaziatura } from '@/theme/tokens';
 
 export default function Notifiche() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
@@ -53,7 +53,10 @@ function NotificheDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
               elevazione="bassa"
               style={notifica.letta_il === null ? styles.nonLetta : undefined}
             >
-              <Text style={styles.titoloNotifica}>{notifica.titolo}</Text>
+              <View style={styles.rigaTitolo}>
+                {notifica.letta_il === null && <View style={styles.pallinoNonLetta} />}
+                <Text style={styles.titoloNotifica}>{notifica.titolo}</Text>
+              </View>
               <Text style={styles.corpoNotifica}>{notifica.corpo}</Text>
               <Text style={styles.dataNotifica}>
                 {format(new Date(notifica.creata_il), "d MMMM yyyy 'alle' HH:mm", { locale: it })}
@@ -80,6 +83,17 @@ const styles = StyleSheet.create({
   nonLetta: {
     borderColor: bento.bordoForte,
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  rigaTitolo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spaziatura.xs,
+  },
+  pallinoNonLetta: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: accenti.rosa,
   },
   titoloNotifica: {
     fontSize: 15,
