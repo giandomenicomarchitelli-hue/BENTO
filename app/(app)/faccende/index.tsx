@@ -236,7 +236,21 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     if (idInModifica !== null) {
       aggiorna.mutate({ id: idInModifica, ...campi }, { onSuccess: azzeraForm });
     } else {
-      crea.mutate({ ...campi, creatoDaMembroId: ilMioMembroId }, { onSuccess: azzeraForm });
+      crea.mutate(
+        { ...campi, creatoDaMembroId: ilMioMembroId },
+        {
+          onSuccess: () => {
+            azzeraForm();
+            // Senza questo, una faccenda appena creata non ha ancora
+            // nessuna occorrenza: sincronizza.mutate() gira solo una
+            // volta all'apertura della pagina (vedi l'useEffect sopra),
+            // quindi senza rilanciarlo qui "Oggi" resta vuoto - nessuna
+            // riga, quindi nessun pulsante "Fatto" - finché non si
+            // ricarica la pagina.
+            sincronizza.mutate();
+          },
+        }
+      );
     }
   }
 

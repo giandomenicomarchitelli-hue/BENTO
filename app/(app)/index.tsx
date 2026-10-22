@@ -10,9 +10,11 @@ import { GlassCard } from '@/components/GlassCard';
 import { GroupPreviewCard } from '@/components/GroupPreviewCard';
 import { HeroBalanceCard } from '@/components/HeroBalanceCard';
 import { IconBadge } from '@/components/IconBadge';
+import { Badge } from '@/components/Badge';
 import { QuickActionRow, type QuickAction } from '@/components/QuickActionRow';
 import { SectionHeader } from '@/components/SectionHeader';
 import { useMieiGruppi } from '@/hooks/useMieiGruppi';
+import { useNotifiche } from '@/hooks/useNotifiche';
 import { useProfilo } from '@/hooks/useProfilo';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { accenti, bento, spaziatura, tipografia } from '@/theme/tokens';
@@ -24,6 +26,12 @@ export default function Homepage() {
   const { profilo, isLoading: profiloInCaricamento } = useProfilo();
   const { gruppi, isLoading: gruppiInCaricamento, error: erroreGruppi } = useMieiGruppi();
   const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
+  // Notifiche sono per-gruppo: qui si mostra il conteggio del gruppo
+  // attualmente aperto in questa sessione (se c'è già stato), stesso dato
+  // già usato da ogni altra pagina per-gruppo (dashboard, liste, ecc.) -
+  // nessun nuovo stato, nessuna query aggregata su più gruppi.
+  const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
+  const { nonLette } = useNotifiche(gruppoAttivoId);
 
   // Serve un nome utente fisso prima di poter fare qualunque cosa.
   if (profiloInCaricamento) {
@@ -74,6 +82,14 @@ export default function Homepage() {
           <Text style={styles.payoff}>Everything, together.</Text>
         </View>
         <View style={styles.azioniIntestazione}>
+          <Pressable onPress={() => router.push('/notifiche')} hitSlop={8} style={styles.bottoneCampanella}>
+            <Feather name="bell" size={18} color={bento.testoMuto} />
+            {nonLette > 0 && (
+              <View style={styles.badgeCampanella}>
+                <Badge testo={String(nonLette)} tono="rosso" />
+              </View>
+            )}
+          </Pressable>
           <Pressable onPress={() => router.push('/profilo')} hitSlop={8}>
             <IconBadge icona="user" colore={accenti.indaco} dimensione={40} />
           </Pressable>
@@ -173,6 +189,17 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  bottoneCampanella: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeCampanella: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
   },
   saluto: {
     ...tipografia.display,

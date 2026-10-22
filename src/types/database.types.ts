@@ -12,8 +12,13 @@
  * `storico_faccende`, `impostazioni_faccende`, `completa_occorrenza`,
  * `annulla_completamento_occorrenza`, `importa_faccende_suggerite`) sono
  * state aggiunte qui a mano, scritte per corrispondere esattamente alle
- * migration 00000000000013/00000000000014: le migration non sono ancora
- * state applicate al progetto Supabase collegato in questa sessione (nessun
+ * migration 00000000000013/00000000000014, e le tabelle/funzioni del modulo
+ * Sfida delle scelte (`sfide_scelta`, `sfide_partecipanti`, `sfide_opzioni`,
+ * `sfide_turni`, `sfide_voti`, `sfide_turno_risultati`, `notifiche`,
+ * `crea_sfida`, `conferma_voti`, `ripeti_sfida`, `scadi_turni_sfida`,
+ * `annulla_sfida`, `_chiudi_turno_se_completo`) per corrispondere a
+ * 00000000000015/00000000000016: le migration non sono ancora state
+ * applicate al progetto Supabase collegato in questa sessione (nessun
  * Docker/Supabase locale disponibile per verificarle prima). Dopo averle
  * applicate, rigenerare questo file con il comando sopra e verificare che
  * coincida con quanto scritto a mano (stessi nomi, stessi tipi) - gli altri
@@ -334,6 +339,88 @@ export type Database = {
           },
         ]
       }
+      notifiche: {
+        Row: {
+          corpo: string
+          creata_il: string
+          destinatario_membro_id: string
+          evento_idempotenza: string
+          gruppo_id: string
+          id: string
+          letta_il: string | null
+          sfida_id: string | null
+          tipo:
+            | "sfida_invito"
+            | "sfida_promemoria"
+            | "sfida_tutti_votato"
+            | "sfida_spareggio"
+            | "sfida_vincitore"
+            | "sfida_senza_accordo"
+            | "sfida_scaduta"
+          titolo: string
+        }
+        Insert: {
+          corpo?: string
+          creata_il?: string
+          destinatario_membro_id: string
+          evento_idempotenza: string
+          gruppo_id: string
+          id?: string
+          letta_il?: string | null
+          sfida_id?: string | null
+          tipo:
+            | "sfida_invito"
+            | "sfida_promemoria"
+            | "sfida_tutti_votato"
+            | "sfida_spareggio"
+            | "sfida_vincitore"
+            | "sfida_senza_accordo"
+            | "sfida_scaduta"
+          titolo: string
+        }
+        Update: {
+          corpo?: string
+          creata_il?: string
+          destinatario_membro_id?: string
+          evento_idempotenza?: string
+          gruppo_id?: string
+          id?: string
+          letta_il?: string | null
+          sfida_id?: string | null
+          tipo?:
+            | "sfida_invito"
+            | "sfida_promemoria"
+            | "sfida_tutti_votato"
+            | "sfida_spareggio"
+            | "sfida_vincitore"
+            | "sfida_senza_accordo"
+            | "sfida_scaduta"
+          titolo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifiche_destinatario_membro_id_fkey"
+            columns: ["destinatario_membro_id"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifiche_gruppo_id_fkey"
+            columns: ["gruppo_id"]
+            isOneToOne: false
+            referencedRelation: "gruppi"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifiche_sfida_id_fkey"
+            columns: ["sfida_id"]
+            isOneToOne: false
+            referencedRelation: "sfide_scelta"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       occorrenze_faccende: {
         Row: {
           completata_da: string | null
@@ -448,6 +535,340 @@ export type Database = {
             columns: ["spesa_id"]
             isOneToOne: false
             referencedRelation: "spese"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sfide_opzioni: {
+        Row: {
+          creata_il: string
+          id: string
+          personalizzata: boolean
+          proposta_da: string | null
+          sfida_id: string
+          testo_normalizzato: string
+          testo_opzione: string
+          turno_proposto_id: string | null
+          voce_lista_id: string | null
+        }
+        Insert: {
+          creata_il?: string
+          id?: string
+          personalizzata?: boolean
+          proposta_da?: string | null
+          sfida_id: string
+          testo_normalizzato: string
+          testo_opzione: string
+          turno_proposto_id?: string | null
+          voce_lista_id?: string | null
+        }
+        Update: {
+          creata_il?: string
+          id?: string
+          personalizzata?: boolean
+          proposta_da?: string | null
+          sfida_id?: string
+          testo_normalizzato?: string
+          testo_opzione?: string
+          turno_proposto_id?: string | null
+          voce_lista_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sfide_opzioni_proposta_da_fkey"
+            columns: ["proposta_da"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sfide_opzioni_sfida_id_fkey"
+            columns: ["sfida_id"]
+            isOneToOne: false
+            referencedRelation: "sfide_scelta"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sfide_opzioni_turno_proposto_id_fkey"
+            columns: ["turno_proposto_id"]
+            isOneToOne: false
+            referencedRelation: "sfide_turni"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sfide_opzioni_voce_lista_id_fkey"
+            columns: ["voce_lista_id"]
+            isOneToOne: false
+            referencedRelation: "voci_lista"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sfide_partecipanti: {
+        Row: {
+          id: string
+          membro_id: string
+          sfida_id: string
+        }
+        Insert: {
+          id?: string
+          membro_id: string
+          sfida_id: string
+        }
+        Update: {
+          id?: string
+          membro_id?: string
+          sfida_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sfide_partecipanti_membro_id_fkey"
+            columns: ["membro_id"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sfide_partecipanti_sfida_id_fkey"
+            columns: ["sfida_id"]
+            isOneToOne: false
+            referencedRelation: "sfide_scelta"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sfide_scelta: {
+        Row: {
+          attivita_fine: string | null
+          attivita_inizio: string
+          attivita_precisione: "giorno" | "fascia" | "orario"
+          categoria: string | null
+          conclusa_il: string | null
+          creata_da: string
+          creata_il: string
+          gruppo_id: string
+          id: string
+          lista_id: string
+          opzione_vincente_id: string | null
+          richiesta_id: string | null
+          stato:
+            | "in_corso"
+            | "conclusa_vincitore"
+            | "conclusa_senza_accordo"
+            | "conclusa_scaduta"
+            | "annullata"
+          titolo: string
+          votazione_scade_il: string
+        }
+        Insert: {
+          attivita_fine?: string | null
+          attivita_inizio: string
+          attivita_precisione: "giorno" | "fascia" | "orario"
+          categoria?: string | null
+          conclusa_il?: string | null
+          creata_da: string
+          creata_il?: string
+          gruppo_id: string
+          id?: string
+          lista_id: string
+          opzione_vincente_id?: string | null
+          richiesta_id?: string | null
+          stato?:
+            | "in_corso"
+            | "conclusa_vincitore"
+            | "conclusa_senza_accordo"
+            | "conclusa_scaduta"
+            | "annullata"
+          titolo: string
+          votazione_scade_il: string
+        }
+        Update: {
+          attivita_fine?: string | null
+          attivita_inizio?: string
+          attivita_precisione?: "giorno" | "fascia" | "orario"
+          categoria?: string | null
+          conclusa_il?: string | null
+          creata_da?: string
+          creata_il?: string
+          gruppo_id?: string
+          id?: string
+          lista_id?: string
+          opzione_vincente_id?: string | null
+          richiesta_id?: string | null
+          stato?:
+            | "in_corso"
+            | "conclusa_vincitore"
+            | "conclusa_senza_accordo"
+            | "conclusa_scaduta"
+            | "annullata"
+          titolo?: string
+          votazione_scade_il?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sfide_scelta_creata_da_fkey"
+            columns: ["creata_da"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sfide_scelta_gruppo_id_fkey"
+            columns: ["gruppo_id"]
+            isOneToOne: false
+            referencedRelation: "gruppi"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sfide_scelta_lista_id_fkey"
+            columns: ["lista_id"]
+            isOneToOne: false
+            referencedRelation: "liste"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sfide_scelta_opzione_vincente_id_fkey"
+            columns: ["opzione_vincente_id"]
+            isOneToOne: false
+            referencedRelation: "sfide_opzioni"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sfide_turni: {
+        Row: {
+          concluso_il: string | null
+          id: string
+          iniziato_il: string
+          numero_turno: number
+          opzioni_in_gara: string[]
+          scadenza: string
+          sfida_id: string
+          stato:
+            | "in_corso"
+            | "concluso_vincitore"
+            | "concluso_pareggio"
+            | "concluso_senza_accordo"
+            | "scaduto_incompleto"
+          tipo_turno: "iniziale" | "spareggio" | "nuovo_tentativo"
+        }
+        Insert: {
+          concluso_il?: string | null
+          id?: string
+          iniziato_il?: string
+          numero_turno: number
+          opzioni_in_gara?: string[]
+          scadenza: string
+          sfida_id: string
+          stato?:
+            | "in_corso"
+            | "concluso_vincitore"
+            | "concluso_pareggio"
+            | "concluso_senza_accordo"
+            | "scaduto_incompleto"
+          tipo_turno: "iniziale" | "spareggio" | "nuovo_tentativo"
+        }
+        Update: {
+          concluso_il?: string | null
+          id?: string
+          iniziato_il?: string
+          numero_turno?: number
+          opzioni_in_gara?: string[]
+          scadenza?: string
+          sfida_id?: string
+          stato?:
+            | "in_corso"
+            | "concluso_vincitore"
+            | "concluso_pareggio"
+            | "concluso_senza_accordo"
+            | "scaduto_incompleto"
+          tipo_turno?: "iniziale" | "spareggio" | "nuovo_tentativo"
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sfide_turni_sfida_id_fkey"
+            columns: ["sfida_id"]
+            isOneToOne: false
+            referencedRelation: "sfide_scelta"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sfide_turno_risultati: {
+        Row: {
+          opzione_id: string
+          turno_id: string
+          voti_ricevuti: number
+        }
+        Insert: {
+          opzione_id: string
+          turno_id: string
+          voti_ricevuti: number
+        }
+        Update: {
+          opzione_id?: string
+          turno_id?: string
+          voti_ricevuti?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sfide_turno_risultati_opzione_id_fkey"
+            columns: ["opzione_id"]
+            isOneToOne: false
+            referencedRelation: "sfide_opzioni"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sfide_turno_risultati_turno_id_fkey"
+            columns: ["turno_id"]
+            isOneToOne: false
+            referencedRelation: "sfide_turni"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sfide_voti: {
+        Row: {
+          creato_il: string
+          id: string
+          membro_id: string
+          opzione_id: string
+          turno_id: string
+        }
+        Insert: {
+          creato_il?: string
+          id?: string
+          membro_id: string
+          opzione_id: string
+          turno_id: string
+        }
+        Update: {
+          creato_il?: string
+          id?: string
+          membro_id?: string
+          opzione_id?: string
+          turno_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sfide_voti_membro_id_fkey"
+            columns: ["membro_id"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sfide_voti_opzione_id_fkey"
+            columns: ["opzione_id"]
+            isOneToOne: false
+            referencedRelation: "sfide_opzioni"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sfide_voti_turno_id_fkey"
+            columns: ["turno_id"]
+            isOneToOne: false
+            referencedRelation: "sfide_turni"
             referencedColumns: ["id"]
           },
         ]
@@ -605,16 +1026,59 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      sfide_turni_progresso: {
+        Row: {
+          // Postgres non può garantire staticamente che le colonne di una
+          // vista siano non-null (anche se qui, nella pratica, lo sono
+          // sempre: count(*) non è mai null, turno_id viene da una chiave
+          // primaria) - confermato da `supabase gen types` dopo aver
+          // applicato la migration, che le marca tutte nullable.
+          partecipanti_totali: number | null
+          partecipanti_votanti: number | null
+          turno_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      _chiudi_turno_se_completo: {
+        Args: { p_turno_id: string }
+        Returns: undefined
+      }
       annulla_completamento_occorrenza: {
         Args: { p_occorrenza_id: string }
+        Returns: undefined
+      }
+      annulla_sfida: {
+        Args: { p_sfida_id: string }
         Returns: undefined
       }
       completa_occorrenza: {
         Args: { p_occorrenza_id: string }
         Returns: undefined
+      }
+      conferma_voti: {
+        Args: {
+          p_opzioni_scelte: string[]
+          p_proposta_personalizzata: string | null
+          p_turno_id: string
+        }
+        Returns: undefined
+      }
+      crea_sfida: {
+        Args: {
+          p_attivita_fine: string | null
+          p_attivita_inizio: string
+          p_attivita_precisione: string
+          p_categoria: string | null
+          p_lista_id: string
+          p_opzioni_scelte: string[]
+          p_proposta_personalizzata: string | null
+          p_richiesta_id: string
+          p_titolo: string
+          p_votazione_scade_il: string
+        }
+        Returns: string
       }
       crea_spesa: {
         Args: {
@@ -631,6 +1095,14 @@ export type Database = {
       importa_faccende_suggerite: {
         Args: { p_gruppo_id: string }
         Returns: number
+      }
+      ripeti_sfida: {
+        Args: { p_sfida_id: string }
+        Returns: string
+      }
+      scadi_turni_sfida: {
+        Args: { p_gruppo_id: string }
+        Returns: undefined
       }
       unisciti_a_gruppo: {
         Args: { p_codice_invito: string }
