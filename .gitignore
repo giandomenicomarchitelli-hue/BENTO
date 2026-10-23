@@ -50,3 +50,6 @@ supabase/.temp/
 # Cache/stato interno degli strumenti agente (non codice del progetto)
 .agents/
 .superpowers/
+
+# Backup locali di asset sostituiti (non da versionare)
+assets/_vecchie_icone_backup/
