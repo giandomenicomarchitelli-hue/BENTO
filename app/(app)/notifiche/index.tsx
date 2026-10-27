@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { Redirect, router } from 'expo-router';
+import { router } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { Notifica } from '@/api/notifiche';
@@ -10,24 +10,21 @@ import { useNotifiche } from '@/hooks/useNotifiche';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { accenti, bento, spaziatura } from '@/theme/tokens';
 
+/** Notifiche di TUTTI i gruppi dell'utente, non serve più un gruppo attivo. */
 export default function Notifiche() {
-  const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
-
-  if (gruppoAttivoId === null) {
-    return <Redirect href="/gruppi" />;
-  }
-
-  return <NotificheDelGruppo gruppoAttivoId={gruppoAttivoId} />;
-}
-
-function NotificheDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
-  const { notifiche, isLoading, segnaLetta } = useNotifiche(gruppoAttivoId);
+  const { notifiche, isLoading, segnaLetta } = useNotifiche();
+  const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
 
   function apriNotifica(notifica: Notifica) {
     if (notifica.letta_il === null) {
       segnaLetta.mutate(notifica.id);
     }
     if (notifica.sfida_id !== null) {
+      // La notifica può riguardare un gruppo diverso da quello attualmente
+      // aperto: senza impostarlo come attivo, la pagina della sfida (che
+      // legge il gruppo dallo store, non dalla notifica) opererebbe sul
+      // gruppo sbagliato.
+      impostaGruppoAttivo(notifica.gruppo_id);
       router.push({ pathname: '/sfide/[id]', params: { id: notifica.sfida_id } });
     }
   }
@@ -58,9 +55,12 @@ function NotificheDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
                 <Text style={styles.titoloNotifica}>{notifica.titolo}</Text>
               </View>
               <Text style={styles.corpoNotifica}>{notifica.corpo}</Text>
-              <Text style={styles.dataNotifica}>
-                {format(new Date(notifica.creata_il), "d MMMM yyyy 'alle' HH:mm", { locale: it })}
-              </Text>
+              <View style={styles.rigaMeta}>
+                {notifica.gruppi !== null && <Text style={styles.gruppoNotifica}>{notifica.gruppi.nome}</Text>}
+                <Text style={styles.dataNotifica}>
+                  {format(new Date(notifica.creata_il), "d MMMM yyyy 'alle' HH:mm", { locale: it })}
+                </Text>
+              </View>
             </GlassCard>
           ))}
         </ScrollView>
@@ -105,10 +105,20 @@ const styles = StyleSheet.create({
     color: bento.testoSecondario,
     marginTop: 2,
   },
+  rigaMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spaziatura.xs,
+    marginTop: 4,
+  },
+  gruppoNotifica: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: bento.testoMuto,
+  },
   dataNotifica: {
     fontSize: 11,
     color: bento.testoMuto,
-    marginTop: 4,
   },
   vuoto: {
     fontSize: 14,

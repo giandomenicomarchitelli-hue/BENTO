@@ -35,7 +35,7 @@ export default function Dashboard() {
   const { transazioni, isLoading: saldiInCaricamento, error: erroreSaldi } =
     useSaldi(gruppoAttivoId);
   const { sfide, isLoading: sfideInCaricamento } = useSfide(gruppoAttivoId);
-  const { nonLette: notificheNonLette } = useNotifiche(gruppoAttivoId);
+  const { nonLette: notificheNonLette } = useNotifiche();
 
   // Posizione netta dell'utente in QUESTO gruppo - vedi
   // calcolaPosizionePersonale in GroupBalanceCard.tsx (testata a parte in

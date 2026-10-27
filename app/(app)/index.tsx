@@ -26,12 +26,10 @@ export default function Homepage() {
   const { profilo, isLoading: profiloInCaricamento } = useProfilo();
   const { gruppi, isLoading: gruppiInCaricamento, error: erroreGruppi } = useMieiGruppi();
   const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
-  // Notifiche sono per-gruppo: qui si mostra il conteggio del gruppo
-  // attualmente aperto in questa sessione (se c'è già stato), stesso dato
-  // già usato da ogni altra pagina per-gruppo (dashboard, liste, ecc.) -
-  // nessun nuovo stato, nessuna query aggregata su più gruppi.
-  const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
-  const { nonLette } = useNotifiche(gruppoAttivoId);
+  // Notifiche di TUTTI i gruppi (vedi useNotifiche.ts): prima erano
+  // legate al gruppo attualmente aperto in sessione, quindi la campanella
+  // non funzionava finché non si era ancora entrati in nessun gruppo.
+  const { nonLette } = useNotifiche();
 
   // Serve un nome utente fisso prima di poter fare qualunque cosa.
   if (profiloInCaricamento) {
