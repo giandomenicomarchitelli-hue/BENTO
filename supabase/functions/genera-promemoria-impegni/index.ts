@@ -240,11 +240,9 @@ interface RigaImpegno {
 Deno.serve(async (_req) => {
   const adesso = new Date();
 
-  // --- Fase 1: generazione delle occorrenze mancanti, fino all'orizzonte.
-  // Stesso algoritmo e stessa idempotenza (upsert con ignoreDuplicates sul
-  // vincolo unique(impegno_id, data_ora)) di sincronizzaOccorrenzeImpegni
-  // in src/api/impegni.ts: questa funzione è la rete di sicurezza lato
-  // server, non sostituisce quella sincronizzazione lato client.
+  // Lettura necessaria a ENTRAMBE le fasi (fase 2 filtra i promemoria sugli
+  // stessi impegni attivi): un fallimento qui è l'unico caso davvero
+  // fatale, perché senza impegni nessuna delle due fasi può procedere.
   const { data: impegniAttivi, error: erroreImpegni } = await supabase
     .from('impegni')
     .select('id, gruppo_id, titolo, data_inizio, ora, frequenza, intervallo_ricorrenza, promemoria_minuti_prima')
@@ -254,68 +252,99 @@ Deno.serve(async (_req) => {
   }
   const impegni: RigaImpegno[] = impegniAttivi ?? [];
 
-  const gruppoIds = [...new Set(impegni.map((i) => i.gruppo_id))];
-  const { data: impostazioni, error: erroreImpostazioni } =
-    gruppoIds.length > 0
-      ? await supabase.from('impostazioni_faccende').select('gruppo_id, fuso_orario').in('gruppo_id', gruppoIds)
-      : { data: [] as { gruppo_id: string; fuso_orario: string }[], error: null };
-  if (erroreImpostazioni) {
-    return new Response(erroreImpostazioni.message, { status: 500 });
-  }
-  // Stesso default di leggiFusoOrarioGruppo (src/api/impegni.ts): un gruppo
-  // senza modulo Faccende attivo non ha riga in impostazioni_faccende.
-  const fusoPerGruppo = new Map<string, string>(gruppoIds.map((g) => [g, FUSO_ORARIO_DEFAULT]));
-  for (const riga of impostazioni ?? []) {
-    fusoPerGruppo.set(riga.gruppo_id, riga.fuso_orario);
-  }
-
-  const impegnoIds = impegni.map((i) => i.id);
-  const { data: occorrenzeEsistenti, error: erroreOccorrenze } =
-    impegnoIds.length > 0
-      ? await supabase.from('occorrenze_impegni').select('impegno_id, data_ora').in('impegno_id', impegnoIds)
-      : { data: [] as { impegno_id: string; data_ora: string }[], error: null };
-  if (erroreOccorrenze) {
-    return new Response(erroreOccorrenze.message, { status: 500 });
-  }
-
-  const ultimaDataOraPerImpegno = new Map<string, string>();
-  for (const occ of occorrenzeEsistenti ?? []) {
-    const attuale = ultimaDataOraPerImpegno.get(occ.impegno_id);
-    if (attuale === undefined || occ.data_ora > attuale) {
-      ultimaDataOraPerImpegno.set(occ.impegno_id, occ.data_ora);
+  // --- Fase 1: generazione delle occorrenze mancanti, fino all'orizzonte.
+  // Stesso algoritmo e stessa idempotenza (upsert con ignoreDuplicates sul
+  // vincolo unique(impegno_id, data_ora)) di sincronizzaOccorrenzeImpegni
+  // in src/api/impegni.ts: questa funzione è la rete di sicurezza lato
+  // server, non sostituisce quella sincronizzazione lato client.
+  // Avvolta in try/catch e resa non bloccante per la fase 2: la fase 2 è
+  // l'unico percorso reale di invio dei promemoria (la generazione è solo
+  // una rete di sicurezza che specchia lato server quanto il client fa già
+  // da solo), quindi un errore qui non deve mai sopprimere in silenzio i
+  // promemoria di questo e di ogni tick successivo finché il problema
+  // persiste.
+  let occorrenzeGenerate = 0;
+  let erroreFase1: string | null = null;
+  try {
+    const gruppoIds = [...new Set(impegni.map((i) => i.gruppo_id))];
+    const { data: impostazioni, error: erroreImpostazioni } =
+      gruppoIds.length > 0
+        ? await supabase.from('impostazioni_faccende').select('gruppo_id, fuso_orario').in('gruppo_id', gruppoIds)
+        : { data: [] as { gruppo_id: string; fuso_orario: string }[], error: null };
+    if (erroreImpostazioni) {
+      throw new Error(erroreImpostazioni.message);
     }
-  }
-
-  const righeDaInserire: { impegno_id: string; gruppo_id: string; data_ora: string }[] = [];
-  for (const impegno of impegni) {
-    const fusoOrario = fusoPerGruppo.get(impegno.gruppo_id) ?? FUSO_ORARIO_DEFAULT;
-    const oggiISO = dataLocaleISO(adesso, fusoOrario);
-    const orizzonteISO = aggiungiGiorni(oggiISO, ORIZZONTE_GIORNI);
-
-    const definizione: DefinizioneRicorrenzaImpegno = {
-      frequenza: impegno.frequenza,
-      intervalloRicorrenza: impegno.intervallo_ricorrenza,
-      dataInizio: impegno.data_inizio,
-      ora: impegno.ora,
-    };
-
-    const ultimaDataOraEsistente = ultimaDataOraPerImpegno.get(impegno.id) ?? null;
-    const ultimaDataGenerata =
-      ultimaDataOraEsistente !== null ? dataLocaleISO(new Date(ultimaDataOraEsistente), fusoOrario) : null;
-
-    const occorrenze = calcolaOccorrenzeMancantiImpegno(definizione, ultimaDataGenerata, orizzonteISO, fusoOrario);
-    for (const occ of occorrenze) {
-      righeDaInserire.push({ impegno_id: impegno.id, gruppo_id: impegno.gruppo_id, data_ora: occ.istanteISO });
+    // Stesso default di leggiFusoOrarioGruppo (src/api/impegni.ts): un
+    // gruppo senza modulo Faccende attivo non ha riga in
+    // impostazioni_faccende.
+    const fusoPerGruppo = new Map<string, string>(gruppoIds.map((g) => [g, FUSO_ORARIO_DEFAULT]));
+    for (const riga of impostazioni ?? []) {
+      fusoPerGruppo.set(riga.gruppo_id, riga.fuso_orario);
     }
-  }
 
-  if (righeDaInserire.length > 0) {
-    const { error } = await supabase
-      .from('occorrenze_impegni')
-      .upsert(righeDaInserire, { onConflict: 'impegno_id,data_ora', ignoreDuplicates: true });
-    if (error) {
-      return new Response(error.message, { status: 500 });
+    const impegnoIds = impegni.map((i) => i.id);
+    // order('data_ora', { ascending: false }): se PostgREST dovesse
+    // troncare il risultato al suo cap di righe predefinito, le righe
+    // scartate sarebbero quelle più vecchie e non quelle più recenti -
+    // esattamente ciò che serve qui, dato che l'unico uso di questi dati è
+    // calcolare, per ciascun impegno, la data_ora PIÙ RECENTE già generata.
+    const { data: occorrenzeEsistenti, error: erroreOccorrenze } =
+      impegnoIds.length > 0
+        ? await supabase
+            .from('occorrenze_impegni')
+            .select('impegno_id, data_ora')
+            .in('impegno_id', impegnoIds)
+            .order('data_ora', { ascending: false })
+        : { data: [] as { impegno_id: string; data_ora: string }[], error: null };
+    if (erroreOccorrenze) {
+      throw new Error(erroreOccorrenze.message);
     }
+
+    const ultimaDataOraPerImpegno = new Map<string, string>();
+    for (const occ of occorrenzeEsistenti ?? []) {
+      const attuale = ultimaDataOraPerImpegno.get(occ.impegno_id);
+      if (attuale === undefined || occ.data_ora > attuale) {
+        ultimaDataOraPerImpegno.set(occ.impegno_id, occ.data_ora);
+      }
+    }
+
+    const righeDaInserire: { impegno_id: string; gruppo_id: string; data_ora: string }[] = [];
+    for (const impegno of impegni) {
+      const fusoOrario = fusoPerGruppo.get(impegno.gruppo_id) ?? FUSO_ORARIO_DEFAULT;
+      const oggiISO = dataLocaleISO(adesso, fusoOrario);
+      const orizzonteISO = aggiungiGiorni(oggiISO, ORIZZONTE_GIORNI);
+
+      const definizione: DefinizioneRicorrenzaImpegno = {
+        frequenza: impegno.frequenza,
+        intervalloRicorrenza: impegno.intervallo_ricorrenza,
+        dataInizio: impegno.data_inizio,
+        ora: impegno.ora,
+      };
+
+      const ultimaDataOraEsistente = ultimaDataOraPerImpegno.get(impegno.id) ?? null;
+      const ultimaDataGenerata =
+        ultimaDataOraEsistente !== null ? dataLocaleISO(new Date(ultimaDataOraEsistente), fusoOrario) : null;
+
+      const occorrenze = calcolaOccorrenzeMancantiImpegno(definizione, ultimaDataGenerata, orizzonteISO, fusoOrario);
+      for (const occ of occorrenze) {
+        righeDaInserire.push({ impegno_id: impegno.id, gruppo_id: impegno.gruppo_id, data_ora: occ.istanteISO });
+      }
+    }
+
+    if (righeDaInserire.length > 0) {
+      const { error } = await supabase
+        .from('occorrenze_impegni')
+        .upsert(righeDaInserire, { onConflict: 'impegno_id,data_ora', ignoreDuplicates: true });
+      if (error) {
+        throw new Error(error.message);
+      }
+    }
+
+    occorrenzeGenerate = righeDaInserire.length;
+  } catch (e) {
+    erroreFase1 = e instanceof Error ? e.message : String(e);
+    // Visibile nei log della function senza bloccare la fase 2 sottostante.
+    console.error('Fase 1 (generazione occorrenze) fallita:', erroreFase1);
   }
 
   // --- Fase 2: promemoria. Solo impegni con promemoria_minuti_prima NON
@@ -330,7 +359,7 @@ Deno.serve(async (_req) => {
 
   if (idImpegniConPromemoria.length === 0) {
     return new Response(
-      JSON.stringify({ occorrenzeGenerate: righeDaInserire.length, promemoriaInseriti: 0 }),
+      JSON.stringify({ occorrenzeGenerate, fase1Ok: erroreFase1 === null, erroreFase1, promemoriaInseriti: 0 }),
       { headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -346,11 +375,23 @@ Deno.serve(async (_req) => {
   // (data_ora - promemoria_minuti_prima minuti <= now()) è fatto sotto in
   // JS, perché richiede l'aritmetica per riga sul valore di
   // promemoria_minuti_prima di CIASCUN impegno.
+  // data_ora <= now() + 7 giorni: limite superiore necessario perché
+  // PostgREST applica un cap di default al numero di righe restituite da
+  // una select senza order - senza questo limite una query su un gruppo
+  // con molte occorrenze future potrebbe essere troncata in modo
+  // arbitrario, perdendo in modo permanente il promemoria di
+  // un'occorrenza (il prossimo tick rifarebbe la stessa query troncata
+  // nello stesso modo). 7 giorni = 10080 minuti, il preset di preavviso
+  // più lungo offerto dal form (vedi ModificaImpegno.tsx): nessuna
+  // occorrenza più lontana di 7 giorni da ora può avere un promemoria già
+  // dovuto, quindi il limite non esclude mai un promemoria legittimo.
+  const orizzontePromemoriaISO = new Date(adesso.getTime() + 7 * 24 * 60 * 60_000).toISOString();
   const { data: occorrenzeFuture, error: erroreFuture } = await supabase
     .from('occorrenze_impegni')
     .select('id, impegno_id, gruppo_id, data_ora')
     .in('impegno_id', idImpegniConPromemoria)
-    .gt('data_ora', new Date(adesso.getTime() - 60 * 60_000).toISOString());
+    .gt('data_ora', new Date(adesso.getTime() - 60 * 60_000).toISOString())
+    .lte('data_ora', orizzontePromemoriaISO);
   if (erroreFuture) {
     return new Response(erroreFuture.message, { status: 500 });
   }
@@ -367,7 +408,7 @@ Deno.serve(async (_req) => {
 
   if (daRicordare.length === 0) {
     return new Response(
-      JSON.stringify({ occorrenzeGenerate: righeDaInserire.length, promemoriaInseriti: 0 }),
+      JSON.stringify({ occorrenzeGenerate, fase1Ok: erroreFase1 === null, erroreFase1, promemoriaInseriti: 0 }),
       { headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -421,7 +462,12 @@ Deno.serve(async (_req) => {
   }
 
   return new Response(
-    JSON.stringify({ occorrenzeGenerate: righeDaInserire.length, promemoriaInseriti: notificheDaInserire.length }),
+    JSON.stringify({
+      occorrenzeGenerate,
+      fase1Ok: erroreFase1 === null,
+      erroreFase1,
+      promemoriaInseriti: notificheDaInserire.length,
+    }),
     { headers: { 'Content-Type': 'application/json' } }
   );
 });
