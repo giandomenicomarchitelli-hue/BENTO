@@ -28,6 +28,7 @@ interface Payload {
   titolo: string;
   corpo: string;
   sfida_id: string | null;
+  impegno_id: string | null;
 }
 
 Deno.serve(async (req) => {
@@ -50,7 +51,12 @@ Deno.serve(async (req) => {
     return new Response(error.message, { status: 500 });
   }
 
-  const urlDestinazione = payload.sfida_id !== null ? `/sfide/${payload.sfida_id}` : '/notifiche';
+  const urlDestinazione =
+    payload.impegno_id !== null
+      ? '/calendario'
+      : payload.sfida_id !== null
+        ? `/sfide/${payload.sfida_id}`
+        : '/notifiche';
 
   await Promise.all(
     (sottoscrizioni ?? []).map(async (sub) => {
