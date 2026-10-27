@@ -19,6 +19,7 @@ export default function AppLayout() {
       <Stack.Screen name="liste/index" options={{ title: 'Liste' }} />
       <Stack.Screen name="liste/[id]" options={{ title: 'Lista' }} />
       <Stack.Screen name="gruppo/index" options={{ title: 'Il tuo gruppo' }} />
+      <Stack.Screen name="calendario/index" options={{ title: 'Calendario' }} />
       <Stack.Screen name="faccende/index" options={{ title: 'Faccende' }} />
       <Stack.Screen name="sfide/index" options={{ title: 'Sfide' }} />
       <Stack.Screen name="sfide/nuova" options={{ title: 'Nuova sfida' }} />
