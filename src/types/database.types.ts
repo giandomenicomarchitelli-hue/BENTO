@@ -231,32 +231,6 @@ export type Database = {
         }
         Relationships: []
       }
-      impostazioni_faccende: {
-        Row: {
-          creato_il: string
-          fuso_orario: string
-          gruppo_id: string
-        }
-        Insert: {
-          creato_il?: string
-          fuso_orario?: string
-          gruppo_id: string
-        }
-        Update: {
-          creato_il?: string
-          fuso_orario?: string
-          gruppo_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "impostazioni_faccende_gruppo_id_fkey"
-            columns: ["gruppo_id"]
-            isOneToOne: true
-            referencedRelation: "gruppi"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       impegni: {
         Row: {
           aggiornato_il: string
@@ -318,6 +292,32 @@ export type Database = {
             foreignKeyName: "impegni_gruppo_id_fkey"
             columns: ["gruppo_id"]
             isOneToOne: false
+            referencedRelation: "gruppi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      impostazioni_faccende: {
+        Row: {
+          creato_il: string
+          fuso_orario: string
+          gruppo_id: string
+        }
+        Insert: {
+          creato_il?: string
+          fuso_orario?: string
+          gruppo_id: string
+        }
+        Update: {
+          creato_il?: string
+          fuso_orario?: string
+          gruppo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impostazioni_faccende_gruppo_id_fkey"
+            columns: ["gruppo_id"]
+            isOneToOne: true
             referencedRelation: "gruppi"
             referencedColumns: ["id"]
           },
@@ -504,45 +504,6 @@ export type Database = {
           },
         ]
       }
-      occorrenze_impegni: {
-        Row: {
-          creato_il: string
-          data_ora: string
-          gruppo_id: string
-          id: string
-          impegno_id: string
-        }
-        Insert: {
-          creato_il?: string
-          data_ora: string
-          gruppo_id: string
-          id?: string
-          impegno_id: string
-        }
-        Update: {
-          creato_il?: string
-          data_ora?: string
-          gruppo_id?: string
-          id?: string
-          impegno_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "occorrenze_impegni_gruppo_id_fkey"
-            columns: ["gruppo_id"]
-            isOneToOne: false
-            referencedRelation: "gruppi"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "occorrenze_impegni_impegno_id_fkey"
-            columns: ["impegno_id"]
-            isOneToOne: false
-            referencedRelation: "impegni"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       occorrenze_faccende: {
         Row: {
           completata_da: string | null
@@ -603,6 +564,45 @@ export type Database = {
             columns: ["gruppo_id"]
             isOneToOne: false
             referencedRelation: "gruppi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      occorrenze_impegni: {
+        Row: {
+          creato_il: string
+          data_ora: string
+          gruppo_id: string
+          id: string
+          impegno_id: string
+        }
+        Insert: {
+          creato_il?: string
+          data_ora: string
+          gruppo_id: string
+          id?: string
+          impegno_id: string
+        }
+        Update: {
+          creato_il?: string
+          data_ora?: string
+          gruppo_id?: string
+          id?: string
+          impegno_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "occorrenze_impegni_gruppo_id_fkey"
+            columns: ["gruppo_id"]
+            isOneToOne: false
+            referencedRelation: "gruppi"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "occorrenze_impegni_impegno_id_fkey"
+            columns: ["impegno_id"]
+            isOneToOne: false
+            referencedRelation: "impegni"
             referencedColumns: ["id"]
           },
         ]
