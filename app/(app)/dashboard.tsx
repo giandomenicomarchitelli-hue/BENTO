@@ -13,6 +13,7 @@ import { MemberAvatarRow } from '@/components/MemberAvatarRow';
 import { SectionHeader } from '@/components/SectionHeader';
 import { useArticoliSpesa } from '@/hooks/useArticoliSpesa';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
+import { useImpegni } from '@/hooks/useImpegni';
 import { useListe } from '@/hooks/useListe';
 import { useNotifiche } from '@/hooks/useNotifiche';
 import { useSaldi } from '@/hooks/useSaldi';
@@ -35,6 +36,7 @@ export default function Dashboard() {
   const { transazioni, isLoading: saldiInCaricamento, error: erroreSaldi } =
     useSaldi(gruppoAttivoId);
   const { sfide, isLoading: sfideInCaricamento } = useSfide(gruppoAttivoId);
+  const { impegni, occorrenze, isLoading: impegniInCaricamento } = useImpegni(gruppoAttivoId);
   const { nonLette: notificheNonLette } = useNotifiche();
 
   // Posizione netta dell'utente in QUESTO gruppo - vedi
@@ -49,6 +51,12 @@ export default function Dashboard() {
     }
     return calcolaPosizionePersonale(transazioni, ilMioMembro.id);
   }, [transazioni, ilMioMembro]);
+
+  const impegniPerId = useMemo(() => new Map(impegni.map((i) => [i.id, i])), [impegni]);
+  const prossimaOccorrenza = useMemo(
+    () => occorrenze.find((o) => new Date(o.data_ora) > new Date()),
+    [occorrenze]
+  );
 
   // Si arriva qui solo scegliendo un gruppo dall'elenco gruppi; senza un
   // gruppo attivo selezionato (es. link diretto, o store appena resettato)
@@ -94,6 +102,12 @@ export default function Dashboard() {
     : sfideAttive === 0
       ? 'Nessuna sfida attiva'
       : `${sfideAttive} ${sfideAttive === 1 ? 'attiva' : 'attive'}`;
+
+  const sottotitoloCalendario = impegniInCaricamento
+    ? undefined
+    : prossimaOccorrenza === undefined
+      ? 'Nessun impegno in programma'
+      : impegniPerId.get(prossimaOccorrenza.impegno_id)?.titolo ?? 'Impegno';
 
   function tornaIndietro() {
     if (router.canGoBack()) {
@@ -172,6 +186,13 @@ export default function Dashboard() {
             titolo="Sfide"
             sottotitolo={sottotitoloSfide}
             onPress={() => router.push('/sfide')}
+          />
+          <GlassTile
+            icona="calendar"
+            accento={accenti.indaco}
+            titolo="Calendario"
+            sottotitolo={sottotitoloCalendario}
+            onPress={() => router.push('/calendario')}
           />
         </View>
       </View>
