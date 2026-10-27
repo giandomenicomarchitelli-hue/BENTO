@@ -257,6 +257,72 @@ export type Database = {
           },
         ]
       }
+      impegni: {
+        Row: {
+          aggiornato_il: string
+          attiva: boolean
+          creato_da: string | null
+          creato_il: string
+          data_inizio: string
+          descrizione: string | null
+          frequenza: "giornaliera" | "settimanale" | "mensile" | "personalizzata" | "una_tantum"
+          gruppo_id: string
+          id: string
+          intervallo_ricorrenza: number | null
+          modificabile_da_tutti: boolean
+          ora: string | null
+          promemoria_minuti_prima: number | null
+          titolo: string
+        }
+        Insert: {
+          aggiornato_il?: string
+          attiva?: boolean
+          creato_da?: string | null
+          creato_il?: string
+          data_inizio: string
+          descrizione?: string | null
+          frequenza: "giornaliera" | "settimanale" | "mensile" | "personalizzata" | "una_tantum"
+          gruppo_id: string
+          id?: string
+          intervallo_ricorrenza?: number | null
+          modificabile_da_tutti?: boolean
+          ora?: string | null
+          promemoria_minuti_prima?: number | null
+          titolo: string
+        }
+        Update: {
+          aggiornato_il?: string
+          attiva?: boolean
+          creato_da?: string | null
+          creato_il?: string
+          data_inizio?: string
+          descrizione?: string | null
+          frequenza?: "giornaliera" | "settimanale" | "mensile" | "personalizzata" | "una_tantum"
+          gruppo_id?: string
+          id?: string
+          intervallo_ricorrenza?: number | null
+          modificabile_da_tutti?: boolean
+          ora?: string | null
+          promemoria_minuti_prima?: number | null
+          titolo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impegni_creato_da_fkey"
+            columns: ["creato_da"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impegni_gruppo_id_fkey"
+            columns: ["gruppo_id"]
+            isOneToOne: false
+            referencedRelation: "gruppi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       liste: {
         Row: {
           con_prezzi: boolean
@@ -348,6 +414,7 @@ export type Database = {
           evento_idempotenza: string
           gruppo_id: string
           id: string
+          impegno_id: string | null
           letta_il: string | null
           sfida_id: string | null
           tipo:
@@ -359,6 +426,7 @@ export type Database = {
             | "sfida_senza_accordo"
             | "sfida_scaduta"
             | "sfida_rifiutata"
+            | "impegno_promemoria"
           titolo: string
         }
         Insert: {
@@ -368,6 +436,7 @@ export type Database = {
           evento_idempotenza: string
           gruppo_id: string
           id?: string
+          impegno_id?: string | null
           letta_il?: string | null
           sfida_id?: string | null
           tipo:
@@ -379,6 +448,7 @@ export type Database = {
             | "sfida_senza_accordo"
             | "sfida_scaduta"
             | "sfida_rifiutata"
+            | "impegno_promemoria"
           titolo: string
         }
         Update: {
@@ -388,6 +458,7 @@ export type Database = {
           evento_idempotenza?: string
           gruppo_id?: string
           id?: string
+          impegno_id?: string | null
           letta_il?: string | null
           sfida_id?: string | null
           tipo?:
@@ -399,6 +470,7 @@ export type Database = {
             | "sfida_senza_accordo"
             | "sfida_scaduta"
             | "sfida_rifiutata"
+            | "impegno_promemoria"
           titolo?: string
         }
         Relationships: [
@@ -417,10 +489,56 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "notifiche_impegno_id_fkey"
+            columns: ["impegno_id"]
+            isOneToOne: false
+            referencedRelation: "impegni"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "notifiche_sfida_id_fkey"
             columns: ["sfida_id"]
             isOneToOne: false
             referencedRelation: "sfide_scelta"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      occorrenze_impegni: {
+        Row: {
+          creato_il: string
+          data_ora: string
+          gruppo_id: string
+          id: string
+          impegno_id: string
+        }
+        Insert: {
+          creato_il?: string
+          data_ora: string
+          gruppo_id: string
+          id?: string
+          impegno_id: string
+        }
+        Update: {
+          creato_il?: string
+          data_ora?: string
+          gruppo_id?: string
+          id?: string
+          impegno_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "occorrenze_impegni_gruppo_id_fkey"
+            columns: ["gruppo_id"]
+            isOneToOne: false
+            referencedRelation: "gruppi"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "occorrenze_impegni_impegno_id_fkey"
+            columns: ["impegno_id"]
+            isOneToOne: false
+            referencedRelation: "impegni"
             referencedColumns: ["id"]
           },
         ]
