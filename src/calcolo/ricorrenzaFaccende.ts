@@ -84,7 +84,7 @@ function scomponiInFuso(
  * ri-scomponendola nel fuso di destinazione, e si corregge. Due iterazioni
  * bastano anche nei rari casi limite attorno a un cambio d'ora.
  */
-function dataLocaleInUtc(
+export function dataLocaleInUtc(
   anno: number,
   mese: number,
   giorno: number,
