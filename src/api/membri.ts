@@ -46,3 +46,17 @@ export async function esciDalGruppo(membroId: string): Promise<void> {
     throw error;
   }
 }
+
+/**
+ * Silenzia/riattiva le notifiche push per questo gruppo, senza toccare
+ * l'iscrizione push stessa (che resta attiva per gli altri gruppi).
+ */
+export async function impostaNotificheSilenziate(membroId: string, silenziate: boolean): Promise<void> {
+  const { error } = await supabase
+    .from('membri')
+    .update({ notifiche_silenziate: silenziate })
+    .eq('id', membroId);
+  if (error) {
+    throw error;
+  }
+}

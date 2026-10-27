@@ -3,10 +3,16 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useProfilo } from '@/hooks/useProfilo';
+import { attivaPushNotifiche, pushGiaAttiva, pushSupportata } from '@/lib/pushNotifiche';
+import { useAuthStore } from '@/store/authStore';
 
 export default function Profilo() {
   const { profilo, isLoading } = useProfilo();
+  const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const [copiato, setCopiato] = useState(false);
+  const [pushAttiva, setPushAttiva] = useState(pushGiaAttiva());
+  const [pushInCorso, setPushInCorso] = useState(false);
+  const [errorePush, setErrorePush] = useState<string | null>(null);
 
   if (isLoading || profilo === null) {
     return (
@@ -20,6 +26,22 @@ export default function Profilo() {
     await Clipboard.setStringAsync(profilo.codice_utente);
     setCopiato(true);
     setTimeout(() => setCopiato(false), 2000);
+  };
+
+  const attivaPush = async () => {
+    if (utenteId === undefined) {
+      return;
+    }
+    setErrorePush(null);
+    setPushInCorso(true);
+    try {
+      await attivaPushNotifiche(utenteId);
+      setPushAttiva(true);
+    } catch (errore) {
+      setErrorePush(errore instanceof Error ? errore.message : 'Qualcosa è andato storto.');
+    } finally {
+      setPushInCorso(false);
+    }
   };
 
   return (
@@ -37,6 +59,30 @@ export default function Profilo() {
       <Text style={styles.suggerimento}>
         {copiato ? 'Copiato!' : 'Tocca il codice per copiarlo'}
       </Text>
+
+      {pushSupportata() && (
+        <>
+          <Text style={[styles.etichetta, styles.etichettaCodice]}>Notifiche</Text>
+          {pushAttiva ? (
+            <Text style={styles.suggerimento}>Notifiche push attive su questo dispositivo.</Text>
+          ) : (
+            <>
+              <Text style={styles.suggerimento}>
+                Ricevi un avviso quando c&apos;è una nuova sfida o un invito in uno dei tuoi gruppi, anche ad
+                app chiusa. Da ogni gruppo puoi poi silenziarle singolarmente.
+              </Text>
+              {errorePush !== null && <Text style={styles.testoErrore}>{errorePush}</Text>}
+              {pushInCorso ? (
+                <ActivityIndicator style={styles.caricamentoPush} />
+              ) : (
+                <Pressable style={styles.bottonePush} onPress={attivaPush}>
+                  <Text style={styles.testoBottonePush}>Attiva notifiche</Text>
+                </Pressable>
+              )}
+            </>
+          )}
+        </>
+      )}
     </View>
   );
 }
@@ -80,5 +126,25 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#888',
     marginTop: 8,
+  },
+  testoErrore: {
+    fontSize: 13,
+    color: '#c0392b',
+    marginTop: 8,
+  },
+  bottonePush: {
+    backgroundColor: '#2d6cdf',
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  testoBottonePush: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  caricamentoPush: {
+    marginTop: 12,
   },
 });

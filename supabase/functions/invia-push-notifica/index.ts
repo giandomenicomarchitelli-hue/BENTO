@@ -1,11 +1,12 @@
 // Invocata dal trigger public._invia_notifica_push() (vedi migration
-// 00000000000026) a ogni riga inserita in public.notifiche. Deployata con
-// --no-verify-jwt: il trigger Postgres non porta un JWT utente (vedi
-// commento in quella migration per il perché e il rischio residuo
-// accettato). Usa SUPABASE_SERVICE_ROLE_KEY (iniettata automaticamente da
-// Supabase in ogni Edge Function) per leggere le sottoscrizioni push di
-// QUALSIASI membro - necessario perché qui non c'è un utente autenticato
-// di cui rispettare la RLS, il trigger ha già fatto le sue verifiche.
+// 00000000000028) a ogni riga inserita in public.notifiche, già filtrata
+// per gruppi non silenziati. Deployata con --no-verify-jwt: il trigger
+// Postgres non porta un JWT utente (vedi commento in quella migration
+// per il perché e il rischio residuo accettato). Usa
+// SUPABASE_SERVICE_ROLE_KEY (iniettata automaticamente da Supabase in
+// ogni Edge Function) per leggere le sottoscrizioni push di QUALSIASI
+// utente - necessario perché qui non c'è un utente autenticato di cui
+// rispettare la RLS, il trigger ha già fatto le sue verifiche.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3';
@@ -23,7 +24,7 @@ const supabase = createClient(
 
 interface Payload {
   notifica_id: string;
-  membro_id: string;
+  utente_id: string;
   titolo: string;
   corpo: string;
   sfida_id: string | null;
@@ -36,14 +37,14 @@ Deno.serve(async (req) => {
   } catch {
     return new Response('body non valido', { status: 400 });
   }
-  if (payload.membro_id === undefined || payload.titolo === undefined) {
+  if (payload.utente_id === undefined || payload.titolo === undefined) {
     return new Response('campi mancanti', { status: 400 });
   }
 
   const { data: sottoscrizioni, error } = await supabase
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth')
-    .eq('membro_id', payload.membro_id);
+    .eq('utente_id', payload.utente_id);
 
   if (error) {
     return new Response(error.message, { status: 500 });

@@ -26,8 +26,8 @@ function chiaveVapidComeBytes(chiaveBase64: string): Uint8Array {
   return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
 
-/** Registra il service worker, chiede il permesso e salva la sottoscrizione per questo membro. */
-export async function attivaPushNotifiche(membroId: string): Promise<void> {
+/** Registra il service worker, chiede il permesso e salva la sottoscrizione per questo utente. */
+export async function attivaPushNotifiche(utenteId: string): Promise<void> {
   if (!pushSupportata()) {
     throw new Error('Le notifiche push non sono supportate su questo browser.');
   }
@@ -59,7 +59,7 @@ export async function attivaPushNotifiche(membroId: string): Promise<void> {
   }
 
   await salvaSottoscrizionePush({
-    membroId,
+    utenteId,
     endpoint: json.endpoint,
     p256dh: json.keys.p256dh,
     auth: json.keys.auth,

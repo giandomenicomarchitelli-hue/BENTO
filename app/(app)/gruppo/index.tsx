@@ -7,13 +7,15 @@ import {
   Pressable,
   Share,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
 } from 'react-native';
 
 import { rinominaGruppo } from '@/api/gruppi';
-import { esciDalGruppo } from '@/api/membri';
+import { esciDalGruppo, impostaNotificheSilenziate } from '@/api/membri';
+import { pushSupportata } from '@/lib/pushNotifiche';
 import { Avatar } from '@/components/Avatar';
 import { Badge } from '@/components/Badge';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
@@ -33,6 +35,7 @@ export default function Gruppo() {
   const invalidaMieiGruppi = useInvalidaMieiGruppi();
   const [copiato, setCopiato] = useState(false);
   const [uscendo, setUscendo] = useState(false);
+  const [cambiandoNotifiche, setCambiandoNotifiche] = useState(false);
 
   const [modificandoNomeGruppo, setModificandoNomeGruppo] = useState(false);
   const [bozzaNomeGruppo, setBozzaNomeGruppo] = useState('');
@@ -57,6 +60,21 @@ export default function Gruppo() {
   const hoUnSaldoAperto = transazioni.some(
     (t) => t.da === ilMioMembro?.id || t.a === ilMioMembro?.id
   );
+
+  const alternaNotifiche = async (silenziate: boolean) => {
+    if (ilMioMembro === undefined) {
+      return;
+    }
+    setCambiandoNotifiche(true);
+    try {
+      await impostaNotificheSilenziate(ilMioMembro.id, silenziate);
+      await ricarica();
+    } catch {
+      await confermaAzione('Qualcosa è andato storto', 'Riprova.', 'OK');
+    } finally {
+      setCambiandoNotifiche(false);
+    }
+  };
 
   const confermaUscita = async () => {
     if (ilMioMembro === undefined) {
@@ -170,6 +188,25 @@ export default function Gruppo() {
         <Feather name="share-2" size={16} color="#fff" />
         <Text style={styles.testoBottone}>Condividi invito</Text>
       </Pressable>
+
+      {pushSupportata() && ilMioMembro !== undefined && (
+        <View style={styles.rigaNotifiche}>
+          <View style={styles.testiRigaNotifiche}>
+            <Text style={styles.etichettaNotifiche}>Notifiche per questo gruppo</Text>
+            <Text style={styles.suggerimento}>
+              Le notifiche push vanno attivate una volta sola da Impostazioni profilo.
+            </Text>
+          </View>
+          {cambiandoNotifiche ? (
+            <ActivityIndicator />
+          ) : (
+            <Switch
+              value={!ilMioMembro.notifiche_silenziate}
+              onValueChange={(attiva) => alternaNotifiche(!attiva)}
+            />
+          )}
+        </View>
+      )}
 
       <View style={styles.rigaEtichettaMembri}>
         <Text style={styles.etichetta}>Membri</Text>
@@ -299,6 +336,22 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  rigaNotifiche: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spaziatura.md,
+    marginTop: spaziatura.xxl,
+  },
+  testiRigaNotifiche: {
+    flex: 1,
+  },
+  etichettaNotifiche: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colori.inchiostro900,
+    marginBottom: 2,
   },
   rigaEtichettaMembri: {
     flexDirection: 'row',

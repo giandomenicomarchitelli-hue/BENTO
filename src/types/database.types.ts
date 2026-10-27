@@ -308,6 +308,7 @@ export type Database = {
           gruppo_id: string
           id: string
           nome: string
+          notifiche_silenziate: boolean
           uscito_il: string | null
           utente_id: string
         }
@@ -316,6 +317,7 @@ export type Database = {
           gruppo_id: string
           id?: string
           nome: string
+          notifiche_silenziate?: boolean
           uscito_il?: string | null
           utente_id: string
         }
@@ -324,6 +326,7 @@ export type Database = {
           gruppo_id?: string
           id?: string
           nome?: string
+          notifiche_silenziate?: boolean
           uscito_il?: string | null
           utente_id?: string
         }
@@ -513,34 +516,26 @@ export type Database = {
           creato_il: string
           endpoint: string
           id: string
-          membro_id: string
           p256dh: string
+          utente_id: string
         }
         Insert: {
           auth: string
           creato_il?: string
           endpoint: string
           id?: string
-          membro_id: string
           p256dh: string
+          utente_id: string
         }
         Update: {
           auth?: string
           creato_il?: string
           endpoint?: string
           id?: string
-          membro_id?: string
           p256dh?: string
+          utente_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "push_subscriptions_membro_id_fkey"
-            columns: ["membro_id"]
-            isOneToOne: false
-            referencedRelation: "membri"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       quote_spesa: {
         Row: {
