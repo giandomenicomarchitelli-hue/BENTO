@@ -126,6 +126,12 @@ export function useImpegni(gruppoId: string | null) {
   const modifica = useMutation({
     // Un'unica mutationFn orchestra le tre chiamate in sequenza: dal punto
     // di vista della UI "modifica" è un'unica operazione atomica.
+    // Non c'è una RPC che le avvolga in una transazione (vincolo del modulo: solo
+    // RLS, scritture dirette dal client): se una delle due chiamate successive
+    // a modificaImpegno fallisce, l'impegno è già stato salvato con i nuovi dati
+    // ma occorrenze_impegni resta sul vecchio calendario. Recupero: rilanciare
+    // "modifica" (eliminaOccorrenzeFuture + sincronizzaOccorrenzeImpegni sono
+    // idempotenti e la rimettono in pari).
     mutationFn: async (params: { id: string } & Omit<ParametriImpegnoForm, 'membroId'>) => {
       const { id, ...resto } = params;
       await modificaImpegno(id, resto);
