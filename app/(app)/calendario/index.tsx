@@ -254,7 +254,16 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 
         {modaleAperto !== null && (
           <GlassCard>
-            <ModificaImpegno valoriIniziali={valoriInizialiForm()} salvando={salvando} onSalva={onSalvaForm} />
+            {/* key: ModificaImpegno legge valoriIniziali solo al mount. Senza una key
+                che cambia con il target, passare da "modifica A" a "modifica B" (o da
+                crea a modifica) senza chiudere il form riusa l'istanza e mostra ancora
+                i valori di A mentre si salva su B. */}
+            <ModificaImpegno
+              key={modaleAperto === 'modifica' ? impegnoInModifica?.id ?? 'modifica' : 'crea'}
+              valoriIniziali={valoriInizialiForm()}
+              salvando={salvando}
+              onSalva={onSalvaForm}
+            />
             {erroreForm !== null && <Text style={styles.testoErrore}>{erroreForm}</Text>}
           </GlassCard>
         )}
