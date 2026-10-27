@@ -3,7 +3,7 @@ alter table public.notifiche add column impegno_id uuid references public.impegn
 alter table public.notifiche drop constraint notifiche_tipo_check;
 alter table public.notifiche add constraint notifiche_tipo_check check (tipo in (
   'sfida_invito', 'sfida_promemoria', 'sfida_tutti_votato',
-  'sfida_spareggio', 'sfida_vincitore', 'sfida_senza_accordo', 'sfida_scaduta',
+  'sfida_spareggio', 'sfida_vincitore', 'sfida_senza_accordo', 'sfida_scaduta', 'sfida_rifiutata',
   'impegno_promemoria'
 ));
 
