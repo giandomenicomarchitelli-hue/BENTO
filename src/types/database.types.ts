@@ -507,6 +507,41 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          creato_il: string
+          endpoint: string
+          id: string
+          membro_id: string
+          p256dh: string
+        }
+        Insert: {
+          auth: string
+          creato_il?: string
+          endpoint: string
+          id?: string
+          membro_id: string
+          p256dh: string
+        }
+        Update: {
+          auth?: string
+          creato_il?: string
+          endpoint?: string
+          id?: string
+          membro_id?: string
+          p256dh?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_membro_id_fkey"
+            columns: ["membro_id"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_spesa: {
         Row: {
           membro_id: string

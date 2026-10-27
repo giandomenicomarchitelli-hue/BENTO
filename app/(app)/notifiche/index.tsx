@@ -1,14 +1,19 @@
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Redirect, router } from 'expo-router';
+import { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { Notifica } from '@/api/notifiche';
+import { BentoButton } from '@/components/BentoButton';
 import { BentoScreen } from '@/components/BentoScreen';
 import { GlassCard } from '@/components/GlassCard';
+import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useNotifiche } from '@/hooks/useNotifiche';
+import { attivaPushNotifiche, pushGiaAttiva, pushSupportata } from '@/lib/pushNotifiche';
+import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
-import { accenti, bento, spaziatura } from '@/theme/tokens';
+import { accenti, bento, semantica, spaziatura } from '@/theme/tokens';
 
 export default function Notifiche() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
@@ -22,6 +27,29 @@ export default function Notifiche() {
 
 function NotificheDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const { notifiche, isLoading, segnaLetta } = useNotifiche(gruppoAttivoId);
+  const { membriAttivi } = useGruppoAttivo();
+  const utenteId = useAuthStore((stato) => stato.session?.user.id);
+  const ilMioMembroId = membriAttivi.find((m) => m.utente_id === utenteId)?.id ?? null;
+
+  const [pushAttiva, setPushAttiva] = useState(pushGiaAttiva());
+  const [pushInCorso, setPushInCorso] = useState(false);
+  const [erroreePush, setErrorePush] = useState<string | null>(null);
+
+  async function attivaPush() {
+    if (ilMioMembroId === null) {
+      return;
+    }
+    setErrorePush(null);
+    setPushInCorso(true);
+    try {
+      await attivaPushNotifiche(ilMioMembroId);
+      setPushAttiva(true);
+    } catch (errore) {
+      setErrorePush(errore instanceof Error ? errore.message : 'Qualcosa è andato storto.');
+    } finally {
+      setPushInCorso(false);
+    }
+  }
 
   function apriNotifica(notifica: Notifica) {
     if (notifica.letta_il === null) {
@@ -42,6 +70,17 @@ function NotificheDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 
   return (
     <BentoScreen>
+      {pushSupportata() && !pushAttiva && (
+        <GlassCard style={styles.cardPush}>
+          <Text style={styles.titoloPush}>Attiva le notifiche</Text>
+          <Text style={styles.testoPush}>
+            Ricevi un avviso sul telefono/computer quando c&apos;è una nuova sfida o un invito, anche ad app chiusa.
+          </Text>
+          {erroreePush !== null && <Text style={styles.testoErrorePush}>{erroreePush}</Text>}
+          <BentoButton etichetta="Attiva notifiche" onPress={attivaPush} caricando={pushInCorso} />
+        </GlassCard>
+      )}
+
       {notifiche.length === 0 ? (
         <Text style={styles.vuoto}>Nessuna notifica ancora.</Text>
       ) : (
@@ -83,6 +122,24 @@ const styles = StyleSheet.create({
   nonLetta: {
     borderColor: bento.bordoForte,
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  cardPush: {
+    gap: spaziatura.xs,
+    marginBottom: spaziatura.sm,
+  },
+  titoloPush: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: bento.testoPrimario,
+  },
+  testoPush: {
+    fontSize: 13,
+    color: bento.testoSecondario,
+    marginBottom: spaziatura.xs,
+  },
+  testoErrorePush: {
+    fontSize: 13,
+    color: semantica.pericolo,
   },
   rigaTitolo: {
     flexDirection: 'row',
