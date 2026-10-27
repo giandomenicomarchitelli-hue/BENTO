@@ -1,9 +1,9 @@
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useProfilo } from '@/hooks/useProfilo';
-import { attivaPushNotifiche, pushGiaAttiva, pushSupportata } from '@/lib/pushNotifiche';
+import { attivaPushNotifiche, pushGiaAttiva, statoSupportoPush } from '@/lib/pushNotifiche';
 import { useAuthStore } from '@/store/authStore';
 
 export default function Profilo() {
@@ -13,6 +13,7 @@ export default function Profilo() {
   const [pushAttiva, setPushAttiva] = useState(pushGiaAttiva());
   const [pushInCorso, setPushInCorso] = useState(false);
   const [errorePush, setErrorePush] = useState<string | null>(null);
+  const statoPush = statoSupportoPush();
 
   if (isLoading || profilo === null) {
     return (
@@ -60,26 +61,40 @@ export default function Profilo() {
         {copiato ? 'Copiato!' : 'Tocca il codice per copiarlo'}
       </Text>
 
-      {pushSupportata() && (
+      {Platform.OS === 'web' && (
         <>
           <Text style={[styles.etichetta, styles.etichettaCodice]}>Notifiche</Text>
-          {pushAttiva ? (
-            <Text style={styles.suggerimento}>Notifiche push attive su questo dispositivo.</Text>
-          ) : (
-            <>
-              <Text style={styles.suggerimento}>
-                Ricevi un avviso quando c&apos;è una nuova sfida o un invito in uno dei tuoi gruppi, anche ad
-                app chiusa. Da ogni gruppo puoi poi silenziarle singolarmente.
-              </Text>
-              {errorePush !== null && <Text style={styles.testoErrore}>{errorePush}</Text>}
-              {pushInCorso ? (
-                <ActivityIndicator style={styles.caricamentoPush} />
-              ) : (
-                <Pressable style={styles.bottonePush} onPress={attivaPush}>
-                  <Text style={styles.testoBottonePush}>Attiva notifiche</Text>
-                </Pressable>
-              )}
-            </>
+
+          {statoPush === 'supportata' &&
+            (pushAttiva ? (
+              <Text style={styles.suggerimento}>Notifiche push attive su questo dispositivo.</Text>
+            ) : (
+              <>
+                <Text style={styles.suggerimento}>
+                  Ricevi un avviso quando c&apos;è una nuova sfida o un invito in uno dei tuoi gruppi, anche ad
+                  app chiusa. Da ogni gruppo puoi poi silenziarle singolarmente.
+                </Text>
+                {errorePush !== null && <Text style={styles.testoErrore}>{errorePush}</Text>}
+                {pushInCorso ? (
+                  <ActivityIndicator style={styles.caricamentoPush} />
+                ) : (
+                  <Pressable style={styles.bottonePush} onPress={attivaPush}>
+                    <Text style={styles.testoBottonePush}>Attiva notifiche</Text>
+                  </Pressable>
+                )}
+              </>
+            ))}
+
+          {statoPush === 'ios_va_aggiunto_a_home' && (
+            <Text style={styles.suggerimento}>
+              Su iPhone le notifiche funzionano solo se aggiungi Bento alla schermata Home: in Safari tocca
+              l&apos;icona Condividi, poi &quot;Aggiungi a Home&quot;. Riapri Bento da quell&apos;icona e torna
+              qui per attivarle.
+            </Text>
+          )}
+
+          {statoPush === 'non_supportata' && (
+            <Text style={styles.suggerimento}>Le notifiche push non sono supportate su questo browser.</Text>
           )}
         </>
       )}

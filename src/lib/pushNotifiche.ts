@@ -12,6 +12,39 @@ export function pushSupportata(): boolean {
   );
 }
 
+function suSafariIOS(): boolean {
+  return Platform.OS === 'web' && typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
+/** true se il sito è stato aperto dall'icona aggiunta alla schermata Home (PWA), non dal browser. */
+function suSchermataHome(): boolean {
+  return (
+    typeof navigator !== 'undefined' &&
+    'standalone' in navigator &&
+    (navigator as unknown as { standalone?: boolean }).standalone === true
+  );
+}
+
+export type StatoSupportoPush = 'supportata' | 'ios_va_aggiunto_a_home' | 'non_supportata';
+
+/**
+ * A differenza di pushSupportata() (booleano secco, usato per decidere se
+ * mostrare il flusso di attivazione), distingue il caso più comune di
+ * mancato supporto - Safari su iPhone/iPad non ancora aggiunto alla
+ * schermata Home, dove PushManager semplicemente non esiste finché non lo
+ * si fa - da un reale "non supportato", per spiegarlo invece di sparire
+ * in silenzio.
+ */
+export function statoSupportoPush(): StatoSupportoPush {
+  if (pushSupportata()) {
+    return 'supportata';
+  }
+  if (suSafariIOS() && !suSchermataHome()) {
+    return 'ios_va_aggiunto_a_home';
+  }
+  return 'non_supportata';
+}
+
 /** true se il browser ha già concesso il permesso di notifica. */
 export function pushGiaAttiva(): boolean {
   return pushSupportata() && Notification.permission === 'granted';
