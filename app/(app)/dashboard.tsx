@@ -14,6 +14,7 @@ import { SectionHeader } from '@/components/SectionHeader';
 import { useArticoliSpesa } from '@/hooks/useArticoliSpesa';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useListe } from '@/hooks/useListe';
+import { useNotifiche } from '@/hooks/useNotifiche';
 import { useSaldi } from '@/hooks/useSaldi';
 import { useSfide } from '@/hooks/useSfide';
 import { useAuthStore } from '@/store/authStore';
@@ -34,6 +35,7 @@ export default function Dashboard() {
   const { transazioni, isLoading: saldiInCaricamento, error: erroreSaldi } =
     useSaldi(gruppoAttivoId);
   const { sfide, isLoading: sfideInCaricamento } = useSfide(gruppoAttivoId);
+  const { nonLette: notificheNonLette } = useNotifiche(gruppoAttivoId);
 
   // Posizione netta dell'utente in QUESTO gruppo - vedi
   // calcolaPosizionePersonale in GroupBalanceCard.tsx (testata a parte in
@@ -115,6 +117,8 @@ export default function Dashboard() {
         onIndietro={tornaIndietro}
         onImpostazioni={apriImpostazioni}
         onEsci={() => esci()}
+        onNotifiche={() => router.push('/notifiche')}
+        notificheNonLette={notificheNonLette}
       />
 
       {membriAttivi.length > 0 && (

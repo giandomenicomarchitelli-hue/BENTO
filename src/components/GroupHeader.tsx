@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Gruppo } from '@/api/gruppi';
+import { Badge } from '@/components/Badge';
 import { iconaPerTipoGruppo } from '@/components/GroupPreviewCard';
 import { IconBadge } from '@/components/IconBadge';
 import { bento, spaziatura } from '@/theme/tokens';
@@ -11,6 +12,8 @@ type Props = {
   onIndietro: () => void;
   onImpostazioni: () => void;
   onEsci: () => void;
+  onNotifiche: () => void;
+  notificheNonLette: number;
 };
 
 /**
@@ -20,7 +23,14 @@ type Props = {
  * `inset.top`, altrimenti lo spazio sotto la status bar raddoppia (bug
  * corretto in questa revisione: niente useSafeAreaInsets qui).
  */
-export function GroupHeader({ gruppo, onIndietro, onImpostazioni, onEsci }: Props) {
+export function GroupHeader({
+  gruppo,
+  onIndietro,
+  onImpostazioni,
+  onEsci,
+  onNotifiche,
+  notificheNonLette,
+}: Props) {
   const stile = iconaPerTipoGruppo(gruppo.tipo);
 
   return (
@@ -30,6 +40,14 @@ export function GroupHeader({ gruppo, onIndietro, onImpostazioni, onEsci }: Prop
           <Feather name="chevron-left" size={22} color={bento.testoPrimario} />
         </Pressable>
         <View style={styles.azioniDestra}>
+          <Pressable onPress={onNotifiche} hitSlop={8} style={styles.bottoneIcona}>
+            <Feather name="bell" size={18} color={bento.testoSecondario} />
+            {notificheNonLette > 0 && (
+              <View style={styles.badgeCampanella}>
+                <Badge testo={String(notificheNonLette)} tono="rosso" />
+              </View>
+            )}
+          </Pressable>
           <Pressable onPress={onImpostazioni} hitSlop={8} style={styles.bottoneIcona}>
             <Feather name="settings" size={18} color={bento.testoSecondario} />
           </Pressable>
@@ -65,6 +83,11 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  badgeCampanella: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
   },
   azioniDestra: {
     flexDirection: 'row',
