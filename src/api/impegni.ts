@@ -25,10 +25,24 @@ export async function listaImpegni(gruppoId: string): Promise<Impegno[]> {
 }
 
 export async function listaOccorrenzeImpegni(gruppoId: string): Promise<OccorrenzaImpegno[]> {
+  // Finestra temporale limitata: senza un limite, il risultato crescerebbe
+  // senza fine per tutta la vita del gruppo. Se mai troncato dal cap di
+  // default di PostgREST, l'ordine ascendente scarterebbe le righe più
+  // vecchie, non quelle future/più rilevanti - ma è comunque più sicuro
+  // limitare esplicitamente a quanto la UI (griglia mensile + lista
+  // giornaliera) può davvero mostrare.
+  const adesso = new Date();
+  const dataMinima = new Date(adesso);
+  dataMinima.setMonth(dataMinima.getMonth() - 1);
+  const dataMassima = new Date(adesso);
+  dataMassima.setMonth(dataMassima.getMonth() + 12);
+
   const { data, error } = await supabase
     .from('occorrenze_impegni')
     .select()
     .eq('gruppo_id', gruppoId)
+    .gte('data_ora', dataMinima.toISOString())
+    .lte('data_ora', dataMassima.toISOString())
     .order('data_ora', { ascending: true });
 
   if (error) {
@@ -84,7 +98,7 @@ export async function modificaImpegno(
   impegnoId: string,
   params: Omit<ParametriImpegno, 'gruppoId' | 'membroId'>
 ): Promise<void> {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('impegni')
     .update({
       titolo: params.titolo,
@@ -96,18 +110,35 @@ export async function modificaImpegno(
       promemoria_minuti_prima: params.promemoriaMinutiPrima,
       modificabile_da_tutti: params.modificabileDaTutti,
     })
-    .eq('id', impegnoId);
+    .eq('id', impegnoId)
+    .select('id');
 
   if (error) {
     throw error;
+  }
+  // Grant a livello di tabella + RLS "bloccata" da chi non ha creato
+  // l'impegno (vedi impegni_update) fanno sì che un UPDATE respinto dalla
+  // policy restituisca 0 righe, non un errore: senza questo controllo
+  // l'utente non vedrebbe nulla succedere, senza nessuna spiegazione.
+  if (data.length === 0) {
+    throw new Error('Solo chi ha creato questo impegno può modificarlo.');
   }
 }
 
 /** Soft delete: ferma la generazione di nuove occorrenze, non tocca quelle già esistenti/lo storico delle notifiche. */
 export async function cancellaImpegno(impegnoId: string): Promise<void> {
-  const { error } = await supabase.from('impegni').update({ attiva: false }).eq('id', impegnoId);
+  const { data, error } = await supabase
+    .from('impegni')
+    .update({ attiva: false })
+    .eq('id', impegnoId)
+    .select('id');
   if (error) {
     throw error;
+  }
+  // Stesso ragionamento di modificaImpegno: un DELETE/UPDATE bloccato dalla
+  // policy RLS restituisce 0 righe, non un errore.
+  if (data.length === 0) {
+    throw new Error('Solo chi ha creato questo impegno può eliminarlo.');
   }
 }
 

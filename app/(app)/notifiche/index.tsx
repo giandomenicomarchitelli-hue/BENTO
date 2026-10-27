@@ -26,6 +26,11 @@ export default function Notifiche() {
       // gruppo sbagliato.
       impostaGruppoAttivo(notifica.gruppo_id);
       router.push({ pathname: '/sfide/[id]', params: { id: notifica.sfida_id } });
+    } else if (notifica.impegno_id !== null) {
+      // Stesso ragionamento del ramo sfida_id: il calendario legge il
+      // gruppo attivo dallo store, non dalla notifica.
+      impostaGruppoAttivo(notifica.gruppo_id);
+      router.push('/calendario');
     }
   }
 

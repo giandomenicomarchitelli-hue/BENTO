@@ -59,21 +59,30 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 
   const impegniPerId = useMemo(() => new Map(impegni.map((i) => [i.id, i])), [impegni]);
 
+  // cancellaImpegno è un soft delete (attiva = false): le occorrenze già
+  // generate restano nel DB finché non vengono sostituite, ma il loro
+  // impegno non compare più in impegniPerId. Senza questo filtro
+  // resterebbero visibili per sempre come occorrenze "fantasma".
+  const occorrenzeAttive = useMemo(
+    () => occorrenze.filter((o) => impegniPerId.has(o.impegno_id)),
+    [occorrenze, impegniPerId]
+  );
+
   // Raggruppamento per data locale nel fuso orario del gruppo, non per
   // fetta UTC ingenua di data_ora: altrimenti un'occorrenza vicina alla
   // mezzanotte finirebbe nel giorno sbagliato della griglia.
   const occorrenzePerGiorno = useMemo(() => {
     const mappa: Record<string, number> = {};
-    for (const occorrenza of occorrenze) {
+    for (const occorrenza of occorrenzeAttive) {
       const giorno = dataLocaleISO(new Date(occorrenza.data_ora), fusoOrario);
       mappa[giorno] = (mappa[giorno] ?? 0) + 1;
     }
     return mappa;
-  }, [occorrenze, fusoOrario]);
+  }, [occorrenzeAttive, fusoOrario]);
 
   const occorrenzeDelGiorno = useMemo(
-    () => occorrenze.filter((o) => dataLocaleISO(new Date(o.data_ora), fusoOrario) === giornoSelezionato),
-    [occorrenze, fusoOrario, giornoSelezionato]
+    () => occorrenzeAttive.filter((o) => dataLocaleISO(new Date(o.data_ora), fusoOrario) === giornoSelezionato),
+    [occorrenzeAttive, fusoOrario, giornoSelezionato]
   );
 
   function selezionaGiorno(dataISO: string) {

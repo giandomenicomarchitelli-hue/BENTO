@@ -53,9 +53,12 @@ export default function Dashboard() {
   }, [transazioni, ilMioMembro]);
 
   const impegniPerId = useMemo(() => new Map(impegni.map((i) => [i.id, i])), [impegni]);
+  // impegniPerId.has(...): cancellaImpegno è un soft delete, quindi
+  // un'occorrenza del suo impegno può restare nel DB anche dopo che
+  // l'impegno non è più attivo - va ignorata, non mostrata come "prossimo impegno".
   const prossimaOccorrenza = useMemo(
-    () => occorrenze.find((o) => new Date(o.data_ora) > new Date()),
-    [occorrenze]
+    () => occorrenze.find((o) => impegniPerId.has(o.impegno_id) && new Date(o.data_ora) > new Date()),
+    [occorrenze, impegniPerId]
   );
 
   // Si arriva qui solo scegliendo un gruppo dall'elenco gruppi; senza un

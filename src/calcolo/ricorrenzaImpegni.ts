@@ -79,11 +79,19 @@ export function calcolaOccorrenzeMancantiImpegno(
   orizzonteISO: string,
   fusoOrario: string
 ): OccorrenzaImpegnoCalcolata[] {
+  // Un cursore precedente alla (nuova) dataInizio è lo scarto di una
+  // ricorrenza appena modificata (data_inizio spostata avanti, frequenza
+  // cambiata, o una_tantum corretta a una data successiva): va ignorato e
+  // si riparte da dataInizio, altrimenti la serie continuerebbe dal vecchio
+  // cursore invece di riallinearsi al nuovo inizio.
+  const cursoreEsistente =
+    ultimaDataGenerata !== null && ultimaDataGenerata < definizione.dataInizio ? null : ultimaDataGenerata;
+
   if (definizione.frequenza === 'una_tantum') {
-    if (ultimaDataGenerata !== null) {
-      return [];
-    }
-    if (definizione.dataInizio > orizzonteISO) {
+    // Una_tantum produce al massimo una riga: nessun rischio di generazione
+    // illimitata, quindi niente controllo sull'orizzonte - un impegno datato
+    // oltre l'orizzonte non deve restare invisibile per sempre.
+    if (cursoreEsistente !== null) {
       return [];
     }
     return [
@@ -100,7 +108,7 @@ export function calcolaOccorrenzeMancantiImpegno(
         ? Math.max(1, definizione.intervalloRicorrenza ?? 1)
         : 1;
     let cursore =
-      ultimaDataGenerata !== null ? aggiungiGiorni(ultimaDataGenerata, passo) : definizione.dataInizio;
+      cursoreEsistente !== null ? aggiungiGiorni(cursoreEsistente, passo) : definizione.dataInizio;
 
     const risultati: OccorrenzaImpegnoCalcolata[] = [];
     while (cursore <= orizzonteISO && risultati.length < MAX_PERIODI_PER_SINCRONIZZAZIONE) {
@@ -115,7 +123,7 @@ export function calcolaOccorrenzeMancantiImpegno(
 
   if (definizione.frequenza === 'settimanale') {
     let cursore =
-      ultimaDataGenerata !== null ? aggiungiGiorni(ultimaDataGenerata, 7) : definizione.dataInizio;
+      cursoreEsistente !== null ? aggiungiGiorni(cursoreEsistente, 7) : definizione.dataInizio;
 
     const risultati: OccorrenzaImpegnoCalcolata[] = [];
     while (cursore <= orizzonteISO && risultati.length < MAX_PERIODI_PER_SINCRONIZZAZIONE) {
@@ -130,8 +138,8 @@ export function calcolaOccorrenzeMancantiImpegno(
 
   // mensile
   let cursore =
-    ultimaDataGenerata !== null
-      ? aggiungiMesiStessoGiorno(ultimaDataGenerata, 1)
+    cursoreEsistente !== null
+      ? aggiungiMesiStessoGiorno(cursoreEsistente, 1)
       : definizione.dataInizio;
 
   const risultati: OccorrenzaImpegnoCalcolata[] = [];

@@ -81,4 +81,22 @@ describe('calcolaOccorrenzeMancantiImpegno', () => {
     const [occorrenza] = calcolaOccorrenzeMancantiImpegno(def, null, '2026-12-31', FUSO);
     expect(occorrenza.istanteISO).toBe('2026-11-15T08:00:00.000Z');
   });
+
+  it('una_tantum oltre l\'orizzonte genera comunque la sua unica occorrenza', () => {
+    // dataInizio è oltre orizzonteISO: senza una generazione futura in
+    // elenco, un impegno così non sarebbe mai visibile/editabile/eliminabile
+    // (la UI è guidata solo dalle occorrenze, non c'è un elenco di impegni).
+    const def = { frequenza: 'una_tantum' as const, intervalloRicorrenza: null, dataInizio: '2027-06-01', ora: null };
+    const risultato = calcolaOccorrenzeMancantiImpegno(def, null, '2026-12-31', FUSO);
+    expect(risultato.map((r) => r.dataISO)).toEqual(['2027-06-01']);
+  });
+
+  it('riparte da dataInizio quando ultimaDataGenerata è un cursore scaduto (data_inizio spostata avanti)', () => {
+    // ultimaDataGenerata (vecchio cursore) precede la nuova dataInizio:
+    // deve riallinearsi su dataInizio invece di continuare la serie dal
+    // vecchio cursore, stantio dopo la modifica.
+    const def = { frequenza: 'settimanale' as const, intervalloRicorrenza: null, dataInizio: '2026-12-01', ora: null };
+    const risultato = calcolaOccorrenzeMancantiImpegno(def, '2026-11-04', '2026-12-22', FUSO);
+    expect(risultato.map((r) => r.dataISO)).toEqual(['2026-12-01', '2026-12-08', '2026-12-15', '2026-12-22']);
+  });
 });

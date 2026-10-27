@@ -68,13 +68,28 @@ create policy impegni_delete on public.impegni for delete
 
 -- OCCORRENZE_IMPEGNI: generate lato client/Edge Function, mai modificate
 -- dopo l'inserimento (niente stato da aggiornare) - nessuna policy di
--- update/delete, stesso principio di occorrenze_faccende/storico_faccende.
+-- update, stesso principio di occorrenze_faccende/storico_faccende. Il
+-- DELETE invece serve davvero: eliminaOccorrenzeFuture in src/api/impegni.ts
+-- lo usa per rigenerare le occorrenze future dopo una modifica alla
+-- ricorrenza, quindi la policy è necessaria (stessa dimenticanza già
+-- corretta per faccende, vedi migration 00000000000023).
 create policy occorrenze_impegni_select on public.occorrenze_impegni for select
   using (e_membro_di(gruppo_id));
 create policy occorrenze_impegni_insert on public.occorrenze_impegni for insert
   with check (e_membro_di(gruppo_id));
+create policy occorrenze_impegni_delete on public.occorrenze_impegni for delete
+  using (
+    e_membro_di(gruppo_id)
+    and exists (
+      select 1 from public.impegni i
+      where i.id = occorrenze_impegni.impegno_id
+        and (i.modificabile_da_tutti or i.creato_da is null
+             or not exists (select 1 from public.membri m where m.id = i.creato_da and m.uscito_il is null)
+             or i.creato_da = (select id from public.membri where utente_id = auth.uid() and gruppo_id = i.gruppo_id and uscito_il is null))
+    )
+  );
 
 grant select, insert, update, delete on public.impegni to authenticated;
-grant select, insert on public.occorrenze_impegni to authenticated;
+grant select, insert, delete on public.occorrenze_impegni to authenticated;
 
 alter publication supabase_realtime add table public.impegni, public.occorrenze_impegni;
