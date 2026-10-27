@@ -239,7 +239,6 @@ interface RigaImpegno {
 
 Deno.serve(async (_req) => {
   const adesso = new Date();
-  const adessoISO = adesso.toISOString();
 
   // --- Fase 1: generazione delle occorrenze mancanti, fino all'orizzonte.
   // Stesso algoritmo e stessa idempotenza (upsert con ignoreDuplicates sul
@@ -336,16 +335,22 @@ Deno.serve(async (_req) => {
     );
   }
 
-  // data_ora > now(): non avvisare mai per un impegno già passato (es. se
-  // il cron fosse stato fermo a lungo). Il filtro sulla finestra di
-  // preavviso (data_ora - promemoria_minuti_prima minuti <= now()) è
-  // fatto sotto in JS, perché richiede l'aritmetica per riga sul valore
-  // di promemoria_minuti_prima di CIASCUN impegno.
+  // data_ora > now() - 1 ora (non > now() secco): con promemoria_minuti_prima
+  // = 0 ("avvisa esattamente all'ora dell'impegno", preset valido dal form
+  // del Task 8), un controllo > now() stretto sarebbe incompatibile con il
+  // filtro di preavviso sotto (data_ora <= now()), quindi quel promemoria
+  // non scatterebbe quasi mai col cron ogni 15 minuti. La finestra di 1 ora
+  // copre comodamente la cadenza del cron (anche saltandone un giro) pur
+  // continuando a escludere gli impegni passati da ore/giorni (es. cron
+  // fermo a lungo). Il filtro sulla finestra di preavviso vera e propria
+  // (data_ora - promemoria_minuti_prima minuti <= now()) è fatto sotto in
+  // JS, perché richiede l'aritmetica per riga sul valore di
+  // promemoria_minuti_prima di CIASCUN impegno.
   const { data: occorrenzeFuture, error: erroreFuture } = await supabase
     .from('occorrenze_impegni')
     .select('id, impegno_id, gruppo_id, data_ora')
     .in('impegno_id', idImpegniConPromemoria)
-    .gt('data_ora', adessoISO);
+    .gt('data_ora', new Date(adesso.getTime() - 60 * 60_000).toISOString());
   if (erroreFuture) {
     return new Response(erroreFuture.message, { status: 500 });
   }
