@@ -66,9 +66,13 @@ export async function eseguiAzioniConfermate(
 
     const nomiDivisoTra = azione.diviso_tra && azione.diviso_tra.length > 0 ? azione.diviso_tra : null;
     const idsDivisoTra = nomiDivisoTra
-      ? nomiDivisoTra
-          .map((nome) => idPerNome.get(nome))
-          .filter((id): id is string => id !== undefined)
+      ? nomiDivisoTra.map((nome) => {
+          const id = idPerNome.get(nome);
+          if (!id) {
+            throw new Error(`Impossibile risolvere "${nome}" (in "diviso_tra") a un membro del gruppo.`);
+          }
+          return id;
+        })
       : ordineCanonicoMembriIds;
 
     const idsOrdinati = ordinaSecondoMembriAttivi(idsDivisoTra, ordineCanonicoMembriIds);
@@ -82,14 +86,18 @@ export async function eseguiAzioniConfermate(
     const quote = calcolaQuoteAcquisto(importoCentesimi, idsOrdinati);
     await creaSpesa({ gruppoId, pagatoDa: pagatoDaId, importoCentesimi, quote });
 
-    for (const nomeArticolo of azione.articoli) {
-      const articoli = await listaArticoli(gruppoId);
-      const trovato = articoli.find(
-        (a) => a.stato === 'da_comprare' && a.nome.trim().toLowerCase() === nomeArticolo.trim().toLowerCase()
-      );
-      if (trovato) {
-        await aggiornaArticolo(trovato.id, { stato: 'comprato', compratoDa: pagatoDaId });
+    try {
+      for (const nomeArticolo of azione.articoli) {
+        const articoli = await listaArticoli(gruppoId);
+        const trovato = articoli.find(
+          (a) => a.stato === 'da_comprare' && a.nome.trim().toLowerCase() === nomeArticolo.trim().toLowerCase()
+        );
+        if (trovato) {
+          await aggiornaArticolo(trovato.id, { stato: 'comprato', compratoDa: pagatoDaId });
+        }
       }
+    } catch {
+      // marcare gli articoli è best-effort: la spesa è già registrata
     }
   }
 }
