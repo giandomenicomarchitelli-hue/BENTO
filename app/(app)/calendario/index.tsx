@@ -145,9 +145,9 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
       if (ilMioMembroId === null) {
         return;
       }
-      crea.mutate({ ...valori, membroId: ilMioMembroId }, { onSuccess: chiudiModale });
+      crea.mutate({ ...valori, membroId: ilMioMembroId, assegnatoA: null }, { onSuccess: chiudiModale });
     } else if (modaleAperto === 'modifica' && impegnoInModifica !== null) {
-      modifica.mutate({ id: impegnoInModifica.id, ...valori }, { onSuccess: chiudiModale });
+      modifica.mutate({ id: impegnoInModifica.id, ...valori, assegnatoA: null }, { onSuccess: chiudiModale });
     }
   }
 

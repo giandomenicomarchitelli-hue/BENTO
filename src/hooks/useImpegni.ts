@@ -26,6 +26,7 @@ interface ParametriImpegnoForm {
   intervalloRicorrenza: number | null;
   promemoriaMinutiPrima: number | null;
   modificabileDaTutti: boolean;
+  assegnatoA: string | null;
 }
 
 /**

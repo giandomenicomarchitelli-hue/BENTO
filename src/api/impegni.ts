@@ -68,7 +68,7 @@ interface ParametriImpegno {
   intervalloRicorrenza: number | null;
   promemoriaMinutiPrima: number | null;
   modificabileDaTutti: boolean;
-  assegnatoA?: string | null;
+  assegnatoA: string | null;
 }
 
 export async function creaImpegno(params: ParametriImpegno): Promise<string> {
