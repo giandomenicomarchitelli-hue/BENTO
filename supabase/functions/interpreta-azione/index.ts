@@ -230,7 +230,10 @@ aggiungi_voce_lista con nomeLista "spesa" o "lista della spesa".
 Usa crea_impegno quando la frase descrive un appuntamento, un evento o un
 impegno con una data (dentista, cena, scadenza, visita, partenza...).
 titolo è una descrizione breve dell'impegno, dataInizio è la data assoluta
-YYYY-MM-DD, ora è l'orario HH:MM se la frase lo dice, altrimenti null.
+YYYY-MM-DD (es. "2026-11-06"), ora è l'orario HH:MM se la frase lo dice,
+altrimenti null. L'orario va sempre scritto a due cifre sia per l'ora sia
+per i minuti: "09:00", mai "9:00"; "alle 9" -> "09:00", "alle 7 e mezza"
+-> "07:30".
 assegnatoA è il nome della persona per cui è l'impegno, ma solo se la
 frase lo dice esplicitamente: "Marco ha il dentista venerdì" ->
 assegnatoA "Marco"; "ho il dentista domani" -> assegnatoA
