@@ -89,7 +89,14 @@ export function ConfermaAzioni({ azioni, membri, confermando, onConferma }: Prop
               </Text>
             ) : azione.tipo === 'crea_impegno' ? (
               <RigaImpegno azione={azione} membri={membri} risolvi={risolvi} scegli={scegli} scelteManuali={scelteManuali} />
-            ) : null}
+            ) : (
+              // Nessun tipo rimanente oggi (azione: never): se un futuro tipo di azione
+              // arriva qui senza un ramo dedicato, fallire rumorosamente invece di
+              // mostrare una riga vuota e confermabile (CLAUDE.md regola 5).
+              ((): never => {
+                throw new Error(`Tipo di azione non gestito in ConfermaAzioni: ${(azione as Azione).tipo}`);
+              })()
+            )}
             <Pressable onPress={() => rimuovi(indice)} style={styles.rimuovi}>
               <Text style={styles.testoRimuovi}>X</Text>
             </Pressable>
