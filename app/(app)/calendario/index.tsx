@@ -122,6 +122,7 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
         intervalloRicorrenza: impegnoInModifica.intervallo_ricorrenza,
         promemoriaMinutiPrima: impegnoInModifica.promemoria_minuti_prima,
         modificabileDaTutti: impegnoInModifica.modificabile_da_tutti,
+        assegnatoA: impegnoInModifica.assegnato_a,
       };
     }
     // Modalità creazione: titolo/descrizione vuoti, data precompilata al
@@ -137,6 +138,7 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
       intervalloRicorrenza: null,
       promemoriaMinutiPrima: null,
       modificabileDaTutti: true,
+      assegnatoA: null,
     };
   }
 
@@ -145,9 +147,9 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
       if (ilMioMembroId === null) {
         return;
       }
-      crea.mutate({ ...valori, membroId: ilMioMembroId, assegnatoA: null }, { onSuccess: chiudiModale });
+      crea.mutate({ ...valori, membroId: ilMioMembroId }, { onSuccess: chiudiModale });
     } else if (modaleAperto === 'modifica' && impegnoInModifica !== null) {
-      modifica.mutate({ id: impegnoInModifica.id, ...valori, assegnatoA: null }, { onSuccess: chiudiModale });
+      modifica.mutate({ id: impegnoInModifica.id, ...valori }, { onSuccess: chiudiModale });
     }
   }
 
@@ -224,6 +226,12 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
                     <Text style={styles.descrizioneOccorrenza}>{impegno.descrizione}</Text>
                   )}
                   <Text style={styles.oraOccorrenza}>{impegno?.ora ?? 'Tutto il giorno'}</Text>
+                  {impegno?.assegnato_a !== null && impegno?.assegnato_a !== undefined && (
+                    <Text style={styles.oraOccorrenza}>
+                      Assegnato a:{' '}
+                      {membriAttivi.find((m) => m.id === impegno.assegnato_a)?.nome ?? 'Membro non più nel gruppo'}
+                    </Text>
+                  )}
 
                   {impegno !== undefined && (
                     <View style={styles.rigaAzioni}>
@@ -270,6 +278,7 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
             <ModificaImpegno
               key={modaleAperto === 'modifica' ? impegnoInModifica?.id ?? 'modifica' : 'crea'}
               valoriIniziali={valoriInizialiForm()}
+              membri={membriAttivi}
               salvando={salvando}
               onSalva={onSalvaForm}
             />

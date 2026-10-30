@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
 import type { Frequenza } from '@/api/faccende';
+import type { MembroRisolvibile } from '@/calcolo/risoluzioneAzioni';
 import { bento, raggio, spaziatura, tipografia } from '@/theme/tokens';
 
 export type ValoriImpegno = {
@@ -13,10 +14,12 @@ export type ValoriImpegno = {
   intervalloRicorrenza: number | null;
   promemoriaMinutiPrima: number | null;
   modificabileDaTutti: boolean;
+  assegnatoA: string | null;
 };
 
 type Props = {
   valoriIniziali: ValoriImpegno | null;
+  membri: MembroRisolvibile[];
   salvando: boolean;
   onSalva: (valori: ValoriImpegno) => void;
 };
@@ -44,7 +47,7 @@ function dataOggiISO(): string {
 }
 
 /** Form di creazione/modifica di un impegno di calendario: stesso pattern "controllato" di ModificaVoceDaFare. */
-export function ModificaImpegno({ valoriIniziali, salvando, onSalva }: Props) {
+export function ModificaImpegno({ valoriIniziali, membri, salvando, onSalva }: Props) {
   const [titolo, setTitolo] = useState(valoriIniziali?.titolo ?? '');
   const [descrizione, setDescrizione] = useState(valoriIniziali?.descrizione ?? '');
   const [dataInizio, setDataInizio] = useState(valoriIniziali?.dataInizio ?? dataOggiISO());
@@ -60,6 +63,7 @@ export function ModificaImpegno({ valoriIniziali, salvando, onSalva }: Props) {
     valoriIniziali?.promemoriaMinutiPrima ?? null
   );
   const [modificabileDaTutti, setModificabileDaTutti] = useState(valoriIniziali?.modificabileDaTutti ?? true);
+  const [assegnatoA, setAssegnatoA] = useState<string | null>(valoriIniziali?.assegnatoA ?? null);
 
   const dataInizioValida = DATA_INIZIO_VALIDA.test(dataInizio);
   const titoloVuoto = titolo.trim() === '';
@@ -78,6 +82,7 @@ export function ModificaImpegno({ valoriIniziali, salvando, onSalva }: Props) {
         frequenza === 'personalizzata' ? (Number.isInteger(intervalloNum) && intervalloNum > 0 ? intervalloNum : 1) : null,
       promemoriaMinutiPrima,
       modificabileDaTutti,
+      assegnatoA,
     });
   }
 
@@ -184,6 +189,29 @@ export function ModificaImpegno({ valoriIniziali, salvando, onSalva }: Props) {
             >
               <Text style={[styles.testoChip, promemoriaMinutiPrima === p.valore && styles.testoChipAttivo]}>
                 {p.etichetta}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.campo}>
+        <Text style={styles.etichetta}>Assegnato a</Text>
+        <View style={styles.rigaChip}>
+          <Pressable
+            onPress={() => setAssegnatoA(null)}
+            style={[styles.chip, assegnatoA === null && styles.chipAttivo]}
+          >
+            <Text style={[styles.testoChip, assegnatoA === null && styles.testoChipAttivo]}>Nessuno</Text>
+          </Pressable>
+          {membri.map((membro) => (
+            <Pressable
+              key={membro.id}
+              onPress={() => setAssegnatoA(membro.id)}
+              style={[styles.chip, assegnatoA === membro.id && styles.chipAttivo]}
+            >
+              <Text style={[styles.testoChip, assegnatoA === membro.id && styles.testoChipAttivo]}>
+                {membro.nome}
               </Text>
             </Pressable>
           ))}
