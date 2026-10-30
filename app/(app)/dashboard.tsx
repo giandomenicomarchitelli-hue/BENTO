@@ -198,6 +198,15 @@ export default function Dashboard() {
             onPress={() => router.push('/calendario')}
           />
         </View>
+        <View style={styles.rigaGriglia}>
+          <GlassTile
+            icona="edit-3"
+            accento={accenti.ciano}
+            titolo="Scrivi"
+            sottotitolo="Aggiungi con una frase"
+            onPress={() => router.push('/assistente')}
+          />
+        </View>
       </View>
 
       {listeInHome.length > 0 && (
