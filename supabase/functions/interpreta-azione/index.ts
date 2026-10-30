@@ -18,6 +18,11 @@ import Anthropic from 'npm:@anthropic-ai/sdk@1';
 import { zodOutputFormat } from 'npm:@anthropic-ai/sdk@1/helpers/zod';
 import { z } from 'npm:zod@4';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 // COPIA GEMELLA di src/calcolo/schemaAzioni.ts: se cambi questo schema,
 // cambia anche quello. La duplicazione è voluta - un'Edge Function è un
 // deployment Deno separato da Metro/Expo e non può importare da src/.
@@ -58,7 +63,7 @@ const FALLBACK = {
 function rispostaJson(corpo: unknown, status = 200): Response {
   return new Response(JSON.stringify(corpo), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }
 
@@ -70,11 +75,15 @@ interface Richiesta {
 }
 
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   let corpo: Richiesta;
   try {
     corpo = await req.json();
   } catch {
-    return new Response('body non valido', { status: 400 });
+    return new Response('body non valido', { status: 400, headers: corsHeaders });
   }
 
   // Validazione al confine di fiducia: questi valori finiscono nel system
@@ -90,18 +99,18 @@ Deno.serve(async (req) => {
     typeof testo !== 'string' ||
     testo.trim() === ''
   ) {
-    return new Response('campi mancanti o non validi', { status: 400 });
+    return new Response('campi mancanti o non validi', { status: 400, headers: corsHeaders });
   }
 
   // Cap di lunghezza: questo è l'unico percorso a pagamento (Claude API) di
   // tutto il progetto. Un membro autenticato (o un retry loop lato client)
   // non deve poter inviare un testo enorme e farlo fatturare a piena dimensione.
   if (testo.length > 2000) {
-    return new Response('testo troppo lungo', { status: 400 });
+    return new Response('testo troppo lungo', { status: 400, headers: corsHeaders });
   }
   // Un gruppo casalingo ha poche persone, non migliaia: limite di sicurezza.
   if (membriNomi.length > 50) {
-    return new Response('troppi membri', { status: 400 });
+    return new Response('troppi membri', { status: 400, headers: corsHeaders });
   }
 
   const supabaseUtente = createClient(
@@ -112,7 +121,7 @@ Deno.serve(async (req) => {
 
   const { data: utente } = await supabaseUtente.auth.getUser();
   if (utente.user === null) {
-    return new Response('non autenticato', { status: 401 });
+    return new Response('non autenticato', { status: 401, headers: corsHeaders });
   }
 
   // membri ha unique(gruppo_id, utente_id) (vedi migration 018), quindi
@@ -127,7 +136,7 @@ Deno.serve(async (req) => {
     .maybeSingle();
 
   if (membro === null) {
-    return new Response('non sei membro di questo gruppo', { status: 403 });
+    return new Response('non sei membro di questo gruppo', { status: 403, headers: corsHeaders });
   }
 
   const systemPrompt = `Sei un interprete di comandi per un'app di gestione casa condivisa.

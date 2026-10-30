@@ -5,6 +5,7 @@ import { risolviNome, type MembroRisolvibile } from '@/calcolo/risoluzioneAzioni
 import type { RispostaInterpretazione } from '@/calcolo/schemaAzioni';
 import type { AzioneRisolta } from '@/api/interpretazione';
 import { BentoButton } from '@/components/BentoButton';
+import { formattaEuro } from '@/lib/formato';
 
 type Azione = RispostaInterpretazione['azioni'][number];
 
@@ -120,7 +121,8 @@ function RigaAcquisto({
   return (
     <View style={styles.rigaTesto2}>
       <Text style={styles.testo}>
-        Registra spesa: {azione.importo_euro}€ pagati da {testoNome(azione.pagato_da)}, divisi tra{' '}
+        Registra spesa: {formattaEuro(Math.round(azione.importo_euro * 100))} pagati da{' '}
+        {testoNome(azione.pagato_da)}, divisi tra{' '}
         {divisoTra === null ? 'tutti' : divisoTra.map(testoNome).join(', ')}
       </Text>
       {nomiDaRisolvere.map((nome) => (
@@ -144,7 +146,7 @@ function SelettoreMembro({
 }) {
   return (
     <View style={styles.selettore}>
-      <Text style={styles.etichettaSelettore}>Chi è "{nome}"?</Text>
+      <Text style={styles.etichettaSelettore}>Chi è «{nome}»?</Text>
       <View style={styles.righeChip}>
         {membri.map((membro) => {
           const selezionato = scelte[nome] === membro.id;

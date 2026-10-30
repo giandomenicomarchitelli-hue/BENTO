@@ -57,9 +57,12 @@ function AssistenteDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 
       {interpreta.data !== undefined &&
         (interpreta.data.ambiguo ? (
-          <Text style={styles.testoChiarimento}>{interpreta.data.domanda_chiarimento}</Text>
+          <Text style={styles.testoChiarimento}>
+            {interpreta.data.domanda_chiarimento ?? 'Non ho capito bene, puoi riscriverla?'}
+          </Text>
         ) : (
           <ConfermaAzioni
+            key={interpreta.submittedAt}
             azioni={interpreta.data.azioni}
             membri={membriAttivi}
             confermando={conferma.isPending}
