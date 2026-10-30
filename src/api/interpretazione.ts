@@ -2,6 +2,9 @@ import { supabase } from '@/lib/supabase';
 import { SchemaRisposta, type RispostaInterpretazione } from '@/calcolo/schemaAzioni';
 import { aggiornaArticolo, aggiungiArticolo, listaArticoli } from '@/api/articoliSpesa';
 import { creaSpesa } from '@/api/spese';
+import { creaLista, listaListe } from '@/api/liste';
+import { aggiungiVoce } from '@/api/vociLista';
+import { creaImpegno, leggiFusoOrarioGruppo, sincronizzaOccorrenzeImpegni } from '@/api/impegni';
 import { calcolaQuoteAcquisto, ordinaSecondoMembriAttivi } from '@/calcolo/risoluzioneAzioni';
 
 export async function interpretaAzione(params: {
@@ -102,6 +105,51 @@ export async function eseguiAzioniConfermate(
       continue;
     }
 
-    // altri tipi di azione (aggiungi_voce_lista, crea_impegno) saranno gestiti da altre funzioni
+    if (azione.tipo === 'aggiungi_voce_lista') {
+      const liste = await listaListe(gruppoId);
+      const nomeNormalizzato = azione.nomeLista.trim().toLowerCase();
+      const trovata = liste.find((l) => l.nome.trim().toLowerCase() === nomeNormalizzato);
+      const lista = trovata ?? (await creaLista({
+        gruppoId,
+        nome: azione.nomeLista.trim(),
+        creatoDaMembroId,
+        mostraInHome: false,
+        conPrezzi: false,
+      }));
+
+      for (const voce of azione.voci) {
+        await aggiungiVoce(lista.id, voce, creatoDaMembroId);
+      }
+      continue;
+    }
+
+    if (azione.tipo === 'crea_impegno') {
+      let idAssegnatoRisolto: string | null = null;
+      if (azione.assegnatoA !== null) {
+        const id = idPerNome.get(azione.assegnatoA);
+        if (!id) {
+          throw new Error(`Impossibile risolvere "${azione.assegnatoA}" (assegnatario) a un membro del gruppo.`);
+        }
+        idAssegnatoRisolto = id;
+      }
+
+      await creaImpegno({
+        gruppoId,
+        membroId: creatoDaMembroId,
+        titolo: azione.titolo,
+        descrizione: null,
+        dataInizio: azione.dataInizio,
+        ora: azione.ora,
+        frequenza: 'una_tantum',
+        intervalloRicorrenza: null,
+        promemoriaMinutiPrima: null,
+        modificabileDaTutti: true,
+        assegnatoA: idAssegnatoRisolto,
+      });
+
+      const fusoOrario = await leggiFusoOrarioGruppo(gruppoId);
+      await sincronizzaOccorrenzeImpegni(gruppoId, fusoOrario);
+      continue;
+    }
   }
 }
