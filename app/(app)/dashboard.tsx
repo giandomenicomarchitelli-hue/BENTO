@@ -203,7 +203,6 @@ export default function Dashboard() {
             icona="edit-3"
             accento={accenti.ciano}
             titolo="Scrivi"
-            sottotitolo="Aggiungi con una frase"
             onPress={() => router.push('/assistente')}
           />
         </View>
