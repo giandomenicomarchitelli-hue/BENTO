@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
+import { dataSicura } from '@/calcolo/campiData';
 import { risolviNome, type MembroRisolvibile } from '@/calcolo/risoluzioneAzioni';
 import type { RispostaInterpretazione } from '@/calcolo/schemaAzioni';
 import type { AzioneRisolta } from '@/api/interpretazione';
@@ -166,7 +167,11 @@ function RigaImpegno({
   const nomiDaRisolvere =
     azione.assegnatoA !== null && risolvi(azione.assegnatoA) === null ? [azione.assegnatoA] : [];
   const testoNome = (nome: string) => (risolvi(nome) !== null ? nome : '(scegli)');
-  const dataFormattata = format(new Date(`${azione.dataInizio}T00:00:00`), 'EEEE d MMMM yyyy', { locale: it });
+  const dataValida = dataSicura(`${azione.dataInizio}T00:00:00`);
+  const dataFormattata =
+    dataValida !== null
+      ? format(dataValida, 'EEEE d MMMM yyyy', { locale: it })
+      : azione.dataInizio; // fallback: mostra la stringa grezza invece di far crashare lo schermo
 
   return (
     <View style={styles.rigaTesto2}>

@@ -45,7 +45,7 @@ export function useInterpretazione(gruppoId: string | null) {
         azioni
       );
     },
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['articoli-spesa', gruppoId] });
       queryClient.invalidateQueries({ queryKey: ['spese', gruppoId] });
       queryClient.invalidateQueries({ queryKey: ['liste', gruppoId] });

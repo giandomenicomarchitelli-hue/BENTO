@@ -6,6 +6,7 @@ import { creaLista, listaListe } from '@/api/liste';
 import { aggiungiVoce } from '@/api/vociLista';
 import { creaImpegno, leggiFusoOrarioGruppo, sincronizzaOccorrenzeImpegni } from '@/api/impegni';
 import { calcolaQuoteAcquisto, ordinaSecondoMembriAttivi } from '@/calcolo/risoluzioneAzioni';
+import { normalizzaTesto } from '@/calcolo/normalizzazioneTesto';
 
 export async function interpretaAzione(params: {
   gruppoId: string;
@@ -107,8 +108,8 @@ export async function eseguiAzioniConfermate(
 
     if (azione.tipo === 'aggiungi_voce_lista') {
       const liste = await listaListe(gruppoId);
-      const nomeNormalizzato = azione.nomeLista.trim().toLowerCase();
-      const trovata = liste.find((l) => l.nome.trim().toLowerCase() === nomeNormalizzato);
+      const nomeNormalizzato = normalizzaTesto(azione.nomeLista);
+      const trovata = liste.find((l) => normalizzaTesto(l.nome) === nomeNormalizzato);
       const lista = trovata ?? (await creaLista({
         gruppoId,
         nome: azione.nomeLista.trim(),
