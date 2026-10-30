@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
 
 import { risolviNome, type MembroRisolvibile } from '@/calcolo/risoluzioneAzioni';
 import type { RispostaInterpretazione } from '@/calcolo/schemaAzioni';
@@ -16,13 +18,16 @@ type Props = {
   onConferma: (azioniRisolte: AzioneRisolta[]) => void;
 };
 
-/** Nomi di persona citati in un'azione che vanno risolti a un membro (solo `acquisto`). */
+/** Nomi di persona citati in un'azione che vanno risolti a un membro (`acquisto` e `crea_impegno`). */
 function nomiNecessari(azione: Azione): string[] {
-  if (azione.tipo !== 'acquisto') {
-    return [];
+  if (azione.tipo === 'acquisto') {
+    const nomiDivisoTra = azione.diviso_tra && azione.diviso_tra.length > 0 ? azione.diviso_tra : [];
+    return [azione.pagato_da, ...nomiDivisoTra];
   }
-  const nomiDivisoTra = azione.diviso_tra && azione.diviso_tra.length > 0 ? azione.diviso_tra : [];
-  return [azione.pagato_da, ...nomiDivisoTra];
+  if (azione.tipo === 'crea_impegno' && azione.assegnatoA !== null) {
+    return [azione.assegnatoA];
+  }
+  return [];
 }
 
 /** Schermata di conferma delle azioni interpretate dall'AI: l'utente puo' rimuovere
@@ -78,6 +83,12 @@ export function ConfermaAzioni({ azioni, membri, confermando, onConferma }: Prop
               <Text style={[styles.testo, styles.rigaTesto2]}>Aggiungi: {azione.articoli.join(', ')}</Text>
             ) : azione.tipo === 'acquisto' ? (
               <RigaAcquisto azione={azione} membri={membri} risolvi={risolvi} scegli={scegli} scelteManuali={scelteManuali} />
+            ) : azione.tipo === 'aggiungi_voce_lista' ? (
+              <Text style={[styles.testo, styles.rigaTesto2]}>
+                Aggiungi a "{azione.nomeLista}": {azione.voci.join(', ')}
+              </Text>
+            ) : azione.tipo === 'crea_impegno' ? (
+              <RigaImpegno azione={azione} membri={membri} risolvi={risolvi} scegli={scegli} scelteManuali={scelteManuali} />
             ) : null}
             <Pressable onPress={() => rimuovi(indice)} style={styles.rimuovi}>
               <Text style={styles.testoRimuovi}>X</Text>
@@ -124,6 +135,38 @@ function RigaAcquisto({
         Registra spesa: {formattaEuro(Math.round(azione.importo_euro * 100))} pagati da{' '}
         {testoNome(azione.pagato_da)}, divisi tra{' '}
         {divisoTra === null ? 'tutti' : divisoTra.map(testoNome).join(', ')}
+      </Text>
+      {nomiDaRisolvere.map((nome) => (
+        <SelettoreMembro key={nome} nome={nome} membri={membri} scelte={scelteManuali} onScegli={scegli} />
+      ))}
+    </View>
+  );
+}
+
+function RigaImpegno({
+  azione,
+  membri,
+  risolvi,
+  scegli,
+  scelteManuali,
+}: {
+  azione: Azione & { tipo: 'crea_impegno' };
+  membri: MembroRisolvibile[];
+  risolvi: (nome: string) => string | null;
+  scegli: (nome: string, membroId: string) => void;
+  scelteManuali: Record<string, string>;
+}) {
+  const nomiDaRisolvere =
+    azione.assegnatoA !== null && risolvi(azione.assegnatoA) === null ? [azione.assegnatoA] : [];
+  const testoNome = (nome: string) => (risolvi(nome) !== null ? nome : '(scegli)');
+  const dataFormattata = format(new Date(`${azione.dataInizio}T00:00:00`), 'EEEE d MMMM yyyy', { locale: it });
+
+  return (
+    <View style={styles.rigaTesto2}>
+      <Text style={styles.testo}>
+        Crea impegno: "{azione.titolo}" il {dataFormattata}
+        {azione.ora !== null ? ` alle ${azione.ora}` : ''}
+        {azione.assegnatoA === null ? ', di gruppo' : `, assegnato a ${testoNome(azione.assegnatoA)}`}
       </Text>
       {nomiDaRisolvere.map((nome) => (
         <SelettoreMembro key={nome} nome={nome} membri={membri} scelte={scelteManuali} onScegli={scegli} />
