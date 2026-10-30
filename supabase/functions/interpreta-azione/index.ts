@@ -39,8 +39,29 @@ const AzioneAcquisto = z.object({
   diviso_tra: z.array(z.string()).optional(),
 });
 
+const AzioneAggiungiVoceLista = z.object({
+  tipo: z.literal('aggiungi_voce_lista'),
+  nomeLista: z.string().min(1),
+  voci: z.array(z.string().min(1)).min(1),
+});
+
+const AzioneCreaImpegno = z.object({
+  tipo: z.literal('crea_impegno'),
+  titolo: z.string().min(1),
+  dataInizio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  ora: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
+  assegnatoA: z.string().nullable(),
+});
+
 const SchemaRisposta = z.object({
-  azioni: z.array(z.discriminatedUnion('tipo', [AzioneAggiungiArticolo, AzioneAcquisto])),
+  azioni: z.array(
+    z.discriminatedUnion('tipo', [
+      AzioneAggiungiArticolo,
+      AzioneAcquisto,
+      AzioneAggiungiVoceLista,
+      AzioneCreaImpegno,
+    ])
+  ),
   ambiguo: z.boolean(),
   domanda_chiarimento: z.string().nullable(),
 });
@@ -59,6 +80,29 @@ const FALLBACK = {
   ambiguo: true,
   domanda_chiarimento: 'Non ho capito bene, puoi riscriverla?',
 };
+
+// Stesso fallback usato lato app in leggiFusoOrarioGruppo (src/api/impegni.ts),
+// per i gruppi dove il modulo Faccende non è ancora attivo.
+const FUSO_DEFAULT = 'Europe/Rome';
+
+// Data di oggi nel fuso del gruppo: senza questa, l'LLM non può risolvere
+// "domani"/"venerdì"/"tra due settimane" in una dataInizio assoluta.
+// Il fuso arriva dal database: se contenesse un valore non valido Intl
+// lancerebbe, e la funzione cadrebbe nel fallback "ambiguo" a ogni frase.
+function oggiNelFuso(fuso: string): { data: string; giorno: string } {
+  const adesso = new Date();
+  try {
+    return {
+      // en-CA formatta come YYYY-MM-DD, lo stesso formato di dataInizio.
+      data: new Intl.DateTimeFormat('en-CA', { timeZone: fuso }).format(adesso),
+      giorno: new Intl.DateTimeFormat('it-IT', { timeZone: fuso, weekday: 'long' }).format(adesso),
+    };
+  } catch {
+    return fuso === FUSO_DEFAULT
+      ? { data: adesso.toISOString().slice(0, 10), giorno: '' }
+      : oggiNelFuso(FUSO_DEFAULT);
+  }
+}
 
 function rispostaJson(corpo: unknown, status = 200): Response {
   return new Response(JSON.stringify(corpo), {
@@ -139,6 +183,17 @@ Deno.serve(async (req) => {
     return new Response('non sei membro di questo gruppo', { status: 403, headers: corsHeaders });
   }
 
+  // Stesso client autenticato (mai il service role): la RLS di
+  // impostazioni_faccende permette la lettura a un membro del gruppo, e qui
+  // l'appartenenza è già stata verificata sopra.
+  const { data: impostazioni } = await supabaseUtente
+    .from('impostazioni_faccende')
+    .select('fuso_orario')
+    .eq('gruppo_id', gruppoId)
+    .maybeSingle<{ fuso_orario: string | null }>();
+
+  const oggi = oggiNelFuso(impostazioni?.fuso_orario ?? FUSO_DEFAULT);
+
   const systemPrompt = `Sei un interprete di comandi per un'app di gestione casa condivisa.
 L'utente scrive una frase libera in italiano. Traducila in una lista di
 azioni secondo lo schema fornito.
@@ -155,10 +210,39 @@ implica.
 Se diviso_tra non è specificato per un acquisto, lascialo vuoto (il
 codice dividerà automaticamente tra tutti i membri del gruppo).
 
-Se la frase è ambigua, incompleta, o non descrive né un acquisto né
-un'aggiunta alla lista della spesa, imposta ambiguo a true e scrivi una
-domanda_chiarimento breve e specifica in italiano; in quel caso azioni
-deve essere un array vuoto.`;
+Oggi è ${oggi.giorno} ${oggi.data} nel fuso orario del gruppo. Usa questa
+data per risolvere le espressioni relative ("oggi", "domani", "dopodomani",
+"venerdì", "la settimana prossima", "tra due settimane") in una data
+assoluta nel formato YYYY-MM-DD. Un giorno della settimana senza altre
+indicazioni significa la prossima volta che cade, a partire da domani.
+
+Usa aggiungi_voce_lista quando la frase chiede di aggiungere qualcosa a
+una lista che ha un nome suo (film, ristoranti, libri da leggere, regali,
+canzoni... qualunque nome usi la frase, non un elenco fisso). Scrivi in
+nomeLista il nome esattamente come lo nomina la frase: non devi sapere né
+indovinare se quella lista esiste già, il codice la cerca o la crea.
+
+La lista della spesa è un dominio a parte e NON è una lista generica:
+"aggiungi il latte alla lista", "metti il latte in lista", "è finito il
+latte" vanno sempre in aggiungi_articolo. Non usare mai
+aggiungi_voce_lista con nomeLista "spesa" o "lista della spesa".
+
+Usa crea_impegno quando la frase descrive un appuntamento, un evento o un
+impegno con una data (dentista, cena, scadenza, visita, partenza...).
+titolo è una descrizione breve dell'impegno, dataInizio è la data assoluta
+YYYY-MM-DD, ora è l'orario HH:MM se la frase lo dice, altrimenti null.
+assegnatoA è il nome della persona per cui è l'impegno, ma solo se la
+frase lo dice esplicitamente: "Marco ha il dentista venerdì" ->
+assegnatoA "Marco"; "ho il dentista domani" -> assegnatoA
+"${nomeMittente}", perché la prima persona indica comunque in modo
+esplicito di chi è l'impegno (stessa regola di pagato_da). Se invece la
+frase non dice per chi è ("cena fuori sabato", "viene il tecnico
+martedì"), assegnatoA è null: è un impegno di tutto il gruppo. Non
+assumere mai che sia di chi scrive solo perché è lui a scrivere.
+
+Se la frase è ambigua, incompleta, o non descrive nessuna di queste
+azioni, imposta ambiguo a true e scrivi una domanda_chiarimento breve e
+specifica in italiano; in quel caso azioni deve essere un array vuoto.`;
 
   try {
     const risposta = await anthropic.messages.parse({
