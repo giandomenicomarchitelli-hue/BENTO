@@ -32,6 +32,17 @@ function AssistenteDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const { membriAttivi } = useGruppoAttivo();
   const { interpreta, conferma } = useInterpretazione(gruppoAttivoId);
   const [testo, setTesto] = useState('');
+  const [risposta, setRisposta] = useState('');
+
+  function inviaRisposta() {
+    // La frase cresce con ogni chiarimento invece di sostituirlo: interpreta
+    // non ha memoria tra una chiamata e l'altra, quindi il contesto della
+    // frase originale va portato avanti esplicitamente.
+    const testoCombinato = `${testo} ${risposta}`.trim();
+    setTesto(testoCombinato);
+    setRisposta('');
+    interpreta.mutate(testoCombinato);
+  }
 
   return (
     <BentoScreen>
@@ -57,9 +68,25 @@ function AssistenteDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 
       {interpreta.data !== undefined &&
         (interpreta.data.ambiguo ? (
-          <Text style={styles.testoChiarimento}>
-            {interpreta.data.domanda_chiarimento ?? 'Non ho capito bene, puoi riscriverla?'}
-          </Text>
+          <>
+            <Text style={styles.testoChiarimento}>
+              {interpreta.data.domanda_chiarimento ?? 'Non ho capito bene, puoi riscriverla?'}
+            </Text>
+            <TextInput
+              style={styles.input}
+              value={risposta}
+              onChangeText={setRisposta}
+              placeholder="Rispondi qui"
+              multiline
+            />
+            <BentoButton
+              etichetta="Invia risposta"
+              onPress={inviaRisposta}
+              variante="primario"
+              disabilitato={interpreta.isPending || risposta.trim() === ''}
+              caricando={interpreta.isPending}
+            />
+          </>
         ) : (
           <ConfermaAzioni
             key={interpreta.submittedAt}
@@ -70,6 +97,7 @@ function AssistenteDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
               conferma.mutate(azioniRisolte, {
                 onSuccess: () => {
                   setTesto('');
+                  setRisposta('');
                   interpreta.reset();
                 },
               })
