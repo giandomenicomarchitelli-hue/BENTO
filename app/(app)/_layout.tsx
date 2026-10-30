@@ -10,6 +10,7 @@ export default function AppLayout() {
       <Stack.Screen name="dashboard" options={{ headerShown: false }} />
       <Stack.Screen name="lista-spesa" options={{ headerShown: false }} />
       <Stack.Screen name="articoli/[id]" options={{ title: 'Articolo' }} />
+      <Stack.Screen name="assistente/index" options={{ title: 'Scrivi' }} />
       <Stack.Screen name="voci/[id]" options={{ title: 'Voce' }} />
       <Stack.Screen name="spese/nuova" options={{ title: 'Nuova spesa' }} />
       <Stack.Screen name="saldi/index" options={{ title: 'Saldi e spese' }} />
