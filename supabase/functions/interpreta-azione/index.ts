@@ -93,6 +93,17 @@ Deno.serve(async (req) => {
     return new Response('campi mancanti o non validi', { status: 400 });
   }
 
+  // Cap di lunghezza: questo è l'unico percorso a pagamento (Claude API) di
+  // tutto il progetto. Un membro autenticato (o un retry loop lato client)
+  // non deve poter inviare un testo enorme e farlo fatturare a piena dimensione.
+  if (testo.length > 2000) {
+    return new Response('testo troppo lungo', { status: 400 });
+  }
+  // Un gruppo casalingo ha poche persone, non migliaia: limite di sicurezza.
+  if (membriNomi.length > 50) {
+    return new Response('troppi membri', { status: 400 });
+  }
+
   const supabaseUtente = createClient(
     Deno.env.get('SUPABASE_URL') as string,
     Deno.env.get('SUPABASE_ANON_KEY') as string,
