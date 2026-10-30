@@ -114,6 +114,7 @@ function rispostaJson(corpo: unknown, status = 200): Response {
 interface Richiesta {
   gruppoId: string;
   membriNomi: string[];
+  listeNomi: string[];
   nomeMittente: string;
   testo: string;
 }
@@ -132,12 +133,14 @@ Deno.serve(async (req) => {
 
   // Validazione al confine di fiducia: questi valori finiscono nel system
   // prompt e nella query, arrivano dal client e non sono ancora verificati.
-  const { gruppoId, membriNomi, nomeMittente, testo } = corpo;
+  const { gruppoId, membriNomi, listeNomi, nomeMittente, testo } = corpo;
   if (
     typeof gruppoId !== 'string' ||
     gruppoId === '' ||
     !Array.isArray(membriNomi) ||
     membriNomi.some((n) => typeof n !== 'string') ||
+    !Array.isArray(listeNomi) ||
+    listeNomi.some((n) => typeof n !== 'string') ||
     typeof nomeMittente !== 'string' ||
     nomeMittente === '' ||
     typeof testo !== 'string' ||
@@ -155,6 +158,10 @@ Deno.serve(async (req) => {
   // Un gruppo casalingo ha poche persone, non migliaia: limite di sicurezza.
   if (membriNomi.length > 50) {
     return new Response('troppi membri', { status: 400, headers: corsHeaders });
+  }
+  // Stesso limite di sicurezza, per lo stesso motivo, sulle liste.
+  if (listeNomi.length > 50) {
+    return new Response('troppe liste', { status: 400, headers: corsHeaders });
   }
 
   const supabaseUtente = createClient(
@@ -218,9 +225,13 @@ indicazioni significa la prossima volta che cade, a partire da domani.
 
 Usa aggiungi_voce_lista quando la frase chiede di aggiungere qualcosa a
 una lista che ha un nome suo (film, ristoranti, libri da leggere, regali,
-canzoni... qualunque nome usi la frase, non un elenco fisso). Scrivi in
-nomeLista il nome esattamente come lo nomina la frase: non devi sapere né
-indovinare se quella lista esiste già, il codice la cerca o la crea.
+canzoni... qualunque nome usi la frase, non un elenco fisso).
+
+${
+  listeNomi.length > 0
+    ? `Le liste già esistenti in questo gruppo sono: ${listeNomi.join(', ')}. Se la frase si riferisce chiaramente a una di queste - anche con parole diverse (singolare/plurale, sinonimi, un articolo in più o in meno) - scrivi in nomeLista il nome ESATTO della lista esistente, non una tua variazione. Solo se non corrisponde chiaramente a nessuna lista esistente, scrivi in nomeLista il nome come lo dice la frase: il codice la creerà.`
+    : 'Non esiste ancora nessuna lista in questo gruppo: scrivi in nomeLista il nome esattamente come lo nomina la frase, il codice la creerà.'
+}
 
 La lista della spesa è un dominio a parte e NON è una lista generica:
 "aggiungi il latte alla lista", "metti il latte in lista", "è finito il

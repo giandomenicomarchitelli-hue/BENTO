@@ -11,6 +11,7 @@ import { normalizzaTesto } from '@/calcolo/normalizzazioneTesto';
 export async function interpretaAzione(params: {
   gruppoId: string;
   membriNomi: string[];
+  listeNomi: string[];
   nomeMittente: string;
   testo: string;
 }): Promise<RispostaInterpretazione> {

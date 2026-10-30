@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { eseguiAzioniConfermate, interpretaAzione, type AzioneRisolta } from '@/api/interpretazione';
 import type { RispostaInterpretazione } from '@/calcolo/schemaAzioni';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
+import { useListe } from '@/hooks/useListe';
 import { useAuthStore } from '@/store/authStore';
 
 /** Interpreta frasi in linguaggio naturale e esegue le azioni confermate. */
@@ -10,6 +11,10 @@ export function useInterpretazione(gruppoId: string | null) {
   const queryClient = useQueryClient();
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const { membriAttivi } = useGruppoAttivo();
+  // Nomi delle liste già esistenti: fatti vedere all'AI (come i nomi dei
+  // membri) così può riconoscere "ristoranti" come la lista "Ristorante"
+  // già creata, invece di crearne una seconda quasi identica.
+  const { liste } = useListe(gruppoId);
 
   const interpreta = useMutation({
     mutationFn: async (testo: string): Promise<RispostaInterpretazione> => {
@@ -23,6 +28,7 @@ export function useInterpretazione(gruppoId: string | null) {
       return interpretaAzione({
         gruppoId,
         membriNomi: membriAttivi.map((m) => m.nome),
+        listeNomi: liste.map((l) => l.nome),
         nomeMittente: mittente.nome,
         testo,
       });
