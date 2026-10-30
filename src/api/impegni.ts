@@ -68,6 +68,7 @@ interface ParametriImpegno {
   intervalloRicorrenza: number | null;
   promemoriaMinutiPrima: number | null;
   modificabileDaTutti: boolean;
+  assegnatoA?: string | null;
 }
 
 export async function creaImpegno(params: ParametriImpegno): Promise<string> {
@@ -84,6 +85,7 @@ export async function creaImpegno(params: ParametriImpegno): Promise<string> {
       intervallo_ricorrenza: params.intervalloRicorrenza,
       promemoria_minuti_prima: params.promemoriaMinutiPrima,
       modificabile_da_tutti: params.modificabileDaTutti,
+      assegnato_a: params.assegnatoA,
     })
     .select('id')
     .single();
@@ -109,6 +111,7 @@ export async function modificaImpegno(
       intervallo_ricorrenza: params.intervalloRicorrenza,
       promemoria_minuti_prima: params.promemoriaMinutiPrima,
       modificabile_da_tutti: params.modificabileDaTutti,
+      assegnato_a: params.assegnatoA,
     })
     .eq('id', impegnoId)
     .select('id');

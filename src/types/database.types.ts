@@ -234,6 +234,7 @@ export type Database = {
       impegni: {
         Row: {
           aggiornato_il: string
+          assegnato_a: string | null
           attiva: boolean
           creato_da: string | null
           creato_il: string
@@ -250,6 +251,7 @@ export type Database = {
         }
         Insert: {
           aggiornato_il?: string
+          assegnato_a?: string | null
           attiva?: boolean
           creato_da?: string | null
           creato_il?: string
@@ -266,6 +268,7 @@ export type Database = {
         }
         Update: {
           aggiornato_il?: string
+          assegnato_a?: string | null
           attiva?: boolean
           creato_da?: string | null
           creato_il?: string
@@ -281,6 +284,13 @@ export type Database = {
           titolo?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "impegni_assegnato_a_fkey"
+            columns: ["assegnato_a"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "impegni_creato_da_fkey"
             columns: ["creato_da"]
