@@ -147,8 +147,13 @@ export async function eseguiAzioniConfermate(
         assegnatoA: idAssegnatoRisolto,
       });
 
-      const fusoOrario = await leggiFusoOrarioGruppo(gruppoId);
-      await sincronizzaOccorrenzeImpegni(gruppoId, fusoOrario);
+      try {
+        const fusoOrario = await leggiFusoOrarioGruppo(gruppoId);
+        await sincronizzaOccorrenzeImpegni(gruppoId, fusoOrario);
+      } catch {
+        // sincronizzare le occorrenze è best-effort: l'impegno è già creato,
+        // e useImpegni le rigenera comunque ad ogni apertura del Calendario
+      }
       continue;
     }
   }

@@ -51,6 +51,9 @@ export function useInterpretazione(gruppoId: string | null) {
       queryClient.invalidateQueries({ queryKey: ['liste', gruppoId] });
       queryClient.invalidateQueries({ queryKey: ['impegni', gruppoId] });
       queryClient.invalidateQueries({ queryKey: ['occorrenze-impegni', gruppoId] });
+      // prefisso senza listaId: non sappiamo quale lista è stata toccata,
+      // ma invalida comunque ogni query voci-lista aperta/in cache
+      queryClient.invalidateQueries({ queryKey: ['voci-lista'] });
     },
   });
 
