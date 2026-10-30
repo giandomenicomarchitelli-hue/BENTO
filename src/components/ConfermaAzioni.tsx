@@ -76,9 +76,9 @@ export function ConfermaAzioni({ azioni, membri, confermando, onConferma }: Prop
           <View style={styles.rigaTesto}>
             {azione.tipo === 'aggiungi_articolo' ? (
               <Text style={[styles.testo, styles.rigaTesto2]}>Aggiungi: {azione.articoli.join(', ')}</Text>
-            ) : (
+            ) : azione.tipo === 'acquisto' ? (
               <RigaAcquisto azione={azione} membri={membri} risolvi={risolvi} scegli={scegli} scelteManuali={scelteManuali} />
-            )}
+            ) : null}
             <Pressable onPress={() => rimuovi(indice)} style={styles.rimuovi}>
               <Text style={styles.testoRimuovi}>X</Text>
             </Pressable>

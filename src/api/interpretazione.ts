@@ -58,46 +58,50 @@ export async function eseguiAzioniConfermate(
       continue;
     }
 
-    // acquisto
-    const pagatoDaId = idPerNome.get(azione.pagato_da);
-    if (!pagatoDaId) {
-      throw new Error(`Impossibile risolvere chi ha pagato ("${azione.pagato_da}") a un membro del gruppo.`);
-    }
-
-    const nomiDivisoTra = azione.diviso_tra && azione.diviso_tra.length > 0 ? azione.diviso_tra : null;
-    const idsDivisoTra = nomiDivisoTra
-      ? nomiDivisoTra.map((nome) => {
-          const id = idPerNome.get(nome);
-          if (!id) {
-            throw new Error(`Impossibile risolvere "${nome}" (in "diviso_tra") a un membro del gruppo.`);
-          }
-          return id;
-        })
-      : ordineCanonicoMembriIds;
-
-    const idsOrdinati = ordinaSecondoMembriAttivi(idsDivisoTra, ordineCanonicoMembriIds);
-    if (idsOrdinati.length === 0) {
-      throw new Error(
-        `Impossibile dividere l'acquisto pagato da "${azione.pagato_da}": nessun membro risolto per "diviso_tra".`
-      );
-    }
-
-    const importoCentesimi = Math.round(azione.importo_euro * 100);
-    const quote = calcolaQuoteAcquisto(importoCentesimi, idsOrdinati);
-    await creaSpesa({ gruppoId, pagatoDa: pagatoDaId, importoCentesimi, quote });
-
-    try {
-      for (const nomeArticolo of azione.articoli) {
-        const articoli = await listaArticoli(gruppoId);
-        const trovato = articoli.find(
-          (a) => a.stato === 'da_comprare' && a.nome.trim().toLowerCase() === nomeArticolo.trim().toLowerCase()
-        );
-        if (trovato) {
-          await aggiornaArticolo(trovato.id, { stato: 'comprato', compratoDa: pagatoDaId });
-        }
+    if (azione.tipo === 'acquisto') {
+      const pagatoDaId = idPerNome.get(azione.pagato_da);
+      if (!pagatoDaId) {
+        throw new Error(`Impossibile risolvere chi ha pagato ("${azione.pagato_da}") a un membro del gruppo.`);
       }
-    } catch {
-      // marcare gli articoli è best-effort: la spesa è già registrata
+
+      const nomiDivisoTra = azione.diviso_tra && azione.diviso_tra.length > 0 ? azione.diviso_tra : null;
+      const idsDivisoTra = nomiDivisoTra
+        ? nomiDivisoTra.map((nome) => {
+            const id = idPerNome.get(nome);
+            if (!id) {
+              throw new Error(`Impossibile risolvere "${nome}" (in "diviso_tra") a un membro del gruppo.`);
+            }
+            return id;
+          })
+        : ordineCanonicoMembriIds;
+
+      const idsOrdinati = ordinaSecondoMembriAttivi(idsDivisoTra, ordineCanonicoMembriIds);
+      if (idsOrdinati.length === 0) {
+        throw new Error(
+          `Impossibile dividere l'acquisto pagato da "${azione.pagato_da}": nessun membro risolto per "diviso_tra".`
+        );
+      }
+
+      const importoCentesimi = Math.round(azione.importo_euro * 100);
+      const quote = calcolaQuoteAcquisto(importoCentesimi, idsOrdinati);
+      await creaSpesa({ gruppoId, pagatoDa: pagatoDaId, importoCentesimi, quote });
+
+      try {
+        for (const nomeArticolo of azione.articoli) {
+          const articoli = await listaArticoli(gruppoId);
+          const trovato = articoli.find(
+            (a) => a.stato === 'da_comprare' && a.nome.trim().toLowerCase() === nomeArticolo.trim().toLowerCase()
+          );
+          if (trovato) {
+            await aggiornaArticolo(trovato.id, { stato: 'comprato', compratoDa: pagatoDaId });
+          }
+        }
+      } catch {
+        // marcare gli articoli è best-effort: la spesa è già registrata
+      }
+      continue;
     }
+
+    // altri tipi di azione (aggiungi_voce_lista, crea_impegno) saranno gestiti da altre funzioni
   }
 }
