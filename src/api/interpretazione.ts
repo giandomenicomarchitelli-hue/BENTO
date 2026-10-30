@@ -13,11 +13,15 @@ export async function interpretaAzione(params: {
     domanda_chiarimento: 'Non ho capito bene, puoi riscriverla?',
   };
 
-  const { data, error } = await supabase.functions.invoke('interpreta-azione', { body: params });
-  if (error) {
+  try {
+    const { data, error } = await supabase.functions.invoke('interpreta-azione', { body: params });
+    if (error) {
+      return fallbackAmbiguo;
+    }
+
+    const risultato = SchemaRisposta.safeParse(data);
+    return risultato.success ? risultato.data : fallbackAmbiguo;
+  } catch {
     return fallbackAmbiguo;
   }
-
-  const risultato = SchemaRisposta.safeParse(data);
-  return risultato.success ? risultato.data : fallbackAmbiguo;
 }
