@@ -378,6 +378,35 @@ export type Database = {
           },
         ]
       }
+      liste_personali: {
+        Row: {
+          creato_il: string
+          id: string
+          nome: string
+          utente_id: string
+        }
+        Insert: {
+          creato_il?: string
+          id?: string
+          nome: string
+          utente_id: string
+        }
+        Update: {
+          creato_il?: string
+          id?: string
+          nome?: string
+          utente_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "liste_personali_utente_id_fkey"
+            columns: ["utente_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       membri: {
         Row: {
           creato_il: string
@@ -1182,6 +1211,38 @@ export type Database = {
             columns: ["lista_id"]
             isOneToOne: false
             referencedRelation: "liste"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voci_lista_personali: {
+        Row: {
+          creato_il: string
+          fatto: boolean
+          id: string
+          lista_id: string
+          testo: string
+        }
+        Insert: {
+          creato_il?: string
+          fatto?: boolean
+          id?: string
+          lista_id: string
+          testo: string
+        }
+        Update: {
+          creato_il?: string
+          fatto?: boolean
+          id?: string
+          lista_id?: string
+          testo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voci_lista_personali_lista_id_fkey"
+            columns: ["lista_id"]
+            isOneToOne: false
+            referencedRelation: "liste_personali"
             referencedColumns: ["id"]
           },
         ]
