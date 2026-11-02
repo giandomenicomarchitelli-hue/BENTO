@@ -208,7 +208,7 @@ export default function Dashboard() {
           {/* Tile temporanea: punto d'accesso provvisorio all'area "Personale"
               finché non arriva la Home a due mondi (Personale/Gruppi) in Fase 4. */}
           <GlassTile
-            icona="list"
+            icona="bookmark"
             accento={accenti.oro}
             titolo="Personale"
             onPress={() => router.push('/personale/liste')}

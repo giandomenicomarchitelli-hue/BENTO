@@ -71,7 +71,7 @@ export default function DettaglioListaPersonale() {
                   style={styles.rigaCliccabile}
                   onPress={() => aggiorna.mutate({ id: voce.id, fatto: !voce.fatto })}
                 >
-                  <View style={[styles.casella, voce.fatto && styles.caselladSelezionata]}>
+                  <View style={[styles.casella, voce.fatto && styles.casellaSelezionata]}>
                     {voce.fatto && <Text style={styles.segno}>✓</Text>}
                   </View>
                   <Text style={[styles.testoVoce, voce.fatto && styles.testoVoceFatto]}>
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  caselladSelezionata: {
+  casellaSelezionata: {
     backgroundColor: accenti.menta,
   },
   segno: {
