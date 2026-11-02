@@ -397,15 +397,7 @@ export type Database = {
           nome?: string
           utente_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "liste_personali_utente_id_fkey"
-            columns: ["utente_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       membri: {
         Row: {
