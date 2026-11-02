@@ -20,6 +20,11 @@ export type ValoriImpegno = {
 type Props = {
   valoriIniziali: ValoriImpegno | null;
   membri: MembroRisolvibile[];
+  // L'assegnatario attuale, solo se non è (più) tra i membri attivi del
+  // gruppo: senza questo, l'assegnazione a chi è uscito resta invisibile
+  // nel form - né confermabile né cancellabile consapevolmente, solo
+  // sovrascrivibile "alla cieca" scegliendo "Nessuno" o un altro membro.
+  membroAssegnatoNonAttivo?: MembroRisolvibile | null;
   salvando: boolean;
   onSalva: (valori: ValoriImpegno) => void;
 };
@@ -47,7 +52,13 @@ function dataOggiISO(): string {
 }
 
 /** Form di creazione/modifica di un impegno di calendario: stesso pattern "controllato" di ModificaVoceDaFare. */
-export function ModificaImpegno({ valoriIniziali, membri, salvando, onSalva }: Props) {
+export function ModificaImpegno({
+  valoriIniziali,
+  membri,
+  membroAssegnatoNonAttivo = null,
+  salvando,
+  onSalva,
+}: Props) {
   const [titolo, setTitolo] = useState(valoriIniziali?.titolo ?? '');
   const [descrizione, setDescrizione] = useState(valoriIniziali?.descrizione ?? '');
   const [dataInizio, setDataInizio] = useState(valoriIniziali?.dataInizio ?? dataOggiISO());
@@ -215,6 +226,16 @@ export function ModificaImpegno({ valoriIniziali, membri, salvando, onSalva }: P
               </Text>
             </Pressable>
           ))}
+          {membroAssegnatoNonAttivo !== null && assegnatoA === membroAssegnatoNonAttivo.id && (
+            <Pressable
+              onPress={() => setAssegnatoA(membroAssegnatoNonAttivo.id)}
+              style={[styles.chip, styles.chipAttivo]}
+            >
+              <Text style={[styles.testoChip, styles.testoChipAttivo]}>
+                {membroAssegnatoNonAttivo.nome} (non più nel gruppo)
+              </Text>
+            </Pressable>
+          )}
         </View>
       </View>
 

@@ -38,7 +38,7 @@ export default function Calendario() {
 }
 
 function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
-  const { membriAttivi, isLoading: gruppoInCaricamento } = useGruppoAttivo();
+  const { membri, membriAttivi, isLoading: gruppoInCaricamento } = useGruppoAttivo();
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const ilMioMembroId = membriAttivi.find((m) => m.utente_id === utenteId)?.id ?? null;
 
@@ -279,6 +279,11 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
               key={modaleAperto === 'modifica' ? impegnoInModifica?.id ?? 'modifica' : 'crea'}
               valoriIniziali={valoriInizialiForm()}
               membri={membriAttivi}
+              membroAssegnatoNonAttivo={
+                impegnoInModifica?.assegnato_a !== null && impegnoInModifica?.assegnato_a !== undefined
+                  ? membri.find((m) => m.id === impegnoInModifica.assegnato_a && m.uscito_il !== null) ?? null
+                  : null
+              }
               salvando={salvando}
               onSalva={onSalvaForm}
             />
