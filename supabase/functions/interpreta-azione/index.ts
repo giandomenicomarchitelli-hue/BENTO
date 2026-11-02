@@ -66,7 +66,7 @@ const SchemaRisposta = z.object({
   domanda_chiarimento: z.string().nullable(),
 });
 
-const MODELLO = 'claude-opus-5';
+const MODELLO = 'claude-haiku-4-5-20251001';
 
 // Costruito a livello di modulo: se ANTHROPIC_API_KEY manca, la funzione
 // fallisce al boot in modo rumoroso invece di cadere in silenzio nel fallback
@@ -261,10 +261,11 @@ specifica in italiano; in quel caso azioni deve essere un array vuoto.`;
   try {
     const risposta = await anthropic.messages.parse({
       model: MODELLO,
-      // max_tokens alto nonostante il JSON di output sia minuscolo: su
-      // claude-opus-5 il ragionamento è attivo di default e consuma lo stesso
-      // budget, quindi un tetto basso (es. 2048) troncherebbe la risposta e
-      // finirebbe nel fallback "ambiguo" senza che si veda alcun errore.
+      // max_tokens alto nonostante il JSON di output sia minuscolo: se il
+      // modello usa ragionamento esteso consuma lo stesso budget, quindi un
+      // tetto basso (es. 2048) troncherebbe la risposta e finirebbe nel
+      // fallback "ambiguo" senza che si veda alcun errore. Innocuo se il
+      // modello non ragiona affatto: è solo un tetto, non un costo fisso.
       max_tokens: 16000,
       system: systemPrompt,
       messages: [{ role: 'user', content: testo }],
