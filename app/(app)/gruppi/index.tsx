@@ -19,8 +19,6 @@ import { useProfilo } from '@/hooks/useProfilo';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { accenti, bento, spaziatura, tipografia } from '@/theme/tokens';
 
-const ANTEPRIMA_MASSIMA = 3;
-
 export default function GruppiHome() {
   const router = useRouter();
   const { profilo, isLoading: profiloInCaricamento } = useProfilo();
@@ -48,9 +46,8 @@ export default function GruppiHome() {
     router.push('/dashboard');
   }
 
-  // Tre scorciatoie, non quattro: "i tuoi gruppi" è già la destinazione
-  // della card hero e della sezione gruppi qui sotto, ripeterla qui
-  // sarebbe un'azione di navigazione duplicata.
+  // Tre scorciatoie: creare, unirsi, saldi. Nessuna rimanda a "i tuoi
+  // gruppi" perché questa schermata la OSPITA già.
   const azioniRapide: QuickAction[] = [
     {
       icona: 'plus-circle',
@@ -121,15 +118,13 @@ export default function GruppiHome() {
                 ? gruppi[0].nome
                 : 'Casa, viaggi, ufficio e altro'
           }
-          azioni={[{ etichetta: 'I tuoi gruppi', onPress: () => router.push('/gruppi') }]}
         />
       )}
 
       <QuickActionRow azioni={azioniRapide} />
 
       <View style={styles.sezione}>
-        {/* Senza "Vedi tutti": la card hero sopra porta già a /gruppi, un
-            secondo link alla stessa destinazione qui sarebbe ridondante. */}
+        {/* Nessun "Vedi tutti": questa sezione mostra già tutti i gruppi dell'utente. */}
         <SectionHeader titolo="I tuoi gruppi" />
 
         {gruppi.length === 0 ? (
@@ -145,7 +140,7 @@ export default function GruppiHome() {
           </GlassCard>
         ) : (
           <View style={styles.listaGruppi}>
-            {gruppi.slice(0, ANTEPRIMA_MASSIMA).map((gruppo) => (
+            {gruppi.map((gruppo) => (
               <GroupPreviewCard key={gruppo.id} gruppo={gruppo} onPress={() => apriGruppo(gruppo)} />
             ))}
           </View>

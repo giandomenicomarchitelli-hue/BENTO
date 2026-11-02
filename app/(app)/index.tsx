@@ -29,14 +29,18 @@ export default function Homepage() {
 
       <View style={styles.scelte}>
         <GlassCard onPress={() => router.push('/personale')} style={styles.tile}>
-          <IconBadge icona="user" colore={accenti.indaco} dimensione={56} />
-          <Text style={styles.titoloTile}>Personale</Text>
-          <Text style={styles.sottotitoloTile}>Le tue cose private</Text>
+          <View style={styles.tileContenuto}>
+            <IconBadge icona="user" colore={accenti.indaco} dimensione={56} />
+            <Text style={styles.titoloTile}>Personale</Text>
+            <Text style={styles.sottotitoloTile}>Le tue cose private</Text>
+          </View>
         </GlassCard>
         <GlassCard onPress={() => router.push('/gruppi')} style={styles.tile}>
-          <IconBadge icona="users" colore={accenti.menta} dimensione={56} />
-          <Text style={styles.titoloTile}>Gruppi</Text>
-          <Text style={styles.sottotitoloTile}>Quello che condividi con gli altri</Text>
+          <View style={styles.tileContenuto}>
+            <IconBadge icona="users" colore={accenti.menta} dimensione={56} />
+            <Text style={styles.titoloTile}>Gruppi</Text>
+            <Text style={styles.sottotitoloTile}>Quello che condividi con gli altri</Text>
+          </View>
         </GlassCard>
       </View>
     </BentoScreen>
@@ -60,8 +64,10 @@ const styles = StyleSheet.create({
   },
   tile: {
     width: '100%',
-    paddingVertical: spaziatura.xl,
+  },
+  tileContenuto: {
     alignItems: 'center',
+    paddingVertical: spaziatura.xl,
   },
   titoloTile: {
     ...tipografia.corpo,
