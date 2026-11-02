@@ -48,9 +48,11 @@ export default function Homepage() {
     router.push('/dashboard');
   }
 
-  // Tre scorciatoie, non quattro: "i tuoi gruppi" è già la destinazione
-  // della card hero e della sezione gruppi qui sotto, ripeterla qui
-  // sarebbe un'azione di navigazione duplicata.
+  // Quattro scorciatoie: le prime tre portano a destinazioni già
+  // raggiungibili altrove in questa schermata (card hero/sezione gruppi),
+  // quindi non duplicano nulla. "Le mie liste" è l'unica via d'accesso
+  // all'area Personale per chi non ha ancora nessun gruppo: la Dashboard
+  // (dove si trova l'altra tile) è irraggiungibile senza un gruppo attivo.
   const azioniRapide: QuickAction[] = [
     {
       icona: 'plus-circle',
@@ -69,6 +71,12 @@ export default function Homepage() {
       accento: accenti.oro,
       etichetta: 'I miei saldi',
       onPress: () => router.push('/saldi-personali'),
+    },
+    {
+      icona: 'bookmark',
+      accento: accenti.rosa,
+      etichetta: 'Le mie liste',
+      onPress: () => router.push('/personale/liste'),
     },
   ];
 
