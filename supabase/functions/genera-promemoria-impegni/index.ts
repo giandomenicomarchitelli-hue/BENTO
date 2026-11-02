@@ -244,6 +244,7 @@ interface RigaImpegno {
   frequenza: Frequenza;
   intervallo_ricorrenza: number | null;
   promemoria_minuti_prima: number | null;
+  assegnato_a: string | null;
 }
 
 Deno.serve(async (_req) => {
@@ -254,7 +255,7 @@ Deno.serve(async (_req) => {
   // fatale, perché senza impegni nessuna delle due fasi può procedere.
   const { data: impegniAttivi, error: erroreImpegni } = await supabase
     .from('impegni')
-    .select('id, gruppo_id, titolo, data_inizio, ora, frequenza, intervallo_ricorrenza, promemoria_minuti_prima')
+    .select('id, gruppo_id, titolo, data_inizio, ora, frequenza, intervallo_ricorrenza, promemoria_minuti_prima, assegnato_a')
     .eq('attiva', true);
   if (erroreImpegni) {
     return new Response(erroreImpegni.message, { status: 500 });
@@ -450,7 +451,17 @@ Deno.serve(async (_req) => {
   const notificheDaInserire = daRicordare.flatMap((occ) => {
     const impegno = impegnoPerId.get(occ.impegno_id);
     const membriGruppo = membriPerGruppo.get(occ.gruppo_id) ?? [];
-    return membriGruppo.map((membroId) => ({
+    // Un impegno assegnato a una persona specifica avvisa solo lei, non
+    // tutto il gruppo - purché sia ancora un membro attivo del gruppo
+    // (altrimenti il promemoria resta "di gruppo" come se non ci fosse
+    // un assegnatario valido, invece di sparire silenziosamente).
+    const destinatari =
+      impegno?.assegnato_a !== null &&
+      impegno?.assegnato_a !== undefined &&
+      membriGruppo.includes(impegno.assegnato_a)
+        ? [impegno.assegnato_a]
+        : membriGruppo;
+    return destinatari.map((membroId) => ({
       gruppo_id: occ.gruppo_id,
       destinatario_membro_id: membroId,
       tipo: 'impegno_promemoria',

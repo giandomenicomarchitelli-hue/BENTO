@@ -45,12 +45,33 @@ const AzioneAggiungiVoceLista = z.object({
   voci: z.array(z.string().min(1)).min(1),
 });
 
+// L'LLM a volte scrive "9:00" invece di "09:00" nonostante le istruzioni nel
+// prompt: l'output strutturato non applica il vincolo di formato della
+// regex lato server, solo questo schema lo rivalida - se non
+// normalizzassimo prima, un'ora senza zero iniziale farebbe scartare
+// l'intera risposta (anche le altre azioni corrette nella stessa frase).
+function normalizzaOra(valore: string | null): string | null {
+  if (valore === null) {
+    return valore;
+  }
+  const corrispondenza = valore.match(/^(\d{1,2}):(\d{1,2})$/);
+  if (corrispondenza === null) {
+    return valore;
+  }
+  return `${corrispondenza[1].padStart(2, '0')}:${corrispondenza[2].padStart(2, '0')}`;
+}
+
 const AzioneCreaImpegno = z.object({
   tipo: z.literal('crea_impegno'),
   titolo: z.string().min(1),
   dataInizio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  ora: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
-  assegnatoA: z.string().nullable(),
+  ora: z
+    .string()
+    .nullable()
+    .transform(normalizzaOra)
+    .pipe(z.string().regex(/^\d{2}:\d{2}$/).nullable()),
+  // .min(1): un assegnatario vuoto non è "nessuno" (null), è malformato.
+  assegnatoA: z.string().min(1).nullable(),
 });
 
 const SchemaRisposta = z.object({
@@ -138,9 +159,9 @@ Deno.serve(async (req) => {
     typeof gruppoId !== 'string' ||
     gruppoId === '' ||
     !Array.isArray(membriNomi) ||
-    membriNomi.some((n) => typeof n !== 'string') ||
+    membriNomi.some((n) => typeof n !== 'string' || n.length > 200) ||
     !Array.isArray(listeNomi) ||
-    listeNomi.some((n) => typeof n !== 'string') ||
+    listeNomi.some((n) => typeof n !== 'string' || n.length > 200) ||
     typeof nomeMittente !== 'string' ||
     nomeMittente === '' ||
     typeof testo !== 'string' ||
