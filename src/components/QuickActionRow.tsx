@@ -40,6 +40,8 @@ const styles = StyleSheet.create({
   riga: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    rowGap: spaziatura.md,
   },
   colonna: {
     alignItems: 'center',
