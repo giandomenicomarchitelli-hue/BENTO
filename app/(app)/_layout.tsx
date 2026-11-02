@@ -8,6 +8,9 @@ export default function AppLayout() {
       <Stack.Screen name="crea-profilo" options={{ title: 'Nome utente' }} />
       <Stack.Screen name="profilo" options={{ title: 'Il mio profilo' }} />
       <Stack.Screen name="dashboard" options={{ headerShown: false }} />
+      <Stack.Screen name="prototipo-ui" options={{ headerShown: false }} />
+      <Stack.Screen name="prototipo-gruppi" options={{ headerShown: false }} />
+      <Stack.Screen name="prototipo-casa" options={{ headerShown: false }} />
       <Stack.Screen name="lista-spesa" options={{ headerShown: false }} />
       <Stack.Screen name="articoli/[id]" options={{ title: 'Articolo' }} />
       <Stack.Screen name="assistente/index" options={{ title: 'Scrivi' }} />
