@@ -37,6 +37,13 @@ function nomiNecessari(azione: Azione): string[] {
 export function ConfermaAzioni({ azioni, membri, confermando, onConferma }: Props) {
   const [rimosse, setRimosse] = useState<Set<number>>(new Set());
   const [scelteManuali, setScelteManuali] = useState<Record<string, string>>({});
+  // L'esecuzione delle azioni non è transazionale: se una fallisce a metà
+  // batch, le precedenti sono già scritte. Un secondo tentativo su questa
+  // stessa schermata rimanderebbe l'intero array e le duplicherebbe -
+  // quindi una volta premuto Conferma, questa schermata non può riprovare:
+  // per correggere o ritentare bisogna scrivere una nuova frase (schermo
+  // nuovo, azioni risolte da zero).
+  const [tentativoEseguito, setTentativoEseguito] = useState(false);
 
   function risolvi(nome: string): string | null {
     const risultato = risolviNome(nome, membri);
@@ -68,6 +75,7 @@ export function ConfermaAzioni({ azioni, membri, confermando, onConferma }: Prop
   );
 
   function conferma() {
+    setTentativoEseguito(true);
     const azioniRisolte: AzioneRisolta[] = azioniAttive.map(({ azione }) => ({
       azione,
       idPerNome: new Map(nomiNecessari(azione).map((nome) => [nome, risolvi(nome) as string])),
@@ -86,7 +94,7 @@ export function ConfermaAzioni({ azioni, membri, confermando, onConferma }: Prop
               <RigaAcquisto azione={azione} membri={membri} risolvi={risolvi} scegli={scegli} scelteManuali={scelteManuali} />
             ) : azione.tipo === 'aggiungi_voce_lista' ? (
               <Text style={[styles.testo, styles.rigaTesto2]}>
-                Aggiungi a "{azione.nomeLista}": {azione.voci.join(', ')}
+                Aggiungi a «{azione.nomeLista}»: {azione.voci.join(', ')}
               </Text>
             ) : azione.tipo === 'crea_impegno' ? (
               <RigaImpegno azione={azione} membri={membri} risolvi={risolvi} scegli={scegli} scelteManuali={scelteManuali} />
@@ -109,9 +117,15 @@ export function ConfermaAzioni({ azioni, membri, confermando, onConferma }: Prop
         etichetta="Conferma"
         onPress={conferma}
         variante="primario"
-        disabilitato={confermando || nonRisolto}
+        disabilitato={confermando || nonRisolto || tentativoEseguito}
         caricando={confermando}
       />
+      {tentativoEseguito && !confermando && (
+        <Text style={styles.testoAvviso}>
+          Alcune di queste azioni potrebbero essere già state eseguite. Controlla lista, spese e calendario
+          prima di scrivere una nuova frase.
+        </Text>
+      )}
     </View>
   );
 }
@@ -176,7 +190,7 @@ function RigaImpegno({
   return (
     <View style={styles.rigaTesto2}>
       <Text style={styles.testo}>
-        Crea impegno: "{azione.titolo}" il {dataFormattata}
+        Crea impegno: «{azione.titolo}» il {dataFormattata}
         {azione.ora !== null ? ` alle ${azione.ora}` : ''}
         {azione.assegnatoA === null ? ', di gruppo' : `, assegnato a ${testoNome(azione.assegnatoA)}`}
       </Text>
@@ -228,6 +242,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#555',
     textAlign: 'center',
+  },
+  testoAvviso: {
+    fontSize: 13,
+    color: '#c0392b',
   },
   riga: {
     borderWidth: 1,

@@ -63,4 +63,30 @@ describe('SchemaRisposta - nuovi tipi di azione', () => {
     });
     expect(risultato.success).toBe(false);
   });
+
+  test('normalizza un\'ora senza zero iniziale invece di scartare la risposta', () => {
+    const risultato = SchemaRisposta.safeParse({
+      azioni: [
+        { tipo: 'crea_impegno', titolo: 'Dentista', dataInizio: '2026-11-02', ora: '9:00', assegnatoA: null },
+      ],
+      ambiguo: false,
+      domanda_chiarimento: null,
+    });
+    expect(risultato.success).toBe(true);
+    if (risultato.success) {
+      const azione = risultato.data.azioni[0];
+      expect(azione.tipo === 'crea_impegno' && azione.ora).toBe('09:00');
+    }
+  });
+
+  test('rifiuta crea_impegno con assegnatoA stringa vuota (non è "nessuno")', () => {
+    const risultato = SchemaRisposta.safeParse({
+      azioni: [
+        { tipo: 'crea_impegno', titolo: 'Dentista', dataInizio: '2026-11-02', ora: null, assegnatoA: '' },
+      ],
+      ambiguo: false,
+      domanda_chiarimento: null,
+    });
+    expect(risultato.success).toBe(false);
+  });
 });

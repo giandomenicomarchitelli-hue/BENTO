@@ -7,6 +7,7 @@ import { aggiungiVoce } from '@/api/vociLista';
 import { creaImpegno, leggiFusoOrarioGruppo, sincronizzaOccorrenzeImpegni } from '@/api/impegni';
 import { calcolaQuoteAcquisto, ordinaSecondoMembriAttivi } from '@/calcolo/risoluzioneAzioni';
 import { normalizzaTesto } from '@/calcolo/normalizzazioneTesto';
+import { dataSicura } from '@/calcolo/campiData';
 
 export async function interpretaAzione(params: {
   gruppoId: string;
@@ -20,17 +21,29 @@ export async function interpretaAzione(params: {
     ambiguo: true,
     domanda_chiarimento: 'Non ho capito bene, puoi riscriverla?',
   };
+  // Stesso risultato "ambiguo" dell'utente nell'app (non vogliamo che la UI
+  // debba gestire un terzo stato), ma un messaggio diverso: un problema di
+  // rete/server non si risolve riscrivendo la frase, va distinto da una
+  // frase genuinamente incomprensibile - altrimenti l'utente riscrive la
+  // stessa frase più volte senza che possa mai funzionare.
+  const fallbackProblemaServer: RispostaInterpretazione = {
+    azioni: [],
+    ambiguo: true,
+    domanda_chiarimento: 'Si è verificato un problema di connessione. Riprova tra poco.',
+  };
 
   try {
     const { data, error } = await supabase.functions.invoke('interpreta-azione', { body: params });
     if (error) {
-      return fallbackAmbiguo;
+      console.error('interpretaAzione: errore dalla Edge Function', error);
+      return fallbackProblemaServer;
     }
 
     const risultato = SchemaRisposta.safeParse(data);
     return risultato.success ? risultato.data : fallbackAmbiguo;
-  } catch {
-    return fallbackAmbiguo;
+  } catch (errore) {
+    console.error('interpretaAzione: eccezione nella chiamata', errore);
+    return fallbackProblemaServer;
   }
 }
 
@@ -92,8 +105,12 @@ export async function eseguiAzioniConfermate(
       await creaSpesa({ gruppoId, pagatoDa: pagatoDaId, importoCentesimi, quote });
 
       try {
+        // Una sola lettura per l'intera azione: gli articoli marcati qui
+        // non vengono creati da questa stessa azione, quindi non c'è
+        // rischio di perdere un articolo appena aggiunto leggendo una
+        // volta sola invece che per ogni nome.
+        const articoli = await listaArticoli(gruppoId);
         for (const nomeArticolo of azione.articoli) {
-          const articoli = await listaArticoli(gruppoId);
           const trovato = articoli.find(
             (a) => a.stato === 'da_comprare' && a.nome.trim().toLowerCase() === nomeArticolo.trim().toLowerCase()
           );
@@ -111,13 +128,26 @@ export async function eseguiAzioniConfermate(
       const liste = await listaListe(gruppoId);
       const nomeNormalizzato = normalizzaTesto(azione.nomeLista);
       const trovata = liste.find((l) => normalizzaTesto(l.nome) === nomeNormalizzato);
-      const lista = trovata ?? (await creaLista({
-        gruppoId,
-        nome: azione.nomeLista.trim(),
-        creatoDaMembroId,
-        mostraInHome: false,
-        conPrezzi: false,
-      }));
+      const lista =
+        trovata ??
+        (await creaLista({
+          gruppoId,
+          nome: azione.nomeLista.trim(),
+          creatoDaMembroId,
+          mostraInHome: false,
+          conPrezzi: false,
+        }).catch(async (erroreCreazione) => {
+          // Un'altra richiesta concorrente potrebbe aver creato questa
+          // stessa lista nel frattempo (vincolo unico su gruppo_id + nome
+          // normalizzato, migration 00000000000033): ricontrolla invece
+          // di far fallire l'intera azione con un errore del database.
+          const listeAggiornate = await listaListe(gruppoId);
+          const trovataOra = listeAggiornate.find((l) => normalizzaTesto(l.nome) === nomeNormalizzato);
+          if (trovataOra) {
+            return trovataOra;
+          }
+          throw erroreCreazione;
+        }));
 
       for (const voce of azione.voci) {
         await aggiungiVoce(lista.id, voce, creatoDaMembroId);
@@ -133,6 +163,14 @@ export async function eseguiAzioniConfermate(
           throw new Error(`Impossibile risolvere "${azione.assegnatoA}" (assegnatario) a un membro del gruppo.`);
         }
         idAssegnatoRisolto = id;
+      }
+
+      // La regex dello schema valida solo la forma (4 cifre-2 cifre-2
+      // cifre), non che la data esista davvero (es. "2026-02-30") - stessa
+      // verifica già usata lato schermata di conferma, qui a protezione
+      // della scrittura effettiva sul database.
+      if (dataSicura(`${azione.dataInizio}T00:00:00`) === null) {
+        throw new Error(`"${azione.dataInizio}" non è una data valida.`);
       }
 
       await creaImpegno({
