@@ -59,6 +59,7 @@ const styles = StyleSheet.create({
     gap: spaziatura.md,
   },
   tile: {
+    width: '100%',
     paddingVertical: spaziatura.xl,
     alignItems: 'center',
   },
