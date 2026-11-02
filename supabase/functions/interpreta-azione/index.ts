@@ -87,7 +87,7 @@ const SchemaRisposta = z.object({
   domanda_chiarimento: z.string().nullable(),
 });
 
-const MODELLO = 'claude-haiku-4-5-20251001';
+const MODELLO = 'claude-sonnet-5';
 
 // Costruito a livello di modulo: se ANTHROPIC_API_KEY manca, la funzione
 // fallisce al boot in modo rumoroso invece di cadere in silenzio nel fallback
