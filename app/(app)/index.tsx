@@ -62,6 +62,14 @@ const pesi = {
  * (padding, gap, allineamento) - separati apposta, non un unico `style`
  * ambiguo (vedi il difetto già corretto altrove in questo progetto per
  * GlassCard, dove un `style` unico finiva sul wrapper sbagliato).
+ *
+ * Con `onPress`, il blocco diventa il proprio Pressable (stesso pattern
+ * di GlassCard altrove in questo progetto) e al tocco la superficie si
+ * sposta di `offset` px in basso a destra, esattamente sopra alla sua
+ * ombra dura - la stessa illusione di "premere il blocco nella sua
+ * ombra" del bottone centrale del mockup originale (active:translate-
+ * y-0.5 active:shadow-none). `transform` non influenza il layout in RN,
+ * quindi lo spostamento non fa saltare le card affiancate.
  */
 function BloccoDuro({
   children,
@@ -71,6 +79,7 @@ function BloccoDuro({
   offset = 3,
   raggio = 20,
   bordo = true,
+  onPress,
 }: {
   children?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -79,6 +88,7 @@ function BloccoDuro({
   offset?: number;
   raggio?: number;
   bordo?: boolean;
+  onPress?: () => void;
 }) {
   return (
     <View style={[styles.involucroOmbra, style]}>
@@ -88,15 +98,19 @@ function BloccoDuro({
           { top: offset, left: offset, right: -offset, bottom: -offset, borderRadius: raggio },
         ]}
       />
-      <View
-        style={[
+      <Pressable
+        onPress={onPress}
+        disabled={onPress === undefined}
+        style={({ pressed }) => [
           { backgroundColor: colore, borderRadius: raggio },
           bordo && { borderWidth: offset <= 2 ? 2 : 2.5, borderColor: colori.scuro },
           contenutoStyle,
+          onPress !== undefined &&
+            pressed && { transform: [{ translateX: offset }, { translateY: offset }] },
         ]}
       >
         {children}
-      </View>
+      </Pressable>
     </View>
   );
 }
@@ -178,57 +192,67 @@ export default function Homepage() {
             contenutoStyle={styles.boxCompartimenti}
           >
             <View style={styles.rigaCard}>
-              <Pressable style={styles.cardWrapper} onPress={() => router.push('/personale')}>
-                <BloccoDuro offset={3} colore="#fff" raggio={20} contenutoStyle={styles.card}>
-                  <View>
-                    <View style={styles.intestazioneCard}>
-                      <Text style={styles.etichettaCard}>PERSONALE</Text>
-                      <View style={[styles.pallino, { backgroundColor: colori.oro }]} />
+              <BloccoDuro
+                style={styles.cardWrapper}
+                onPress={() => router.push('/personale')}
+                offset={3}
+                colore="#fff"
+                raggio={20}
+                contenutoStyle={styles.card}
+              >
+                <View>
+                  <View style={styles.intestazioneCard}>
+                    <Text style={styles.etichettaCard}>PERSONALE</Text>
+                    <View style={[styles.pallino, { backgroundColor: colori.oro }]} />
+                  </View>
+                  {personaleInCaricamento ? (
+                    <ActivityIndicator color={colori.scuro} style={styles.caricamentoCard} />
+                  ) : (
+                    <View style={styles.corpoCardCentrato}>
+                      <Text style={styles.statoPersonale}>{liste.length} liste</Text>
+                      <Text style={styles.statoPersonaleSecondario}>{note.length} note</Text>
                     </View>
-                    {personaleInCaricamento ? (
-                      <ActivityIndicator color={colori.scuro} style={styles.caricamentoCard} />
-                    ) : (
-                      <View style={styles.corpoCardCentrato}>
-                        <Text style={styles.statoPersonale}>{liste.length} liste</Text>
-                        <Text style={styles.statoPersonaleSecondario}>{note.length} note</Text>
-                      </View>
-                    )}
-                  </View>
-                  <View style={styles.pieCard}>
-                    <Text style={styles.linkCard}>Entra</Text>
-                    <Text style={styles.frecciaCard}>→</Text>
-                  </View>
-                </BloccoDuro>
-              </Pressable>
+                  )}
+                </View>
+                <View style={styles.pieCard}>
+                  <Text style={styles.linkCard}>Entra</Text>
+                  <Text style={styles.frecciaCard}>→</Text>
+                </View>
+              </BloccoDuro>
 
-              <Pressable style={styles.cardWrapper} onPress={() => router.push('/gruppi')}>
-                <BloccoDuro offset={3} colore="#fff" raggio={20} contenutoStyle={styles.card}>
-                  <View>
-                    <View style={styles.intestazioneCard}>
-                      <Text style={styles.etichettaCard}>GRUPPI</Text>
-                      <View style={[styles.pallino, { backgroundColor: colori.corallo }]} />
+              <BloccoDuro
+                style={styles.cardWrapper}
+                onPress={() => router.push('/gruppi')}
+                offset={3}
+                colore="#fff"
+                raggio={20}
+                contenutoStyle={styles.card}
+              >
+                <View>
+                  <View style={styles.intestazioneCard}>
+                    <Text style={styles.etichettaCard}>GRUPPI</Text>
+                    <View style={[styles.pallino, { backgroundColor: colori.corallo }]} />
+                  </View>
+                  {gruppiInCaricamento ? (
+                    <ActivityIndicator color={colori.scuro} style={styles.caricamentoCard} />
+                  ) : (
+                    <View style={styles.corpoCardCentrato}>
+                      <Text style={styles.numeroGruppi}>{gruppi.length}</Text>
+                      <Text style={styles.etichettaGruppiAttivi}>GRUPPI ATTIVI</Text>
+                      {gruppi.length > 0 && (
+                        <Text style={styles.nomeGruppo} numberOfLines={1}>
+                          {gruppi[0].nome}
+                          {gruppi.length > 1 ? ` +${gruppi.length - 1}` : ''}
+                        </Text>
+                      )}
                     </View>
-                    {gruppiInCaricamento ? (
-                      <ActivityIndicator color={colori.scuro} style={styles.caricamentoCard} />
-                    ) : (
-                      <View style={styles.corpoCardCentrato}>
-                        <Text style={styles.numeroGruppi}>{gruppi.length}</Text>
-                        <Text style={styles.etichettaGruppiAttivi}>GRUPPI ATTIVI</Text>
-                        {gruppi.length > 0 && (
-                          <Text style={styles.nomeGruppo} numberOfLines={1}>
-                            {gruppi[0].nome}
-                            {gruppi.length > 1 ? ` +${gruppi.length - 1}` : ''}
-                          </Text>
-                        )}
-                      </View>
-                    )}
-                  </View>
-                  <View style={styles.pieCard}>
-                    <Text style={styles.linkCard}>Apri</Text>
-                    <Text style={styles.frecciaCard}>→</Text>
-                  </View>
-                </BloccoDuro>
-              </Pressable>
+                  )}
+                </View>
+                <View style={styles.pieCard}>
+                  <Text style={styles.linkCard}>Apri</Text>
+                  <Text style={styles.frecciaCard}>→</Text>
+                </View>
+              </BloccoDuro>
             </View>
           </BloccoDuro>
         </View>
