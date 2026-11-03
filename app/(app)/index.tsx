@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Redirect, useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -57,6 +58,14 @@ const pesi = {
 const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
 
 /**
+ * Altezza del solo contenuto della barra inferiore (senza la safe area,
+ * aggiunta a parte) - serve sia allo spazio lasciato in fondo allo
+ * ScrollView sia allo stile della barra stessa, deve restare la stessa
+ * costante nei due punti.
+ */
+const ALTEZZA_BARRA = 64;
+
+/**
  * "Ombra dura" neo-brutalista: un rettangolo scuro pieno, sfalsato di
  * `offset` px dietro la superficie visibile - non le proprietà shadow
  * (o elevation) di RN, che rendono in modo incoerente tra iOS/Android/web e non danno mai
@@ -82,12 +91,19 @@ const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
  * implementazione, gira sul thread UI e non si inceppa se il thread JS
  * è occupato. `pressRetentionOffset` evita che un lieve spostamento del
  * dito annulli la pressione.
+ *
+ * `gradiente` sostituisce `colore` con un riempimento a sfumatura
+ * (solo il box "compartimenti" lo usa) - non interattivo per
+ * costruzione, quindi niente Pressable/transizione di pressione qui:
+ * nessun punto di questa schermata passa `onPress` insieme a
+ * `gradiente`.
  */
 function BloccoDuro({
   children,
   style,
   contenutoStyle,
   colore,
+  gradiente,
   offset = 3,
   raggio = 20,
   bordo = true,
@@ -96,13 +112,15 @@ function BloccoDuro({
   children?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   contenutoStyle?: StyleProp<ViewStyle>;
-  colore: string;
+  colore?: string;
+  gradiente?: [string, string];
   offset?: number;
   raggio?: number;
   bordo?: boolean;
   onPress?: () => void;
 }) {
   const [premuto, setPremuto] = useState(false);
+  const stileBordo = bordo ? { borderWidth: offset <= 2 ? 2 : 2.5, borderColor: colori.scuro } : undefined;
 
   return (
     <View style={[styles.involucroOmbra, style]}>
@@ -112,33 +130,42 @@ function BloccoDuro({
           { top: offset, left: offset, right: -offset, bottom: -offset, borderRadius: raggio },
         ]}
       />
-      <Animated.View
-        style={[
-          {
-            backgroundColor: colore,
-            borderRadius: raggio,
-            transform: [
-              { translateX: premuto ? offset : 0 },
-              { translateY: premuto ? offset : 0 },
-            ],
-            transitionProperty: 'transform',
-            transitionDuration: '100ms',
-            transitionTimingFunction: EASE_OUT,
-          },
-          bordo && { borderWidth: offset <= 2 ? 2 : 2.5, borderColor: colori.scuro },
-        ]}
-      >
-        <Pressable
-          onPress={onPress}
-          onPressIn={() => setPremuto(true)}
-          onPressOut={() => setPremuto(false)}
-          disabled={onPress === undefined}
-          pressRetentionOffset={16}
-          style={[styles.riempimentoPressable, contenutoStyle]}
+      {gradiente !== undefined ? (
+        <LinearGradient
+          colors={gradiente}
+          style={[{ borderRadius: raggio }, stileBordo, contenutoStyle]}
         >
           {children}
-        </Pressable>
-      </Animated.View>
+        </LinearGradient>
+      ) : (
+        <Animated.View
+          style={[
+            {
+              backgroundColor: colore,
+              borderRadius: raggio,
+              transform: [
+                { translateX: premuto ? offset : 0 },
+                { translateY: premuto ? offset : 0 },
+              ],
+              transitionProperty: 'transform',
+              transitionDuration: '100ms',
+              transitionTimingFunction: EASE_OUT,
+            },
+            stileBordo,
+          ]}
+        >
+          <Pressable
+            onPress={onPress}
+            onPressIn={() => setPremuto(true)}
+            onPressOut={() => setPremuto(false)}
+            disabled={onPress === undefined}
+            pressRetentionOffset={16}
+            style={[styles.riempimentoPressable, contenutoStyle]}
+          >
+            {children}
+          </Pressable>
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -176,9 +203,10 @@ export default function Homepage() {
   return (
     <View style={styles.schermo}>
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={[
           styles.contenuto,
-          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
+          { paddingTop: insets.top + 16, paddingBottom: ALTEZZA_BARRA + 24 },
         ]}
       >
         <View style={styles.header}>
@@ -193,12 +221,7 @@ export default function Homepage() {
               <Feather name="log-out" size={16} color={colori.scuro} />
             </Pressable>
             <Pressable onPress={() => router.push('/profilo')}>
-              <BloccoDuro
-                offset={2}
-                colore={colori.crema}
-                raggio={999}
-                contenutoStyle={styles.avatarCerchio}
-              >
+              <BloccoDuro offset={2} colore="#fff" raggio={999} contenutoStyle={styles.avatarCerchio}>
                 <Text style={styles.avatarTesto}>{inizialeNome}</Text>
               </BloccoDuro>
             </Pressable>
@@ -208,14 +231,9 @@ export default function Homepage() {
         <Text style={styles.saluto}>CIAO, {profilo.nome_utente.toUpperCase()}!</Text>
 
         <View style={styles.sezioneCompartimenti}>
-          <View style={styles.rigaBadge}>
-            <BloccoDuro offset={2} colore={colori.corallo} raggio={999} contenutoStyle={styles.badgePill}>
-              <Text style={styles.testoBadgePill}>BENTO COMPARTMENTS</Text>
-            </BloccoDuro>
-          </View>
           <BloccoDuro
             offset={4}
-            colore={colori.cremaCard}
+            gradiente={['#C83528', '#BD3125']}
             raggio={28}
             contenutoStyle={styles.boxCompartimenti}
           >
@@ -344,10 +362,43 @@ export default function Homepage() {
                   </BloccoDuro>
                 );
               })}
+              <Pressable onPress={() => router.push('/notifiche')} style={styles.bottoneVediTutte}>
+                <Text style={styles.testoVediTutte}>VEDI TUTTE LE NOTIFICHE</Text>
+                <Text style={styles.frecciaVediTutte}>→</Text>
+              </Pressable>
             </BloccoDuro>
           )}
         </View>
       </ScrollView>
+
+      <View style={[styles.barraInferiore, { paddingBottom: insets.bottom + 8 }]}>
+        <View style={styles.vociBarra}>
+          <View style={styles.vocetaBarra}>
+            <View style={styles.iconaHomeAttiva}>
+              <Feather name="home" size={16} color={colori.scuro} />
+            </View>
+            <Text style={styles.etichettaBarra}>HOME</Text>
+          </View>
+          <View style={styles.vocetaBarra}>
+            <Feather name="user" size={20} color={colori.scuro} />
+            <Text style={styles.etichettaBarra}>PERSONALE</Text>
+          </View>
+          <View style={[styles.vocetaBarra, styles.voceCentrale]}>
+            <BloccoDuro offset={2.5} colore={colori.corallo} raggio={999} contenutoStyle={styles.bottoneVoce}>
+              <Feather name="mic" size={22} color="#fff" />
+            </BloccoDuro>
+            <Text style={styles.etichettaBarra}>VOCE</Text>
+          </View>
+          <View style={styles.vocetaBarra}>
+            <Feather name="users" size={20} color={colori.scuro} />
+            <Text style={styles.etichettaBarra}>GRUPPI</Text>
+          </View>
+          <View style={styles.vocetaBarra}>
+            <Feather name="credit-card" size={20} color={colori.scuro} />
+            <Text style={styles.etichettaBarra}>SALDI</Text>
+          </View>
+        </View>
+      </View>
     </View>
   );
 }
@@ -360,6 +411,9 @@ const styles = StyleSheet.create({
   centrato: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  scroll: {
+    flex: 1,
   },
   contenuto: {
     flexGrow: 1,
@@ -428,25 +482,7 @@ const styles = StyleSheet.create({
     color: colori.scuro,
     textTransform: 'uppercase',
   },
-  sezioneCompartimenti: {
-    paddingTop: 10,
-  },
-  rigaBadge: {
-    alignItems: 'center',
-    marginBottom: -13,
-    zIndex: 1,
-  },
-  badgePill: {
-    paddingHorizontal: 16,
-    paddingVertical: 5,
-  },
-  testoBadgePill: {
-    ...pesi.extraBold,
-    fontSize: 10,
-    color: '#fff',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
+  sezioneCompartimenti: {},
   boxCompartimenti: {
     padding: 12,
     paddingTop: 20,
@@ -633,5 +669,80 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colori.scuro,
     marginTop: 3,
+  },
+  bottoneVediTutte: {
+    marginTop: 2,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  testoVediTutte: {
+    ...pesi.extraBold,
+    fontSize: 12,
+    color: colori.scuro,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  frecciaVediTutte: {
+    ...pesi.extraBold,
+    fontSize: 14,
+    color: colori.scuro,
+  },
+  /**
+   * Solo grafica, nessun collegamento per ora (vedi richiesta): HOME è
+   * mostrata attiva per via statica (siamo sempre su questa schermata),
+   * le altre voci non hanno onPress.
+   */
+  barraInferiore: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colori.crema,
+    borderTopWidth: 2.5,
+    borderTopColor: colori.scuro,
+    paddingTop: 8,
+    paddingHorizontal: 12,
+  },
+  vociBarra: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  vocetaBarra: {
+    alignItems: 'center',
+    gap: 4,
+    minWidth: 48,
+  },
+  etichettaBarra: {
+    ...pesi.extraBold,
+    fontSize: 8.5,
+    color: colori.scuro,
+    letterSpacing: 0.2,
+  },
+  iconaHomeAttiva: {
+    width: 40,
+    height: 28,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    backgroundColor: colori.oro,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  voceCentrale: {
+    marginTop: -16,
+  },
+  bottoneVoce: {
+    width: 52,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
