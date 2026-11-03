@@ -387,7 +387,7 @@ export default function Homepage() {
         </View>
       </ScrollView>
 
-      <View style={[styles.barraInferiore, { paddingBottom: insets.bottom + 8 }]}>
+      <View style={[styles.barraInferiore, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
         <View style={styles.vociBarra}>
           <View style={styles.vocetaBarra}>
             <View style={styles.iconaHomeAttiva}>
