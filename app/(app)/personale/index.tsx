@@ -20,7 +20,12 @@ export default function PersonaleHome() {
             titolo="Liste"
             onPress={() => router.push('/personale/liste')}
           />
-          <GlassTile icona="file-text" accento={accenti.viola} titolo="Note" badge="Presto" />
+          <GlassTile
+            icona="file-text"
+            accento={accenti.viola}
+            titolo="Note"
+            onPress={() => router.push('/personale/note')}
+          />
         </View>
         <View style={styles.rigaGriglia}>
           <GlassTile icona="calendar" accento={accenti.indaco} titolo="Calendario" badge="Presto" />
