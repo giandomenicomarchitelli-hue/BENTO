@@ -32,7 +32,7 @@ import { useAuthStore } from '@/store/authStore';
  * tema "Hybrid Liquid Glass" di theme/tokens.ts.
  */
 const colori = {
-  crema: '#FAF6EF',
+  crema: '#F8F9FA',
   cremaCard: '#F3EFE6',
   scuro: '#1A1817',
   corallo: '#EE5D50',
