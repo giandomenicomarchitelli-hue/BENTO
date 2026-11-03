@@ -204,6 +204,36 @@ export type Database = {
           },
         ]
       }
+      eventi_personali: {
+        Row: {
+          creato_il: string
+          data: string
+          descrizione: string | null
+          id: string
+          ora: string | null
+          titolo: string
+          utente_id: string
+        }
+        Insert: {
+          creato_il?: string
+          data: string
+          descrizione?: string | null
+          id?: string
+          ora?: string | null
+          titolo: string
+          utente_id: string
+        }
+        Update: {
+          creato_il?: string
+          data?: string
+          descrizione?: string | null
+          id?: string
+          ora?: string | null
+          titolo?: string
+          utente_id?: string
+        }
+        Relationships: []
+      }
       foto_note_personali: {
         Row: {
           creato_il: string
