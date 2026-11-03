@@ -5,7 +5,6 @@ import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Animated,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,6 +13,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import Animated, { cubicBezier } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { esci } from '@/api/auth';
@@ -53,6 +53,9 @@ const pesi = {
   bold: { fontFamily: 'PlusJakartaSans_700Bold', fontWeight: '700' as const },
 };
 
+/** Curva di ease-out decisa (skill animate-expo), per il feedback al tocco di BloccoDuro. */
+const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
+
 /**
  * "Ombra dura" neo-brutalista: un rettangolo scuro pieno, sfalsato di
  * `offset` px dietro la superficie visibile - non le proprietà shadow
@@ -70,13 +73,15 @@ const pesi = {
  * anima verso `offset` px in basso a destra, esattamente sopra alla sua
  * ombra dura - la stessa illusione di "premere il blocco nella sua
  * ombra" del bottone centrale del mockup originale (active:translate-
- * y-0.5 active:shadow-none). Un `Animated.Value` guidato da onPressIn/
- * onPressOut, non uno scatto istantaneo legato al booleano `pressed` di
- * Pressable: senza un'animazione vera, su un tocco reale (premi e
- * rilasci in una frazione di secondo) lo spostamento di pochi pixel non
- * fa in tempo a disegnarsi su schermo - scompare prima di essere visto.
- * `transform` non influenza il layout in RN, quindi lo spostamento non
- * fa saltare le card affiancate.
+ * y-0.5 active:shadow-none).
+ *
+ * Transizione CSS di Reanimated (ricetta "Press feedback" della skill
+ * animate-expo), non il modulo `Animated` core di RN: nessun gesto né
+ * valore continuo qui (solo premi/rilascia), quindi non serve una
+ * shared value - una `transitionProperty` dichiarativa è l'intera
+ * implementazione, gira sul thread UI e non si inceppa se il thread JS
+ * è occupato. `pressRetentionOffset` evita che un lieve spostamento del
+ * dito annulli la pressione.
  */
 function BloccoDuro({
   children,
@@ -97,15 +102,7 @@ function BloccoDuro({
   bordo?: boolean;
   onPress?: () => void;
 }) {
-  const [spostamento] = useState(() => new Animated.Value(0));
-
-  function animaA(valore: number) {
-    Animated.timing(spostamento, {
-      toValue: valore,
-      duration: valore === 0 ? 120 : 80,
-      useNativeDriver: true,
-    }).start();
-  }
+  const [premuto, setPremuto] = useState(false);
 
   return (
     <View style={[styles.involucroOmbra, style]}>
@@ -117,16 +114,26 @@ function BloccoDuro({
       />
       <Animated.View
         style={[
-          { backgroundColor: colore, borderRadius: raggio },
+          {
+            backgroundColor: colore,
+            borderRadius: raggio,
+            transform: [
+              { translateX: premuto ? offset : 0 },
+              { translateY: premuto ? offset : 0 },
+            ],
+            transitionProperty: 'transform',
+            transitionDuration: '100ms',
+            transitionTimingFunction: EASE_OUT,
+          },
           bordo && { borderWidth: offset <= 2 ? 2 : 2.5, borderColor: colori.scuro },
-          { transform: [{ translateX: spostamento }, { translateY: spostamento }] },
         ]}
       >
         <Pressable
           onPress={onPress}
-          onPressIn={() => animaA(offset)}
-          onPressOut={() => animaA(0)}
+          onPressIn={() => setPremuto(true)}
+          onPressOut={() => setPremuto(false)}
           disabled={onPress === undefined}
+          pressRetentionOffset={16}
           style={[styles.riempimentoPressable, contenutoStyle]}
         >
           {children}
