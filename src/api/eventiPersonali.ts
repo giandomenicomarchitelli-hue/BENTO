@@ -8,7 +8,8 @@ export async function listaEventiPersonali(utenteId: string): Promise<EventoPers
     .from('eventi_personali')
     .select()
     .eq('utente_id', utenteId)
-    .order('data', { ascending: true });
+    .order('data', { ascending: true })
+    .order('ora', { ascending: true, nullsFirst: true });
 
   if (error) {
     throw error;
