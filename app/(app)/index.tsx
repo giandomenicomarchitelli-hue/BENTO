@@ -3,7 +3,6 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Redirect, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import MaskedView from '@react-native-masked-view/masked-view';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -19,7 +18,6 @@ import Animated, { cubicBezier } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { esci } from '@/api/auth';
-import type { Notifica } from '@/api/notifiche';
 import { useFontBento } from '@/hooks/useFontBento';
 import { useListePersonali } from '@/hooks/useListePersonali';
 import { useMieiGruppi } from '@/hooks/useMieiGruppi';
@@ -67,16 +65,14 @@ const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
  */
 const ALTEZZA_BARRA = 64;
 
-/** Quante notifiche carica al massimo l'elenco scorrevole (il resto si trova con "Vedi tutte"). */
-const MASSIMO_NOTIFICHE = 8;
-
 /**
- * Sotto questa soglia l'elenco resta statico (niente da far scorrere,
- * la maschera sarebbe inutile); da qui in su diventa scorrevole con
- * dissolvenza in fondo, stesse percentuali del mask-image CSS del
- * mockup (opaco fino al 68%, sfumato fino al 100%).
+ * Elenco notifiche fisso, non scorrevole: uno scorrimento annidato con
+ * sfumatura in overlay si è rivelato fragile (l'ombra/bordo dura
+ * dell'ultima riga restava visibile sotto la sfumatura, creando una
+ * "card fantasma" vuota) - più semplice e robusto mostrare al massimo
+ * le N più recenti, con "Vedi tutte le notifiche" per il resto.
  */
-const NOTIFICHE_VISIBILI_A_RIPOSO = 4;
+const MASSIMO_NOTIFICHE = 8;
 
 /**
  * "Ombra dura" neo-brutalista: un rettangolo scuro pieno, sfalsato di
@@ -180,30 +176,6 @@ function BloccoDuro({
         </Animated.View>
       )}
     </View>
-  );
-}
-
-/** Una riga di `ULTIME NOTIFICHE` - estratta perché usata sia nell'elenco mascherato che in quello statico. */
-function RigaNotifica({ notifica }: { notifica: Notifica }) {
-  const eSfida = notifica.tipo.startsWith('sfida_');
-  const coloreTipo = eSfida ? colori.oro : colori.menta;
-  return (
-    <BloccoDuro offset={2} colore="#fff" raggio={18} contenutoStyle={styles.rigaNotifica}>
-      <View style={[styles.iconaNotifica, { backgroundColor: coloreTipo }]}>
-        <Feather name={eSfida ? 'award' : 'calendar'} size={16} color={colori.scuro} />
-      </View>
-      <View style={styles.contenutoNotifica}>
-        <View style={styles.rigaMetaNotifica}>
-          <Text style={[styles.badgeTipo, { backgroundColor: coloreTipo }]}>{eSfida ? 'Sfida' : 'Impegno'}</Text>
-          <Text style={styles.tempoNotifica}>
-            {formatDistanceToNowStrict(new Date(notifica.creata_il), { locale: it, addSuffix: true })}
-          </Text>
-        </View>
-        <Text style={styles.testoNotifica} numberOfLines={1}>
-          {notifica.titolo}
-        </Text>
-      </View>
-    </BloccoDuro>
   );
 }
 
@@ -365,33 +337,42 @@ export default function Homepage() {
             <Text style={styles.nessunaNotifica}>Nessuna notifica ancora.</Text>
           ) : (
             <BloccoDuro offset={4} colore={colori.cremaCard} raggio={24} contenutoStyle={styles.boxNotifiche}>
-              {notifiche.length > NOTIFICHE_VISIBILI_A_RIPOSO ? (
-                <MaskedView
-                  style={styles.elencoNotificheMascherato}
-                  maskElement={
-                    <LinearGradient
-                      colors={['black', 'black', 'rgba(0,0,0,0.15)', 'transparent']}
-                      locations={[0, 0.68, 0.95, 1]}
-                      style={styles.maschera}
-                    />
-                  }
-                >
-                  <ScrollView
-                    contentContainerStyle={styles.elencoNotificheContenuto}
-                    showsVerticalScrollIndicator={false}
-                  >
-                    {notifiche.slice(0, MASSIMO_NOTIFICHE).map((notifica) => (
-                      <RigaNotifica key={notifica.id} notifica={notifica} />
-                    ))}
-                  </ScrollView>
-                </MaskedView>
-              ) : (
-                <View style={styles.elencoNotificheContenuto}>
-                  {notifiche.map((notifica) => (
-                    <RigaNotifica key={notifica.id} notifica={notifica} />
-                  ))}
-                </View>
-              )}
+              {notifiche.slice(0, MASSIMO_NOTIFICHE).map((notifica, indice, visibili) => {
+                const eSfida = notifica.tipo.startsWith('sfida_');
+                const coloreTipo = eSfida ? colori.oro : colori.menta;
+                // L'ultima riga mostrata si "spegne" quando ce ne sono
+                // altre sotto - stesso effetto visivo della sfumatura a
+                // scorrimento del mockup, ma su una sola riga fissa e
+                // senza ScrollView/overlay: niente ombre/bordi che
+                // sbucano da sotto una maschera (il difetto già trovato
+                // con l'approccio a scorrimento).
+                const ultimaEConAltre = indice === visibili.length - 1 && notifiche.length > MASSIMO_NOTIFICHE;
+                return (
+                  <View key={notifica.id} style={ultimaEConAltre && styles.notificaSfumata}>
+                    <BloccoDuro offset={2} colore="#fff" raggio={18} contenutoStyle={styles.rigaNotifica}>
+                      <View style={[styles.iconaNotifica, { backgroundColor: coloreTipo }]}>
+                        <Feather name={eSfida ? 'award' : 'calendar'} size={16} color={colori.scuro} />
+                      </View>
+                      <View style={styles.contenutoNotifica}>
+                        <View style={styles.rigaMetaNotifica}>
+                          <Text style={[styles.badgeTipo, { backgroundColor: coloreTipo }]}>
+                            {eSfida ? 'Sfida' : 'Impegno'}
+                          </Text>
+                          <Text style={styles.tempoNotifica}>
+                            {formatDistanceToNowStrict(new Date(notifica.creata_il), {
+                              locale: it,
+                              addSuffix: true,
+                            })}
+                          </Text>
+                        </View>
+                        <Text style={styles.testoNotifica} numberOfLines={1}>
+                          {notifica.titolo}
+                        </Text>
+                      </View>
+                    </BloccoDuro>
+                  </View>
+                );
+              })}
               <Pressable onPress={() => router.push('/notifiche')} style={styles.bottoneVediTutte}>
                 <Text style={styles.testoVediTutte}>VEDI TUTTE LE NOTIFICHE</Text>
                 <Text style={styles.frecciaVediTutte}>→</Text>
@@ -654,16 +635,8 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 10,
   },
-  /** Altezza che mostra circa 4 righe a riposo; il resto, fino a MASSIMO_NOTIFICHE, si trova scorrendo. */
-  elencoNotificheMascherato: {
-    height: 280,
-  },
-  maschera: {
-    flex: 1,
-  },
-  elencoNotificheContenuto: {
-    gap: 10,
-    paddingBottom: 4,
+  notificaSfumata: {
+    opacity: 0.35,
   },
   rigaNotifica: {
     padding: 10,
