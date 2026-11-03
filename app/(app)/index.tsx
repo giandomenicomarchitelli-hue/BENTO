@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { esci } from '@/api/auth';
+import { useFontBento } from '@/hooks/useFontBento';
 import { useListePersonali } from '@/hooks/useListePersonali';
 import { useMieiGruppi } from '@/hooks/useMieiGruppi';
 import { useNotePersonali } from '@/hooks/useNotePersonali';
@@ -36,6 +37,18 @@ const colori = {
   oro: '#FDCB4E',
   menta: '#72C4B8',
   grigioTesto: '#716C65',
+};
+
+/**
+ * Nessuna variante 900/Black esiste per Plus Jakarta Sans (vedi
+ * useFontBento.ts) - 800 ExtraBold è il peso massimo reale caricato.
+ * `fontFamily` è ciò che conta per il rendering con un font custom
+ * caricato per singolo peso; `fontWeight` resta allineato per coerenza,
+ * non ha effetto aggiuntivo una volta che `fontFamily` è impostato.
+ */
+const pesi = {
+  extraBold: { fontFamily: 'PlusJakartaSans_800ExtraBold', fontWeight: '800' as const },
+  bold: { fontFamily: 'PlusJakartaSans_700Bold', fontWeight: '700' as const },
 };
 
 /**
@@ -91,6 +104,7 @@ function BloccoDuro({
 export default function Homepage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [fontPronti] = useFontBento();
   const { profilo, isLoading: profiloInCaricamento } = useProfilo();
   const utenteId = useAuthStore((stato) => stato.session?.user.id) ?? null;
   const { gruppi, isLoading: gruppiInCaricamento } = useMieiGruppi();
@@ -98,8 +112,11 @@ export default function Homepage() {
   const { note, isLoading: noteInCaricamento } = useNotePersonali(utenteId);
   const { notifiche, nonLette, isLoading: notificheInCaricamento } = useNotifiche();
 
-  // Serve un nome utente fisso prima di poter fare qualunque cosa.
-  if (profiloInCaricamento) {
+  // Serve un nome utente fisso prima di poter fare qualunque cosa, e il
+  // font neo-brutalista pronto prima di disegnare qualunque testo di
+  // questa schermata (altrimenti un istante col font di sistema, poi lo
+  // scatto a Plus Jakarta Sans appena pronto).
+  if (profiloInCaricamento || !fontPronti) {
     return (
       <View style={[styles.schermo, styles.centrato]}>
         <ActivityIndicator color={colori.scuro} />
@@ -319,8 +336,8 @@ const styles = StyleSheet.create({
     height: 40,
   },
   marchio: {
+    ...pesi.extraBold,
     fontSize: 26,
-    fontWeight: '900',
     letterSpacing: -0.5,
     color: colori.scuro,
   },
@@ -345,13 +362,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarTesto: {
+    ...pesi.extraBold,
     fontSize: 15,
-    fontWeight: '900',
     color: colori.scuro,
   },
   saluto: {
+    ...pesi.extraBold,
     fontSize: 20,
-    fontWeight: '900',
     letterSpacing: -0.2,
     color: colori.scuro,
     textTransform: 'uppercase',
@@ -369,8 +386,8 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   testoBadgePill: {
+    ...pesi.extraBold,
     fontSize: 10,
-    fontWeight: '900',
     color: '#fff',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
@@ -400,8 +417,8 @@ const styles = StyleSheet.create({
     borderBottomColor: colori.scuro,
   },
   etichettaCard: {
+    ...pesi.extraBold,
     fontSize: 11,
-    fontWeight: '900',
     color: colori.scuro,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
@@ -421,33 +438,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statoPersonale: {
+    ...pesi.extraBold,
     fontSize: 16,
-    fontWeight: '900',
     color: colori.scuro,
   },
   statoPersonaleSecondario: {
+    ...pesi.bold,
     fontSize: 13,
-    fontWeight: '700',
     color: colori.grigioTesto,
     marginTop: 2,
   },
   numeroGruppi: {
+    ...pesi.extraBold,
     fontSize: 32,
-    fontWeight: '900',
     color: colori.scuro,
     lineHeight: 34,
   },
   etichettaGruppiAttivi: {
+    ...pesi.extraBold,
     fontSize: 9,
-    fontWeight: '900',
     color: colori.corallo,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginTop: 2,
   },
   nomeGruppo: {
+    ...pesi.bold,
     fontSize: 10,
-    fontWeight: '700',
     color: colori.grigioTesto,
     marginTop: 3,
     maxWidth: '100%',
@@ -462,13 +479,13 @@ const styles = StyleSheet.create({
     borderTopColor: '#E5E0D6',
   },
   linkCard: {
+    ...pesi.extraBold,
     fontSize: 11,
-    fontWeight: '800',
     color: colori.scuro,
   },
   frecciaCard: {
+    ...pesi.bold,
     fontSize: 12,
-    fontWeight: '700',
     color: colori.scuro,
   },
   sezioneNotifiche: {
@@ -485,8 +502,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   titoloSezione: {
+    ...pesi.extraBold,
     fontSize: 14,
-    fontWeight: '900',
     color: colori.scuro,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
@@ -496,13 +513,13 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   testoBadgeNonLette: {
+    ...pesi.extraBold,
     fontSize: 9,
-    fontWeight: '900',
     color: '#fff',
   },
   linkTutte: {
+    ...pesi.extraBold,
     fontSize: 11,
-    fontWeight: '900',
     color: colori.scuro,
     textTransform: 'uppercase',
   },
@@ -541,8 +558,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   badgeTipo: {
+    ...pesi.extraBold,
     fontSize: 9,
-    fontWeight: '900',
     color: colori.scuro,
     paddingHorizontal: 6,
     paddingVertical: 1,
@@ -552,13 +569,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   tempoNotifica: {
+    ...pesi.bold,
     fontSize: 10,
-    fontWeight: '700',
     color: colori.grigioTesto,
   },
   testoNotifica: {
+    ...pesi.extraBold,
     fontSize: 13,
-    fontWeight: '800',
     color: colori.scuro,
     marginTop: 3,
   },
