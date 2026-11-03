@@ -337,37 +337,40 @@ export default function Homepage() {
             <Text style={styles.nessunaNotifica}>Nessuna notifica ancora.</Text>
           ) : (
             <BloccoDuro offset={4} colore={colori.cremaCard} raggio={24} contenutoStyle={styles.boxNotifiche}>
-              {notifiche.slice(0, MASSIMO_NOTIFICHE).map((notifica) => {
+              {notifiche.slice(0, MASSIMO_NOTIFICHE).map((notifica, indice, visibili) => {
                 const eSfida = notifica.tipo.startsWith('sfida_');
                 const coloreTipo = eSfida ? colori.oro : colori.menta;
+                // L'ultima riga mostrata si "spegne" quando ce ne sono
+                // altre sotto - stesso effetto visivo della sfumatura a
+                // scorrimento del mockup, ma su una sola riga fissa e
+                // senza ScrollView/overlay: niente ombre/bordi che
+                // sbucano da sotto una maschera (il difetto già trovato
+                // con l'approccio a scorrimento).
+                const ultimaEConAltre = indice === visibili.length - 1 && notifiche.length > MASSIMO_NOTIFICHE;
                 return (
-                  <BloccoDuro
-                    key={notifica.id}
-                    offset={2}
-                    colore="#fff"
-                    raggio={18}
-                    contenutoStyle={styles.rigaNotifica}
-                  >
-                    <View style={[styles.iconaNotifica, { backgroundColor: coloreTipo }]}>
-                      <Feather name={eSfida ? 'award' : 'calendar'} size={16} color={colori.scuro} />
-                    </View>
-                    <View style={styles.contenutoNotifica}>
-                      <View style={styles.rigaMetaNotifica}>
-                        <Text style={[styles.badgeTipo, { backgroundColor: coloreTipo }]}>
-                          {eSfida ? 'Sfida' : 'Impegno'}
-                        </Text>
-                        <Text style={styles.tempoNotifica}>
-                          {formatDistanceToNowStrict(new Date(notifica.creata_il), {
-                            locale: it,
-                            addSuffix: true,
-                          })}
+                  <View key={notifica.id} style={ultimaEConAltre && styles.notificaSfumata}>
+                    <BloccoDuro offset={2} colore="#fff" raggio={18} contenutoStyle={styles.rigaNotifica}>
+                      <View style={[styles.iconaNotifica, { backgroundColor: coloreTipo }]}>
+                        <Feather name={eSfida ? 'award' : 'calendar'} size={16} color={colori.scuro} />
+                      </View>
+                      <View style={styles.contenutoNotifica}>
+                        <View style={styles.rigaMetaNotifica}>
+                          <Text style={[styles.badgeTipo, { backgroundColor: coloreTipo }]}>
+                            {eSfida ? 'Sfida' : 'Impegno'}
+                          </Text>
+                          <Text style={styles.tempoNotifica}>
+                            {formatDistanceToNowStrict(new Date(notifica.creata_il), {
+                              locale: it,
+                              addSuffix: true,
+                            })}
+                          </Text>
+                        </View>
+                        <Text style={styles.testoNotifica} numberOfLines={1}>
+                          {notifica.titolo}
                         </Text>
                       </View>
-                      <Text style={styles.testoNotifica} numberOfLines={1}>
-                        {notifica.titolo}
-                      </Text>
-                    </View>
-                  </BloccoDuro>
+                    </BloccoDuro>
+                  </View>
                 );
               })}
               <Pressable onPress={() => router.push('/notifiche')} style={styles.bottoneVediTutte}>
@@ -631,6 +634,9 @@ const styles = StyleSheet.create({
   boxNotifiche: {
     padding: 12,
     gap: 10,
+  },
+  notificaSfumata: {
+    opacity: 0.35,
   },
   rigaNotifica: {
     padding: 10,
