@@ -43,8 +43,8 @@ export function useFotoNotePersonali(notaId: string | null, utenteId: string | n
   }, [notaId, idIstanza]);
 
   const aggiungi = useMutation({
-    mutationFn: ({ uri }: { uri: string }) =>
-      aggiungiFotoNota({ utenteId: utenteId as string, notaId: notaId as string, uri }),
+    mutationFn: ({ uri, fileWeb, mimeType }: { uri: string; fileWeb?: Blob; mimeType?: string | null }) =>
+      aggiungiFotoNota({ utenteId: utenteId as string, notaId: notaId as string, uri, fileWeb, mimeType }),
     onSuccess: invalida,
   });
 

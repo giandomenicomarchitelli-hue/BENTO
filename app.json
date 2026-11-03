@@ -25,7 +25,13 @@
       "expo-router",
       "expo-status-bar",
       "expo-font",
-      "expo-splash-screen"
+      "expo-splash-screen",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Bento ha bisogno di accedere alle foto per allegarle alle tue note personali."
+        }
+      ]
     ]
   }
 }

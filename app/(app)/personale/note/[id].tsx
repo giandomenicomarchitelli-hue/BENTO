@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
+import MarkdownIt from 'markdown-it';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -26,7 +27,7 @@ import { bento, raggio, semantica, spaziatura } from '@/theme/tokens';
 export default function DettaglioNotaPersonale() {
   const { id, titolo: titoloIniziale } = useLocalSearchParams<{ id: string; titolo?: string }>();
   const utenteId = useAuthStore((stato) => stato.session?.user.id) ?? null;
-  const { note, aggiorna, elimina: eliminaNota } = useNotePersonali(utenteId);
+  const { note, isLoading, aggiorna, elimina: eliminaNota } = useNotePersonali(utenteId);
   const { foto, aggiungi, elimina: eliminaFoto } = useFotoNotePersonali(id ?? null, utenteId);
 
   const nota = note.find((n) => n.id === id);
@@ -62,7 +63,8 @@ export default function DettaglioNotaPersonale() {
     if (risultato.canceled) {
       return;
     }
-    aggiungi.mutate({ uri: risultato.assets[0].uri });
+    const asset = risultato.assets[0];
+    aggiungi.mutate({ uri: asset.uri, fileWeb: asset.file, mimeType: asset.mimeType });
   }
 
   async function confermaEliminaNota() {
@@ -75,6 +77,15 @@ export default function DettaglioNotaPersonale() {
       eliminaNota.mutate(id);
       router.back();
     }
+  }
+
+  if (isLoading || nota === undefined) {
+    return (
+      <BentoScreen>
+        {titoloIniziale !== undefined && <Stack.Screen options={{ title: titoloIniziale }} />}
+        <ActivityIndicator color={bento.testoPrimario} style={styles.caricamento} />
+      </BentoScreen>
+    );
   }
 
   return (
@@ -99,7 +110,7 @@ export default function DettaglioNotaPersonale() {
 
           {modalitaAnteprima ? (
             <View style={styles.anteprimaContenitore}>
-              <Markdown style={markdownStyle}>{contenuto}</Markdown>
+              <Markdown style={markdownStyle} markdownit={parserMarkdown}>{contenuto}</Markdown>
             </View>
           ) : (
             <TextInput
@@ -166,7 +177,15 @@ const markdownStyle = {
   body: { color: bento.testoPrimario },
 };
 
+// typographer: false evita che virgolette/puntini vengano silenziosamente
+// "corretti" (il testo salvato non deve mai differire da quello digitato);
+// breaks: true preserva i ritorni a capo singoli, come in un editor di note.
+const parserMarkdown = MarkdownIt({ typographer: false, breaks: true });
+
 const styles = StyleSheet.create({
+  caricamento: {
+    marginTop: spaziatura.xl,
+  },
   form: {
     gap: spaziatura.md,
   },

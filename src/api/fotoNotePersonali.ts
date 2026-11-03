@@ -1,8 +1,52 @@
+import { File } from 'expo-file-system';
+import { Platform } from 'react-native';
+
 import { supabase } from '@/lib/supabase';
 
 export type FotoNotaPersonale = { id: string; percorso: string; url: string; creatoIl: string };
 
 const BUCKET = 'note-personali';
+
+const TIPI_CONTENUTO: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  heic: 'image/heic',
+  webp: 'image/webp',
+};
+
+function tipoContenutoDaEstensione(estensione: string): string {
+  return TIPI_CONTENUTO[estensione.toLowerCase()] ?? 'image/jpeg';
+}
+
+/**
+ * expo-file-system non è supportato sul web (la sua classe `File` è uno
+ * stub che avvisa e basta): su quella piattaforma si legge invece il
+ * `File`/`Blob` nativo del browser che `expo-image-picker` espone già in
+ * `ImagePickerAsset.file`. Su nativo si legge `uri` con `File.arrayBuffer()`
+ * di expo-file-system - non con `fetch(uri)`, che è la fragilità nota
+ * che questa scelta evita (blob.type può essere vuoto su file://).
+ */
+async function leggiBytes(uri: string, fileWeb?: Blob): Promise<ArrayBuffer> {
+  if (Platform.OS === 'web') {
+    if (!fileWeb) {
+      throw new Error('File non disponibile per il caricamento sul web');
+    }
+    return fileWeb.arrayBuffer();
+  }
+  return new File(uri).arrayBuffer();
+}
+
+/** Riconosce un errore "file non trovato" per poter eliminare comunque la riga anche se il file è già assente. */
+function fileNonTrovato(errore: { message?: string; statusCode?: string | number } | null): boolean {
+  if (errore === null) {
+    return false;
+  }
+  if (errore.statusCode === '404' || errore.statusCode === 404) {
+    return true;
+  }
+  return errore.message?.toLowerCase().includes('not found') ?? false;
+}
 
 export async function listaFotoNota(notaId: string): Promise<FotoNotaPersonale[]> {
   const { data, error } = await supabase
@@ -37,17 +81,22 @@ export async function listaFotoNota(notaId: string): Promise<FotoNotaPersonale[]
   }));
 }
 
-export async function aggiungiFotoNota(params: { utenteId: string; notaId: string; uri: string }): Promise<void> {
+export async function aggiungiFotoNota(params: {
+  utenteId: string;
+  notaId: string;
+  uri: string;
+  /** Solo sul web: il `File`/`Blob` nativo del browser (`ImagePickerAsset.file`). */
+  fileWeb?: Blob;
+  /** Tipo MIME riportato dall'asset scelto (`ImagePickerAsset.mimeType`), più affidabile dell'estensione del nome file. */
+  mimeType?: string | null;
+}): Promise<void> {
   const ultimoSegmento = params.uri.split('.').pop();
   const estensione = ultimoSegmento && ultimoSegmento !== params.uri ? ultimoSegmento : 'jpg';
   const percorso = `${params.utenteId}/${params.notaId}/${Date.now()}.${estensione}`;
+  const contentType = params.mimeType ?? tipoContenutoDaEstensione(estensione);
+  const bytes = await leggiBytes(params.uri, params.fileWeb);
 
-  const risposta = await fetch(params.uri);
-  const blob = await risposta.blob();
-
-  const { error: erroreUpload } = await supabase.storage.from(BUCKET).upload(percorso, blob, {
-    contentType: blob.type,
-  });
+  const { error: erroreUpload } = await supabase.storage.from(BUCKET).upload(percorso, bytes, { contentType });
   if (erroreUpload) {
     throw erroreUpload;
   }
@@ -60,7 +109,7 @@ export async function aggiungiFotoNota(params: { utenteId: string; notaId: strin
 
 export async function eliminaFotoNota(params: { id: string; percorso: string }): Promise<void> {
   const { error: erroreStorage } = await supabase.storage.from(BUCKET).remove([params.percorso]);
-  if (erroreStorage) {
+  if (erroreStorage !== null && !fileNonTrovato(erroreStorage)) {
     throw erroreStorage;
   }
 
