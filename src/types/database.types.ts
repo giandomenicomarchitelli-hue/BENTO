@@ -204,6 +204,35 @@ export type Database = {
           },
         ]
       }
+      foto_note_personali: {
+        Row: {
+          creato_il: string
+          id: string
+          nota_id: string
+          percorso: string
+        }
+        Insert: {
+          creato_il?: string
+          id?: string
+          nota_id: string
+          percorso: string
+        }
+        Update: {
+          creato_il?: string
+          id?: string
+          nota_id?: string
+          percorso?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_note_personali_nota_id_fkey"
+            columns: ["nota_id"]
+            isOneToOne: false
+            referencedRelation: "note_personali"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gruppi: {
         Row: {
           codice_invito: string
@@ -534,6 +563,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      note_personali: {
+        Row: {
+          aggiornato_il: string
+          contenuto: string
+          creato_il: string
+          id: string
+          titolo: string
+          utente_id: string
+        }
+        Insert: {
+          aggiornato_il?: string
+          contenuto?: string
+          creato_il?: string
+          id?: string
+          titolo: string
+          utente_id: string
+        }
+        Update: {
+          aggiornato_il?: string
+          contenuto?: string
+          creato_il?: string
+          id?: string
+          titolo?: string
+          utente_id?: string
+        }
+        Relationships: []
       }
       occorrenze_faccende: {
         Row: {
