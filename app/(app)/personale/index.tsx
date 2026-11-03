@@ -28,7 +28,12 @@ export default function PersonaleHome() {
           />
         </View>
         <View style={styles.rigaGriglia}>
-          <GlassTile icona="calendar" accento={accenti.indaco} titolo="Calendario" badge="Presto" />
+          <GlassTile
+            icona="calendar"
+            accento={accenti.indaco}
+            titolo="Calendario"
+            onPress={() => router.push('/personale/calendario')}
+          />
         </View>
       </View>
     </BentoScreen>
