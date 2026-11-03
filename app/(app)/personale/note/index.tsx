@@ -1,3 +1,6 @@
+import { Feather } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -9,7 +12,7 @@ import { GlassCard } from '@/components/GlassCard';
 import { useNotePersonali } from '@/hooks/useNotePersonali';
 import { confermaAzione } from '@/lib/conferma';
 import { useAuthStore } from '@/store/authStore';
-import { bento, raggio, semantica, spaziatura } from '@/theme/tokens';
+import { bento, raggio, spaziatura } from '@/theme/tokens';
 
 /**
  * Nessun redirect/guard legato a un gruppo: le note personali sono scoped
@@ -73,25 +76,30 @@ export default function NotePersonali() {
       ) : note.length === 0 ? (
         <Text style={styles.vuoto}>Nessuna nota ancora. Creane una qui sopra.</Text>
       ) : (
-        <View style={styles.elenco}>
-          {note.map((nota) => (
-            <GlassCard key={nota.id} onPress={() => apriNota(nota)} elevazione="bassa">
-              <View style={styles.riga}>
+        <GlassCard elevazione="bassa">
+          <View style={styles.elenco}>
+            {note.map((nota, indice) => (
+              <Pressable
+                key={nota.id}
+                onPress={() => apriNota(nota)}
+                style={[styles.riga, indice < note.length - 1 && styles.rigaConDivisore]}
+              >
                 <View style={styles.contenutoRiga}>
-                  <Text style={styles.titoloNota}>{nota.titolo}</Text>
-                  {nota.contenuto !== '' && (
-                    <Text style={styles.anteprima} numberOfLines={2}>
-                      {nota.contenuto}
-                    </Text>
-                  )}
+                  <Text style={styles.titoloNota} numberOfLines={1}>
+                    {nota.titolo}
+                  </Text>
+                  <Text style={styles.anteprima} numberOfLines={1}>
+                    {format(new Date(nota.aggiornato_il), "d MMM, HH:mm", { locale: it })}
+                    {nota.contenuto !== '' ? `  ${nota.contenuto}` : ''}
+                  </Text>
                 </View>
-                <Pressable onPress={() => confermaEliminaNota(nota)} hitSlop={8}>
-                  <Text style={styles.elimina}>Elimina</Text>
+                <Pressable onPress={() => confermaEliminaNota(nota)} hitSlop={8} style={styles.bottoneElimina}>
+                  <Feather name="trash-2" size={16} color={bento.testoMuto} />
                 </Pressable>
-              </View>
-            </GlassCard>
-          ))}
-        </View>
+              </Pressable>
+            ))}
+          </View>
+        </GlassCard>
       )}
     </BentoScreen>
   );
@@ -118,13 +126,18 @@ const styles = StyleSheet.create({
     marginTop: spaziatura.xl,
   },
   elenco: {
-    gap: spaziatura.sm,
+    width: '100%',
   },
   riga: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spaziatura.md,
+    paddingVertical: spaziatura.md,
+  },
+  rigaConDivisore: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: bento.bordoSoft,
   },
   contenutoRiga: {
     flex: 1,
@@ -137,11 +150,9 @@ const styles = StyleSheet.create({
   anteprima: {
     fontSize: 13,
     color: bento.testoSecondario,
-    marginTop: 4,
+    marginTop: 2,
   },
-  elimina: {
-    color: semantica.pericolo,
-    fontSize: 13,
-    fontWeight: '600',
+  bottoneElimina: {
+    padding: 4,
   },
 });
