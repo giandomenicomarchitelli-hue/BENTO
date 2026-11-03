@@ -198,7 +198,6 @@ export default function Homepage() {
 
   const inizialeNome = profilo.nome_utente.charAt(0).toUpperCase();
   const personaleInCaricamento = listeInCaricamento || noteInCaricamento;
-  const notificheRecenti = notifiche.slice(0, 3);
 
   return (
     <View style={styles.schermo}>
@@ -325,43 +324,59 @@ export default function Homepage() {
 
           {notificheInCaricamento ? (
             <ActivityIndicator color={colori.scuro} />
-          ) : notificheRecenti.length === 0 ? (
+          ) : notifiche.length === 0 ? (
             <Text style={styles.nessunaNotifica}>Nessuna notifica ancora.</Text>
           ) : (
             <BloccoDuro offset={4} colore={colori.cremaCard} raggio={24} contenutoStyle={styles.boxNotifiche}>
-              {notificheRecenti.map((notifica) => {
-                const eSfida = notifica.tipo.startsWith('sfida_');
-                const coloreTipo = eSfida ? colori.oro : colori.menta;
-                return (
-                  <BloccoDuro
-                    key={notifica.id}
-                    offset={2}
-                    colore="#fff"
-                    raggio={18}
-                    contenutoStyle={styles.rigaNotifica}
-                  >
-                    <View style={[styles.iconaNotifica, { backgroundColor: coloreTipo }]}>
-                      <Feather name={eSfida ? 'award' : 'calendar'} size={16} color={colori.scuro} />
-                    </View>
-                    <View style={styles.contenutoNotifica}>
-                      <View style={styles.rigaMetaNotifica}>
-                        <Text style={[styles.badgeTipo, { backgroundColor: coloreTipo }]}>
-                          {eSfida ? 'Sfida' : 'Impegno'}
-                        </Text>
-                        <Text style={styles.tempoNotifica}>
-                          {formatDistanceToNowStrict(new Date(notifica.creata_il), {
-                            locale: it,
-                            addSuffix: true,
-                          })}
-                        </Text>
-                      </View>
-                      <Text style={styles.testoNotifica} numberOfLines={1}>
-                        {notifica.titolo}
-                      </Text>
-                    </View>
-                  </BloccoDuro>
-                );
-              })}
+              <View style={styles.contenitoreElencoNotifiche}>
+                <ScrollView
+                  style={styles.elencoNotificheScroll}
+                  contentContainerStyle={styles.elencoNotificheContenuto}
+                  showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled
+                >
+                  {notifiche.map((notifica) => {
+                    const eSfida = notifica.tipo.startsWith('sfida_');
+                    const coloreTipo = eSfida ? colori.oro : colori.menta;
+                    return (
+                      <BloccoDuro
+                        key={notifica.id}
+                        offset={2}
+                        colore="#fff"
+                        raggio={18}
+                        contenutoStyle={styles.rigaNotifica}
+                      >
+                        <View style={[styles.iconaNotifica, { backgroundColor: coloreTipo }]}>
+                          <Feather name={eSfida ? 'award' : 'calendar'} size={16} color={colori.scuro} />
+                        </View>
+                        <View style={styles.contenutoNotifica}>
+                          <View style={styles.rigaMetaNotifica}>
+                            <Text style={[styles.badgeTipo, { backgroundColor: coloreTipo }]}>
+                              {eSfida ? 'Sfida' : 'Impegno'}
+                            </Text>
+                            <Text style={styles.tempoNotifica}>
+                              {formatDistanceToNowStrict(new Date(notifica.creata_il), {
+                                locale: it,
+                                addSuffix: true,
+                              })}
+                            </Text>
+                          </View>
+                          <Text style={styles.testoNotifica} numberOfLines={1}>
+                            {notifica.titolo}
+                          </Text>
+                        </View>
+                      </BloccoDuro>
+                    );
+                  })}
+                </ScrollView>
+                {notifiche.length > 3 && (
+                  <LinearGradient
+                    colors={['transparent', colori.cremaCard]}
+                    style={styles.sfumaturaNotifiche}
+                    pointerEvents="none"
+                  />
+                )}
+              </View>
               <Pressable onPress={() => router.push('/notifiche')} style={styles.bottoneVediTutte}>
                 <Text style={styles.testoVediTutte}>VEDI TUTTE LE NOTIFICHE</Text>
                 <Text style={styles.frecciaVediTutte}>→</Text>
@@ -623,6 +638,25 @@ const styles = StyleSheet.create({
   boxNotifiche: {
     padding: 12,
     gap: 10,
+  },
+  contenitoreElencoNotifiche: {
+    position: 'relative',
+  },
+  elencoNotificheScroll: {
+    maxHeight: 260,
+  },
+  elencoNotificheContenuto: {
+    gap: 10,
+    paddingBottom: 4,
+  },
+  sfumaturaNotifiche: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 36,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   rigaNotifica: {
     padding: 10,
