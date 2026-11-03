@@ -1,7 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { BlurView } from 'expo-blur';
 import { Redirect, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
@@ -66,7 +65,13 @@ const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
  */
 const ALTEZZA_BARRA = 64;
 
-/** Quante notifiche carica al massimo l'elenco scorrevole (il resto si trova con "Vedi tutte"). */
+/**
+ * Elenco notifiche fisso, non scorrevole: uno scorrimento annidato con
+ * sfumatura in overlay si è rivelato fragile (l'ombra/bordo dura
+ * dell'ultima riga restava visibile sotto la sfumatura, creando una
+ * "card fantasma" vuota) - più semplice e robusto mostrare al massimo
+ * le N più recenti, con "Vedi tutte le notifiche" per il resto.
+ */
 const MASSIMO_NOTIFICHE = 8;
 
 /**
@@ -332,51 +337,42 @@ export default function Homepage() {
             <Text style={styles.nessunaNotifica}>Nessuna notifica ancora.</Text>
           ) : (
             <BloccoDuro offset={4} colore={colori.cremaCard} raggio={24} contenutoStyle={styles.boxNotifiche}>
-              <View style={styles.contenitoreElencoNotifiche}>
-                <ScrollView
-                  style={styles.elencoNotificheScroll}
-                  contentContainerStyle={styles.elencoNotificheContenuto}
-                  showsVerticalScrollIndicator={false}
-                  nestedScrollEnabled
-                >
-                  {notifiche.slice(0, MASSIMO_NOTIFICHE).map((notifica) => {
-                    const eSfida = notifica.tipo.startsWith('sfida_');
-                    const coloreTipo = eSfida ? colori.oro : colori.menta;
-                    return (
-                      <BloccoDuro
-                        key={notifica.id}
-                        offset={2}
-                        colore="#fff"
-                        raggio={18}
-                        contenutoStyle={styles.rigaNotifica}
-                      >
-                        <View style={[styles.iconaNotifica, { backgroundColor: coloreTipo }]}>
-                          <Feather name={eSfida ? 'award' : 'calendar'} size={16} color={colori.scuro} />
-                        </View>
-                        <View style={styles.contenutoNotifica}>
-                          <View style={styles.rigaMetaNotifica}>
-                            <Text style={[styles.badgeTipo, { backgroundColor: coloreTipo }]}>
-                              {eSfida ? 'Sfida' : 'Impegno'}
-                            </Text>
-                            <Text style={styles.tempoNotifica}>
-                              {formatDistanceToNowStrict(new Date(notifica.creata_il), {
-                                locale: it,
-                                addSuffix: true,
-                              })}
-                            </Text>
-                          </View>
-                          <Text style={styles.testoNotifica} numberOfLines={1}>
-                            {notifica.titolo}
+              {notifiche.slice(0, MASSIMO_NOTIFICHE).map((notifica, indice, visibili) => {
+                const eSfida = notifica.tipo.startsWith('sfida_');
+                const coloreTipo = eSfida ? colori.oro : colori.menta;
+                // L'ultima riga mostrata si "spegne" quando ce ne sono
+                // altre sotto - stesso effetto visivo della sfumatura a
+                // scorrimento del mockup, ma su una sola riga fissa e
+                // senza ScrollView/overlay: niente ombre/bordi che
+                // sbucano da sotto una maschera (il difetto già trovato
+                // con l'approccio a scorrimento).
+                const ultimaEConAltre = indice === visibili.length - 1 && notifiche.length > MASSIMO_NOTIFICHE;
+                return (
+                  <View key={notifica.id} style={ultimaEConAltre && styles.notificaSfumata}>
+                    <BloccoDuro offset={2} colore="#fff" raggio={18} contenutoStyle={styles.rigaNotifica}>
+                      <View style={[styles.iconaNotifica, { backgroundColor: coloreTipo }]}>
+                        <Feather name={eSfida ? 'award' : 'calendar'} size={16} color={colori.scuro} />
+                      </View>
+                      <View style={styles.contenutoNotifica}>
+                        <View style={styles.rigaMetaNotifica}>
+                          <Text style={[styles.badgeTipo, { backgroundColor: coloreTipo }]}>
+                            {eSfida ? 'Sfida' : 'Impegno'}
+                          </Text>
+                          <Text style={styles.tempoNotifica}>
+                            {formatDistanceToNowStrict(new Date(notifica.creata_il), {
+                              locale: it,
+                              addSuffix: true,
+                            })}
                           </Text>
                         </View>
-                      </BloccoDuro>
-                    );
-                  })}
-                </ScrollView>
-                {notifiche.length > 4 && (
-                  <BlurView intensity={25} tint="light" style={styles.sfumaturaNotifiche} pointerEvents="none" />
-                )}
-              </View>
+                        <Text style={styles.testoNotifica} numberOfLines={1}>
+                          {notifica.titolo}
+                        </Text>
+                      </View>
+                    </BloccoDuro>
+                  </View>
+                );
+              })}
               <Pressable onPress={() => router.push('/notifiche')} style={styles.bottoneVediTutte}>
                 <Text style={styles.testoVediTutte}>VEDI TUTTE LE NOTIFICHE</Text>
                 <Text style={styles.frecciaVediTutte}>→</Text>
@@ -639,34 +635,8 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 10,
   },
-  contenitoreElencoNotifiche: {
-    position: 'relative',
-  },
-  /** Altezza che mostra circa 4 righe a riposo (righe fino a MASSIMO_NOTIFICHE si trovano scorrendo). */
-  elencoNotificheScroll: {
-    maxHeight: 280,
-  },
-  elencoNotificheContenuto: {
-    gap: 10,
-    paddingBottom: 4,
-  },
-  /**
-   * Sfocatura (non un overlay a gradiente/opacità) sopra il bordo
-   * inferiore dell'elenco: una sfocatura attenua in modo uniforme sia
-   * il riempimento bianco sia il bordo/ombra scuri della riga sotto -
-   * un overlay semi-trasparente invece lasciava il bordo scuro (alto
-   * contrasto) visibile molto più a lungo del riempimento bianco
-   * (basso contrasto), creando l'effetto "carta fantasma" già trovato.
-   */
-  sfumaturaNotifiche: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 40,
-    overflow: 'hidden',
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
+  notificaSfumata: {
+    opacity: 0.35,
   },
   rigaNotifica: {
     padding: 10,
