@@ -2,8 +2,10 @@ import { Feather } from '@expo/vector-icons';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Redirect, useRouter } from 'expo-router';
+import { useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -65,11 +67,16 @@ const pesi = {
  *
  * Con `onPress`, il blocco diventa il proprio Pressable (stesso pattern
  * di GlassCard altrove in questo progetto) e al tocco la superficie si
- * sposta di `offset` px in basso a destra, esattamente sopra alla sua
+ * anima verso `offset` px in basso a destra, esattamente sopra alla sua
  * ombra dura - la stessa illusione di "premere il blocco nella sua
  * ombra" del bottone centrale del mockup originale (active:translate-
- * y-0.5 active:shadow-none). `transform` non influenza il layout in RN,
- * quindi lo spostamento non fa saltare le card affiancate.
+ * y-0.5 active:shadow-none). Un `Animated.Value` guidato da onPressIn/
+ * onPressOut, non uno scatto istantaneo legato al booleano `pressed` di
+ * Pressable: senza un'animazione vera, su un tocco reale (premi e
+ * rilasci in una frazione di secondo) lo spostamento di pochi pixel non
+ * fa in tempo a disegnarsi su schermo - scompare prima di essere visto.
+ * `transform` non influenza il layout in RN, quindi lo spostamento non
+ * fa saltare le card affiancate.
  */
 function BloccoDuro({
   children,
@@ -90,6 +97,16 @@ function BloccoDuro({
   bordo?: boolean;
   onPress?: () => void;
 }) {
+  const [spostamento] = useState(() => new Animated.Value(0));
+
+  function animaA(valore: number) {
+    Animated.timing(spostamento, {
+      toValue: valore,
+      duration: valore === 0 ? 120 : 80,
+      useNativeDriver: true,
+    }).start();
+  }
+
   return (
     <View style={[styles.involucroOmbra, style]}>
       <View
@@ -98,19 +115,23 @@ function BloccoDuro({
           { top: offset, left: offset, right: -offset, bottom: -offset, borderRadius: raggio },
         ]}
       />
-      <Pressable
-        onPress={onPress}
-        disabled={onPress === undefined}
-        style={({ pressed }) => [
+      <Animated.View
+        style={[
           { backgroundColor: colore, borderRadius: raggio },
           bordo && { borderWidth: offset <= 2 ? 2 : 2.5, borderColor: colori.scuro },
-          contenutoStyle,
-          onPress !== undefined &&
-            pressed && { transform: [{ translateX: offset }, { translateY: offset }] },
+          { transform: [{ translateX: spostamento }, { translateY: spostamento }] },
         ]}
       >
-        {children}
-      </Pressable>
+        <Pressable
+          onPress={onPress}
+          onPressIn={() => animaA(offset)}
+          onPressOut={() => animaA(0)}
+          disabled={onPress === undefined}
+          style={[styles.riempimentoPressable, contenutoStyle]}
+        >
+          {children}
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }
@@ -344,6 +365,9 @@ const styles = StyleSheet.create({
   ombraDura: {
     position: 'absolute',
     backgroundColor: colori.scuro,
+  },
+  riempimentoPressable: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
