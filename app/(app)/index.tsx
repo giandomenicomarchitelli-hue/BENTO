@@ -2,8 +2,6 @@ import { Feather } from '@expo/vector-icons';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Redirect, useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -11,13 +9,11 @@ import {
   StyleSheet,
   Text,
   View,
-  type StyleProp,
-  type ViewStyle,
 } from 'react-native';
-import Animated, { cubicBezier } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { esci } from '@/api/auth';
+import { BloccoDuro } from '@/components/BloccoDuro';
 import { useFontBento } from '@/hooks/useFontBento';
 import { useListePersonali } from '@/hooks/useListePersonali';
 import { useMieiGruppi } from '@/hooks/useMieiGruppi';
@@ -25,37 +21,7 @@ import { useNotePersonali } from '@/hooks/useNotePersonali';
 import { useNotifiche } from '@/hooks/useNotifiche';
 import { useProfilo } from '@/hooks/useProfilo';
 import { useAuthStore } from '@/store/authStore';
-
-/**
- * Palette "neo-brutalista" solo per questa schermata (bordi spessi neri,
- * ombre dure a blocco, nessun vetro/blur) - un restyling isolato della
- * sola Home, non un nuovo tema globale: il resto dell'app resta sul
- * tema "Hybrid Liquid Glass" di theme/tokens.ts.
- */
-const colori = {
-  crema: '#F8F9FA',
-  cremaCard: '#F3EFE6',
-  scuro: '#1A1817',
-  corallo: '#EE5D50',
-  oro: '#FDCB4E',
-  menta: '#72C4B8',
-  grigioTesto: '#716C65',
-};
-
-/**
- * Nessuna variante 900/Black esiste per Plus Jakarta Sans (vedi
- * useFontBento.ts) - 800 ExtraBold è il peso massimo reale caricato.
- * `fontFamily` è ciò che conta per il rendering con un font custom
- * caricato per singolo peso; `fontWeight` resta allineato per coerenza,
- * non ha effetto aggiuntivo una volta che `fontFamily` è impostato.
- */
-const pesi = {
-  extraBold: { fontFamily: 'PlusJakartaSans_800ExtraBold', fontWeight: '800' as const },
-  bold: { fontFamily: 'PlusJakartaSans_700Bold', fontWeight: '700' as const },
-};
-
-/** Curva di ease-out decisa (skill animate-expo), per il feedback al tocco di BloccoDuro. */
-const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 /**
  * Altezza del solo contenuto della barra inferiore (senza la safe area,
@@ -73,111 +39,6 @@ const ALTEZZA_BARRA = 64;
  * le N più recenti, con "Vedi tutte le notifiche" per il resto.
  */
 const MASSIMO_NOTIFICHE = 8;
-
-/**
- * "Ombra dura" neo-brutalista: un rettangolo scuro pieno, sfalsato di
- * `offset` px dietro la superficie visibile - non le proprietà shadow
- * (o elevation) di RN, che rendono in modo incoerente tra iOS/Android/web e non danno mai
- * il bordo netto voluto qui.
- *
- * `style` dimensiona/posiziona il blocco nel layout circostante (es.
- * flex:1 per due card affiancate); `contenutoStyle` è solo l'interno
- * (padding, gap, allineamento) - separati apposta, non un unico `style`
- * ambiguo (vedi il difetto già corretto altrove in questo progetto per
- * GlassCard, dove un `style` unico finiva sul wrapper sbagliato).
- *
- * Con `onPress`, il blocco diventa il proprio Pressable (stesso pattern
- * di GlassCard altrove in questo progetto) e al tocco la superficie si
- * anima verso `offset` px in basso a destra, esattamente sopra alla sua
- * ombra dura - la stessa illusione di "premere il blocco nella sua
- * ombra" del bottone centrale del mockup originale (active:translate-
- * y-0.5 active:shadow-none).
- *
- * Transizione CSS di Reanimated (ricetta "Press feedback" della skill
- * animate-expo), non il modulo `Animated` core di RN: nessun gesto né
- * valore continuo qui (solo premi/rilascia), quindi non serve una
- * shared value - una `transitionProperty` dichiarativa è l'intera
- * implementazione, gira sul thread UI e non si inceppa se il thread JS
- * è occupato. `pressRetentionOffset` evita che un lieve spostamento del
- * dito annulli la pressione.
- *
- * `gradiente` sostituisce `colore` con un riempimento a sfumatura
- * (solo il box "compartimenti" lo usa) - non interattivo per
- * costruzione, quindi niente Pressable/transizione di pressione qui:
- * nessun punto di questa schermata passa `onPress` insieme a
- * `gradiente`.
- */
-function BloccoDuro({
-  children,
-  style,
-  contenutoStyle,
-  colore,
-  gradiente,
-  offset = 3,
-  raggio = 20,
-  bordo = true,
-  onPress,
-}: {
-  children?: React.ReactNode;
-  style?: StyleProp<ViewStyle>;
-  contenutoStyle?: StyleProp<ViewStyle>;
-  colore?: string;
-  gradiente?: [string, string];
-  offset?: number;
-  raggio?: number;
-  bordo?: boolean;
-  onPress?: () => void;
-}) {
-  const [premuto, setPremuto] = useState(false);
-  const stileBordo = bordo ? { borderWidth: offset <= 2 ? 2 : 2.5, borderColor: colori.scuro } : undefined;
-
-  return (
-    <View style={[styles.involucroOmbra, style]}>
-      <View
-        style={[
-          styles.ombraDura,
-          { top: offset, left: offset, right: -offset, bottom: -offset, borderRadius: raggio },
-        ]}
-      />
-      {gradiente !== undefined ? (
-        <LinearGradient
-          colors={gradiente}
-          style={[{ borderRadius: raggio }, stileBordo, contenutoStyle]}
-        >
-          {children}
-        </LinearGradient>
-      ) : (
-        <Animated.View
-          style={[
-            {
-              backgroundColor: colore,
-              borderRadius: raggio,
-              transform: [
-                { translateX: premuto ? offset : 0 },
-                { translateY: premuto ? offset : 0 },
-              ],
-              transitionProperty: 'transform',
-              transitionDuration: '100ms',
-              transitionTimingFunction: EASE_OUT,
-            },
-            stileBordo,
-          ]}
-        >
-          <Pressable
-            onPress={onPress}
-            onPressIn={() => setPremuto(true)}
-            onPressOut={() => setPremuto(false)}
-            disabled={onPress === undefined}
-            pressRetentionOffset={16}
-            style={[styles.riempimentoPressable, contenutoStyle]}
-          >
-            {children}
-          </Pressable>
-        </Animated.View>
-      )}
-    </View>
-  );
-}
 
 export default function Homepage() {
   const router = useRouter();
@@ -430,16 +291,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 20,
     gap: 16,
-  },
-  involucroOmbra: {
-    position: 'relative',
-  },
-  ombraDura: {
-    position: 'absolute',
-    backgroundColor: colori.scuro,
-  },
-  riempimentoPressable: {
-    flex: 1,
   },
   header: {
     flexDirection: 'row',
