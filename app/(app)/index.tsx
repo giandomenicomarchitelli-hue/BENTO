@@ -371,7 +371,8 @@ export default function Homepage() {
                 </ScrollView>
                 {notifiche.length > 3 && (
                   <LinearGradient
-                    colors={['transparent', colori.cremaCard]}
+                    colors={['rgba(243,239,230,0)', colori.cremaCard, colori.cremaCard]}
+                    locations={[0, 0.7, 1]}
                     style={styles.sfumaturaNotifiche}
                     pointerEvents="none"
                   />
@@ -654,7 +655,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 36,
+    height: 56,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
