@@ -99,14 +99,18 @@ export default function PersonaleHome() {
             >
               <View>
                 <View style={styles.intestazioneCard}>
-                  <Feather name="bookmark" size={16} color={colori.scuro} />
+                  <Text style={styles.etichettaCard}>LISTE</Text>
                   <View style={[styles.pallino, { backgroundColor: colori.oro }]} />
                 </View>
-                <Text style={styles.etichettaCard}>LISTE</Text>
                 {listeInCaricamento ? (
                   <ActivityIndicator color={colori.scuro} style={styles.caricamentoCard} />
                 ) : (
-                  <Text style={styles.statoCard}>{liste.length} liste attive</Text>
+                  <View style={styles.corpoCardCentrato}>
+                    <Text style={styles.numeroCard}>{liste.length}</Text>
+                    <Text style={[styles.etichettaCardSecondaria, { color: colori.oro }]}>
+                      LISTE ATTIVE
+                    </Text>
+                  </View>
                 )}
               </View>
               <View style={styles.pieCard}>
@@ -125,14 +129,18 @@ export default function PersonaleHome() {
             >
               <View>
                 <View style={styles.intestazioneCard}>
-                  <Feather name="file-text" size={16} color={colori.scuro} />
-                  <View style={[styles.pallino, { backgroundColor: '#fff' }]} />
+                  <Text style={styles.etichettaCard}>NOTE</Text>
+                  <View style={[styles.pallino, { backgroundColor: '#7C3AED' }]} />
                 </View>
-                <Text style={styles.etichettaCard}>NOTE</Text>
                 {noteInCaricamento ? (
                   <ActivityIndicator color={colori.scuro} style={styles.caricamentoCard} />
                 ) : (
-                  <Text style={styles.statoCard}>{note.length} note salvate</Text>
+                  <View style={styles.corpoCardCentrato}>
+                    <Text style={styles.numeroCard}>{note.length}</Text>
+                    <Text style={[styles.etichettaCardSecondaria, { color: '#7C3AED' }]}>
+                      NOTE SALVATE
+                    </Text>
+                  </View>
                 )}
               </View>
               <View style={styles.pieCard}>
@@ -193,9 +201,9 @@ export default function PersonaleHome() {
           </View>
           <View style={[styles.vocetaBarra, styles.voceCentrale]}>
             <BloccoDuro offset={2.5} colore={colori.corallo} raggio={999} contenutoStyle={styles.bottoneVoce}>
-              <Feather name="plus" size={26} color="#fff" />
+              <Feather name="mic" size={22} color="#fff" />
             </BloccoDuro>
-            <Text style={styles.etichettaBarra}>CREA</Text>
+            <Text style={styles.etichettaBarra}>VOCE</Text>
           </View>
           <View style={styles.vocetaBarra}>
             <Feather name="users" size={20} color={colori.scuro} />
@@ -304,7 +312,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   card: {
-    minHeight: 140,
+    minHeight: 168,
     padding: 12,
     justifyContent: 'space-between',
   },
@@ -312,33 +320,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    paddingBottom: 6,
+    borderBottomWidth: 2,
+    borderBottomColor: colori.scuro,
   },
   pallino: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     borderWidth: 1.5,
     borderColor: colori.scuro,
   },
   etichettaCard: {
     ...pesi.extraBold,
-    fontSize: 17,
-    color: colori.scuro,
-    textTransform: 'uppercase',
-    letterSpacing: -0.2,
-  },
-  caricamentoCard: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
-  },
-  statoCard: {
-    ...pesi.bold,
     fontSize: 11,
     color: colori.scuro,
-    opacity: 0.6,
     textTransform: 'uppercase',
-    letterSpacing: 0.2,
+    letterSpacing: 0.4,
+  },
+  caricamentoCard: {
+    marginTop: 20,
+  },
+  corpoCardCentrato: {
+    marginTop: 14,
+    alignItems: 'center',
+  },
+  numeroCard: {
+    ...pesi.extraBold,
+    fontSize: 32,
+    color: colori.scuro,
+    lineHeight: 34,
+  },
+  etichettaCardSecondaria: {
+    ...pesi.extraBold,
+    fontSize: 9,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
     marginTop: 2,
   },
   pieCard: {
@@ -347,9 +364,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     gap: 4,
     paddingTop: 8,
-    marginTop: 8,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(26,24,23,0.1)',
+    borderTopColor: '#E5E0D6',
   },
   linkCard: {
     ...pesi.extraBold,
