@@ -35,7 +35,7 @@ function useIconaWeb() {
     };
     metaTag('apple-mobile-web-app-capable', 'yes');
     metaTag('apple-mobile-web-app-title', 'Bento');
-    metaTag('theme-color', '#2d6cdf');
+    metaTag('theme-color', '#F8F9FA');
   }, []);
 }
 
