@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
 import {
   ActivityIndicator,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -189,10 +190,10 @@ export default function PersonaleHome() {
 
       <View style={[styles.barraInferiore, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
         <View style={styles.vociBarra}>
-          <View style={styles.vocetaBarra}>
+          <Pressable style={styles.vocetaBarra} onPress={() => router.push('/')}>
             <Feather name="home" size={20} color={colori.scuro} />
             <Text style={styles.etichettaBarra}>HOME</Text>
-          </View>
+          </Pressable>
           <View style={styles.vocetaBarra}>
             <View style={styles.iconaPersonaleAttiva}>
               <Feather name="user" size={16} color={colori.scuro} />
@@ -205,10 +206,10 @@ export default function PersonaleHome() {
             </BloccoDuro>
             <Text style={styles.etichettaBarra}>VOCE</Text>
           </View>
-          <View style={styles.vocetaBarra}>
+          <Pressable style={styles.vocetaBarra} onPress={() => router.push('/gruppi')}>
             <Feather name="users" size={20} color={colori.scuro} />
             <Text style={styles.etichettaBarra}>GRUPPI</Text>
-          </View>
+          </Pressable>
           <View style={styles.vocetaBarra}>
             <Feather name="credit-card" size={20} color={colori.scuro} />
             <Text style={styles.etichettaBarra}>SALDI</Text>

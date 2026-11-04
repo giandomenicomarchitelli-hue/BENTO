@@ -251,20 +251,20 @@ export default function Homepage() {
             </View>
             <Text style={styles.etichettaBarra}>HOME</Text>
           </View>
-          <View style={styles.vocetaBarra}>
+          <Pressable style={styles.vocetaBarra} onPress={() => router.push('/personale')}>
             <Feather name="user" size={20} color={colori.scuro} />
             <Text style={styles.etichettaBarra}>PERSONALE</Text>
-          </View>
+          </Pressable>
           <View style={[styles.vocetaBarra, styles.voceCentrale]}>
             <BloccoDuro offset={2.5} colore={colori.corallo} raggio={999} contenutoStyle={styles.bottoneVoce}>
               <Feather name="mic" size={22} color="#fff" />
             </BloccoDuro>
             <Text style={styles.etichettaBarra}>VOCE</Text>
           </View>
-          <View style={styles.vocetaBarra}>
+          <Pressable style={styles.vocetaBarra} onPress={() => router.push('/gruppi')}>
             <Feather name="users" size={20} color={colori.scuro} />
             <Text style={styles.etichettaBarra}>GRUPPI</Text>
-          </View>
+          </Pressable>
           <View style={styles.vocetaBarra}>
             <Feather name="credit-card" size={20} color={colori.scuro} />
             <Text style={styles.etichettaBarra}>SALDI</Text>
@@ -560,9 +560,10 @@ const styles = StyleSheet.create({
     color: colori.scuro,
   },
   /**
-   * Solo grafica, nessun collegamento per ora (vedi richiesta): HOME è
-   * mostrata attiva per via statica (siamo sempre su questa schermata),
-   * le altre voci non hanno onPress.
+   * HOME è mostrata attiva per via statica (siamo sempre su questa
+   * schermata). PERSONALE e GRUPPI portano alle rispettive schermate;
+   * VOCE e SALDI restano solo grafica, non esiste ancora una schermata
+   * per loro.
    */
   barraInferiore: {
     position: 'absolute',
