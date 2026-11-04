@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npx expo export -p web",
+  "buildCommand": "npx expo export -p web && node scripts/inject-pwa-meta.mjs",
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/((?!_expo|favicon|apple-touch-icon|metadata.json).*)", "destination": "/index.html" }
