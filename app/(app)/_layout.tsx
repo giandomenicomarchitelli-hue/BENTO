@@ -5,11 +5,11 @@ export default function AppLayout() {
     <Stack>
       <Stack.Screen
         name="index"
-        options={{ headerShown: false, animation: 'fade', animationDuration: 180 }}
+        options={{ headerShown: false, animation: 'fade', animationDuration: 120 }}
       />
       <Stack.Screen
         name="gruppi/index"
-        options={{ headerShown: false, animation: 'fade', animationDuration: 180 }}
+        options={{ headerShown: false, animation: 'fade', animationDuration: 120 }}
       />
       <Stack.Screen name="crea-profilo" options={{ title: 'Nome utente' }} />
       <Stack.Screen name="profilo" options={{ title: 'Il mio profilo' }} />
@@ -30,7 +30,7 @@ export default function AppLayout() {
       <Stack.Screen name="liste/[id]" options={{ title: 'Lista' }} />
       <Stack.Screen
         name="personale/index"
-        options={{ headerShown: false, animation: 'fade', animationDuration: 180 }}
+        options={{ headerShown: false, animation: 'fade', animationDuration: 120 }}
       />
       <Stack.Screen name="personale/liste/index" options={{ title: 'Le mie liste' }} />
       <Stack.Screen name="personale/liste/[id]" options={{ title: 'Lista' }} />
