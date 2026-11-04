@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Redirect, useRouter } from 'expo-router';
+import type { ComponentProps } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -39,6 +40,24 @@ const ALTEZZA_BARRA = 64;
  * le N più recenti, con "Vedi tutte le notifiche" per il resto.
  */
 const MASSIMO_NOTIFICHE = 8;
+
+/** Icona, etichetta e colore del badge per ogni famiglia di tipo notifica. */
+function infoTipoNotifica(tipo: string): {
+  icona: ComponentProps<typeof Feather>['name'];
+  etichetta: string;
+  colore: string;
+} {
+  if (tipo.startsWith('sfida_')) {
+    return { icona: 'award', etichetta: 'Sfida', colore: colori.oro };
+  }
+  if (tipo.startsWith('impegno_')) {
+    return { icona: 'calendar', etichetta: 'Impegno', colore: colori.menta };
+  }
+  if (tipo.startsWith('articolo_spesa_')) {
+    return { icona: 'shopping-bag', etichetta: 'Spesa', colore: colori.corallo };
+  }
+  return { icona: 'list', etichetta: 'Lista', colore: colori.viola };
+}
 
 export default function Homepage() {
   const router = useRouter();
@@ -199,8 +218,7 @@ export default function Homepage() {
           ) : (
             <BloccoDuro offset={4} colore={colori.cremaCard} raggio={24} contenutoStyle={styles.boxNotifiche}>
               {notifiche.slice(0, MASSIMO_NOTIFICHE).map((notifica, indice, visibili) => {
-                const eSfida = notifica.tipo.startsWith('sfida_');
-                const coloreTipo = eSfida ? colori.oro : colori.menta;
+                const { icona, etichetta, colore: coloreTipo } = infoTipoNotifica(notifica.tipo);
                 // L'ultima riga mostrata si "spegne" quando ce ne sono
                 // altre sotto - stesso effetto visivo della sfumatura a
                 // scorrimento del mockup, ma su una sola riga fissa e
@@ -212,12 +230,12 @@ export default function Homepage() {
                   <View key={notifica.id} style={ultimaEConAltre && styles.notificaSfumata}>
                     <BloccoDuro offset={2} colore="#fff" raggio={18} contenutoStyle={styles.rigaNotifica}>
                       <View style={[styles.iconaNotifica, { backgroundColor: coloreTipo }]}>
-                        <Feather name={eSfida ? 'award' : 'calendar'} size={16} color={colori.scuro} />
+                        <Feather name={icona} size={16} color={colori.scuro} />
                       </View>
                       <View style={styles.contenutoNotifica}>
                         <View style={styles.rigaMetaNotifica}>
                           <Text style={[styles.badgeTipo, { backgroundColor: coloreTipo }]}>
-                            {eSfida ? 'Sfida' : 'Impegno'}
+                            {etichetta}
                           </Text>
                           <Text style={styles.tempoNotifica}>
                             {formatDistanceToNowStrict(new Date(notifica.creata_il), {

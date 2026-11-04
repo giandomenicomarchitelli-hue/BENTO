@@ -517,6 +517,11 @@ export type Database = {
             | "sfida_scaduta"
             | "sfida_rifiutata"
             | "impegno_promemoria"
+            | "impegno_creato"
+            | "articolo_spesa_aggiunto"
+            | "articolo_spesa_comprato"
+            | "lista_creata"
+            | "lista_voce_aggiunta"
           titolo: string
         }
         Insert: {
@@ -539,6 +544,11 @@ export type Database = {
             | "sfida_scaduta"
             | "sfida_rifiutata"
             | "impegno_promemoria"
+            | "impegno_creato"
+            | "articolo_spesa_aggiunto"
+            | "articolo_spesa_comprato"
+            | "lista_creata"
+            | "lista_voce_aggiunta"
           titolo: string
         }
         Update: {
@@ -561,6 +571,11 @@ export type Database = {
             | "sfida_scaduta"
             | "sfida_rifiutata"
             | "impegno_promemoria"
+            | "impegno_creato"
+            | "articolo_spesa_aggiunto"
+            | "articolo_spesa_comprato"
+            | "lista_creata"
+            | "lista_voce_aggiunta"
           titolo?: string
         }
         Relationships: [
