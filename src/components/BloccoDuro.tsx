@@ -89,13 +89,22 @@ export function BloccoDuro({
             stileBordo,
           ]}
         >
+          {/* Niente flex:1 qui: su bottoni a dimensione fissa (contenutoStyle con
+              width/height espliciti, es. il bottone VOCE) flex:1 forza flexBasis
+              a 0, e con un genitore (Animated.View) a sua volta senza altezza
+              propria il risultato collassa o si deforma invece di rispettare
+              width/height - prima dell'aggiornamento a RN 0.88/Reanimated 4.7
+              funzionava, ora no (regressione confermata riproducendo il bottone
+              VOCE in isolamento). Le card, che riempiono lo spazio via flex:1
+              sull'involucro esterno (style) e minHeight qui, restano invariate:
+              la larghezza arriva comunque per default (alignItems:'stretch'). */}
           <Pressable
             onPress={onPress}
             onPressIn={() => setPremuto(true)}
             onPressOut={() => setPremuto(false)}
             disabled={onPress === undefined}
             pressRetentionOffset={16}
-            style={[styles.riempimentoPressable, contenutoStyle]}
+            style={contenutoStyle}
           >
             {children}
           </Pressable>
@@ -112,8 +121,5 @@ const styles = StyleSheet.create({
   ombraDura: {
     position: 'absolute',
     backgroundColor: coloriNB.scuro,
-  },
-  riempimentoPressable: {
-    flex: 1,
   },
 });
