@@ -3,18 +3,13 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Redirect, useRouter } from 'expo-router';
 import type { ComponentProps } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { esci } from '@/api/auth';
 import { BloccoDuro } from '@/components/BloccoDuro';
+import { CifraScomparto, Scomparto } from '@/components/Scomparto';
+import { PARETE, Vassoio } from '@/components/Vassoio';
 import { useFontBento } from '@/hooks/useFontBento';
 import { useListePersonali } from '@/hooks/useListePersonali';
 import { useMieiGruppi } from '@/hooks/useMieiGruppi';
@@ -33,15 +28,14 @@ import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 const ALTEZZA_BARRA = 64;
 
 /**
- * Elenco notifiche fisso, non scorrevole: uno scorrimento annidato con
- * sfumatura in overlay si è rivelato fragile (l'ombra/bordo dura
- * dell'ultima riga restava visibile sotto la sfumatura, creando una
- * "card fantasma" vuota) - più semplice e robusto mostrare al massimo
- * le N più recenti, con "Vedi tutte le notifiche" per il resto.
+ * Quante notifiche entrano nel feed prima del bottone. Il conteggio
+ * totale sta nel bottone stesso, quindi non serve sfumare l'ultima riga
+ * per far capire che ce ne sono altre (era il difetto della versione
+ * precedente).
  */
-const MASSIMO_NOTIFICHE = 8;
+const RIGHE_FEED = 3;
 
-/** Icona, etichetta e colore del badge per ogni famiglia di tipo notifica. */
+/** Icona e colore del quadratino per ogni famiglia di tipo notifica. */
 function infoTipoNotifica(tipo: string): {
   icona: ComponentProps<typeof Feather>['name'];
   etichetta: string;
@@ -54,7 +48,7 @@ function infoTipoNotifica(tipo: string): {
     return { icona: 'calendar', etichetta: 'Impegno', colore: colori.menta };
   }
   if (tipo.startsWith('articolo_spesa_')) {
-    return { icona: 'shopping-bag', etichetta: 'Spesa', colore: colori.corallo };
+    return { icona: 'shopping-bag', etichetta: 'Spesa', colore: colori.viola };
   }
   return { icona: 'list', etichetta: 'Lista', colore: colori.viola };
 }
@@ -68,7 +62,7 @@ export default function Homepage() {
   const { gruppi, isLoading: gruppiInCaricamento } = useMieiGruppi();
   const { liste, isLoading: listeInCaricamento } = useListePersonali(utenteId);
   const { note, isLoading: noteInCaricamento } = useNotePersonali(utenteId);
-  const { notifiche, nonLette, isLoading: notificheInCaricamento } = useNotifiche();
+  const { notifiche, isLoading: notificheInCaricamento } = useNotifiche();
 
   // Serve un nome utente fisso prima di poter fare qualunque cosa, e il
   // font neo-brutalista pronto prima di disegnare qualunque testo di
@@ -87,6 +81,7 @@ export default function Homepage() {
 
   const inizialeNome = profilo.nome_utente.charAt(0).toUpperCase();
   const personaleInCaricamento = listeInCaricamento || noteInCaricamento;
+  const personaleVuoto = liste.length === 0 && note.length === 0;
 
   return (
     <View style={styles.schermo}>
@@ -99,196 +94,193 @@ export default function Homepage() {
       >
         <View style={styles.header}>
           <View style={styles.marchioRiga}>
-            <BloccoDuro offset={2} colore={colori.corallo} raggio={12} contenutoStyle={styles.logoQuadrato} />
+            <BloccoDuro
+              offset={2}
+              colore={colori.scuro}
+              raggio={7}
+              contenutoStyle={styles.logoVassoio}
+            >
+              <View style={styles.logoRiga}>
+                <View style={[styles.logoCella, { backgroundColor: colori.oro }]} />
+                <View style={[styles.logoCella, { backgroundColor: colori.menta }]} />
+              </View>
+              <View style={styles.logoRiga}>
+                <View style={[styles.logoCella, { backgroundColor: colori.viola }]} />
+                <View style={[styles.logoCella, { backgroundColor: colori.corallo }]} />
+              </View>
+            </BloccoDuro>
             <Text style={styles.marchio}>
               BENTO<Text style={styles.puntoMarchio}>.</Text>
             </Text>
           </View>
           <View style={styles.azioniHeader}>
             <Pressable onPress={() => esci()} hitSlop={8} style={styles.bottoneEsci}>
-              <Feather name="log-out" size={16} color={colori.scuro} />
+              <Feather name="log-out" size={17} color={colori.scuro} />
             </Pressable>
             <Pressable onPress={() => router.push('/profilo')}>
-              <BloccoDuro offset={2} colore="#fff" raggio={999} contenutoStyle={styles.avatarCerchio}>
+              <BloccoDuro
+                offset={2}
+                colore={colori.panna}
+                raggio={999}
+                contenutoStyle={styles.avatarCerchio}
+              >
                 <Text style={styles.avatarTesto}>{inizialeNome}</Text>
               </BloccoDuro>
             </Pressable>
           </View>
         </View>
 
-        <Text style={styles.saluto}>CIAO, {profilo.nome_utente.toUpperCase()}!</Text>
+        <Text style={styles.saluto}>Ciao, {profilo.nome_utente}</Text>
 
-        <View style={styles.sezioneCompartimenti}>
-          <BloccoDuro
-            offset={4}
-            gradiente={['#C83528', '#BD3125']}
-            raggio={28}
-            contenutoStyle={styles.boxCompartimenti}
-          >
-            <View style={styles.rigaCard}>
-              <BloccoDuro
-                style={styles.cardWrapper}
-                onPress={() => router.push('/personale')}
-                offset={3}
-                colore="#fff"
-                raggio={20}
-                contenutoStyle={styles.card}
-              >
-                <View>
-                  <View style={styles.intestazioneCard}>
-                    <Text style={styles.etichettaCard}>PERSONALE</Text>
-                    <View style={[styles.pallino, { backgroundColor: colori.oro }]} />
-                  </View>
-                  {personaleInCaricamento ? (
-                    <ActivityIndicator color={colori.scuro} style={styles.caricamentoCard} />
-                  ) : (
-                    <View style={styles.corpoCardCentrato}>
-                      <Text style={styles.statoPersonale}>
-                        {liste.length} {liste.length === 1 ? 'lista' : 'liste'}
-                      </Text>
-                      <Text style={styles.statoPersonaleSecondario}>
-                        {note.length} {note.length === 1 ? 'nota' : 'note'}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-                <View style={styles.pieCard}>
-                  <Text style={styles.linkCard}>Entra</Text>
-                  <Text style={styles.frecciaCard}>→</Text>
-                </View>
-              </BloccoDuro>
-
-              <BloccoDuro
-                style={styles.cardWrapper}
-                onPress={() => router.push('/gruppi')}
-                offset={3}
-                colore="#fff"
-                raggio={20}
-                contenutoStyle={styles.card}
-              >
-                <View>
-                  <View style={styles.intestazioneCard}>
-                    <Text style={styles.etichettaCard}>GRUPPI</Text>
-                    <View style={[styles.pallino, { backgroundColor: colori.corallo }]} />
-                  </View>
-                  {gruppiInCaricamento ? (
-                    <ActivityIndicator color={colori.scuro} style={styles.caricamentoCard} />
-                  ) : (
-                    <View style={styles.corpoCardCentrato}>
-                      <Text style={styles.numeroGruppi}>{gruppi.length}</Text>
-                      <Text style={styles.etichettaGruppiAttivi}>GRUPPI ATTIVI</Text>
-                      {gruppi.length > 0 && (
-                        <Text style={styles.nomeGruppo} numberOfLines={1}>
-                          {gruppi[0].nome}
-                          {gruppi.length > 1 ? ` +${gruppi.length - 1}` : ''}
-                        </Text>
-                      )}
-                    </View>
-                  )}
-                </View>
-                <View style={styles.pieCard}>
-                  <Text style={styles.linkCard}>Apri</Text>
-                  <Text style={styles.frecciaCard}>→</Text>
-                </View>
-              </BloccoDuro>
-            </View>
-          </BloccoDuro>
-        </View>
-
-        <View style={styles.sezioneNotifiche}>
-          <View style={styles.intestazioneNotifiche}>
-            <View style={styles.rigaTitoloNotifiche}>
-              <Text style={styles.titoloSezione}>ULTIME NOTIFICHE</Text>
-              {nonLette > 0 && (
-                <BloccoDuro
-                  offset={1.5}
-                  colore={colori.corallo}
-                  raggio={999}
-                  contenutoStyle={styles.badgeNonLette}
-                >
-                  <Text style={styles.testoBadgeNonLette}>{nonLette} NUOVE</Text>
-                </BloccoDuro>
+        {/* Mosaico Home: Personale a tutta altezza a sinistra, Gruppi e
+            Scrivi impilati a destra. Diverso da quello di Personale
+            apposta, così le due schermate non si confondono. */}
+        <Vassoio>
+          <View style={styles.mosaicoHome}>
+            <Scomparto
+              style={styles.colonnaLarga}
+              nome="Personale"
+              icona="user"
+              colore={colori.panna}
+              azione={personaleVuoto ? 'Crea la prima' : 'Entra'}
+              onPress={() => router.push('/personale')}
+            >
+              {personaleInCaricamento ? (
+                <ActivityIndicator color={colori.scuro} />
+              ) : personaleVuoto ? (
+                <CifraScomparto unita="Ancora vuoto" dettaglio="Liste e note solo tue" />
+              ) : (
+                <CifraScomparto
+                  cifra={liste.length}
+                  unita={liste.length === 1 ? 'lista' : 'liste'}
+                  dettaglio={`+ ${note.length} ${note.length === 1 ? 'nota' : 'note'}`}
+                />
               )}
-            </View>
-            <Pressable onPress={() => router.push('/notifiche')}>
-              <Text style={styles.linkTutte}>Tutte →</Text>
-            </Pressable>
-          </View>
+            </Scomparto>
 
+            <View style={styles.colonnaStretta}>
+              <Scomparto
+                nome="Gruppi"
+                icona="users"
+                colore={colori.menta}
+                azione="Apri"
+                onPress={() => router.push('/gruppi')}
+              >
+                {gruppiInCaricamento ? (
+                  <ActivityIndicator color={colori.scuro} />
+                ) : (
+                  <CifraScomparto
+                    cifra={gruppi.length}
+                    dettaglio={
+                      gruppi.length === 0
+                        ? 'Nessun gruppo'
+                        : `${gruppi[0].nome}${gruppi.length > 1 ? ` +${gruppi.length - 1}` : ''}`
+                    }
+                  />
+                )}
+              </Scomparto>
+
+              <Scomparto
+                colore={colori.oro}
+                azione="Scrivi"
+                onPress={() => router.push('/assistente')}
+              >
+                <View style={styles.rigaScrivi}>
+                  <View style={styles.badgeScrivi}>
+                    <Feather name="edit-3" size={16} color={colori.scuro} />
+                  </View>
+                  <Text style={styles.nomeScrivi}>Scrivi cosa{'\n'}hai fatto</Text>
+                </View>
+              </Scomparto>
+            </View>
+          </View>
+        </Vassoio>
+
+        {/* Feed appiattito: le notifiche vivono nelle pareti del loro
+            contenitore, come gli scomparti. Nessuna card dentro la card. */}
+        <BloccoDuro offset={4} colore={colori.scuro} raggio={18} contenutoStyle={styles.feed}>
           {notificheInCaricamento ? (
-            <ActivityIndicator color={colori.scuro} />
+            <View style={styles.feedVuoto}>
+              <ActivityIndicator color={colori.scuro} />
+            </View>
           ) : notifiche.length === 0 ? (
-            <Text style={styles.nessunaNotifica}>Nessuna notifica ancora.</Text>
+            <View style={styles.feedVuoto}>
+              <Text style={styles.testoFeedVuoto}>Nessuna notifica ancora</Text>
+            </View>
           ) : (
-            <BloccoDuro offset={4} colore={colori.cremaCard} raggio={24} contenutoStyle={styles.boxNotifiche}>
-              {notifiche.slice(0, MASSIMO_NOTIFICHE).map((notifica, indice, visibili) => {
-                const { icona, etichetta, colore: coloreTipo } = infoTipoNotifica(notifica.tipo);
-                // L'ultima riga mostrata si "spegne" quando ce ne sono
-                // altre sotto - stesso effetto visivo della sfumatura a
-                // scorrimento del mockup, ma su una sola riga fissa e
-                // senza ScrollView/overlay: niente ombre/bordi che
-                // sbucano da sotto una maschera (il difetto già trovato
-                // con l'approccio a scorrimento).
-                const ultimaEConAltre = indice === visibili.length - 1 && notifiche.length > MASSIMO_NOTIFICHE;
-                return (
-                  <View key={notifica.id} style={ultimaEConAltre && styles.notificaSfumata}>
-                    <BloccoDuro offset={2} colore="#fff" raggio={18} contenutoStyle={styles.rigaNotifica}>
-                      <View style={[styles.iconaNotifica, { backgroundColor: coloreTipo }]}>
-                        <Feather name={icona} size={16} color={colori.scuro} />
+            <>
+              <View style={styles.righeFeed}>
+                {notifiche.slice(0, RIGHE_FEED).map((notifica) => {
+                  const { icona, etichetta, colore } = infoTipoNotifica(notifica.tipo);
+                  return (
+                    <View key={notifica.id} style={styles.rigaFeed}>
+                      <View style={[styles.segnoFeed, { backgroundColor: colore }]}>
+                        <Feather name={icona} size={12} color={colori.scuro} />
                       </View>
-                      <View style={styles.contenutoNotifica}>
-                        <View style={styles.rigaMetaNotifica}>
-                          <Text style={[styles.badgeTipo, { backgroundColor: coloreTipo }]}>
-                            {etichetta}
-                          </Text>
-                          <Text style={styles.tempoNotifica}>
+                      <View style={styles.testoFeed}>
+                        <View style={styles.metaFeed}>
+                          <Text style={styles.etichettaFeed}>{etichetta}</Text>
+                          <Text style={styles.etichettaFeed}>
                             {formatDistanceToNowStrict(new Date(notifica.creata_il), {
                               locale: it,
                               addSuffix: true,
                             })}
                           </Text>
                         </View>
-                        <Text style={styles.testoNotifica} numberOfLines={1}>
+                        <Text style={styles.titoloFeed} numberOfLines={1}>
                           {notifica.titolo}
                         </Text>
                       </View>
-                    </BloccoDuro>
-                  </View>
-                );
-              })}
-              <Pressable onPress={() => router.push('/notifiche')} style={styles.bottoneVediTutte}>
-                <Text style={styles.testoVediTutte}>VEDI TUTTE LE NOTIFICHE</Text>
-                <Text style={styles.frecciaVediTutte}>→</Text>
+                    </View>
+                  );
+                })}
+              </View>
+              <Pressable onPress={() => router.push('/notifiche')} style={styles.ctaFeed}>
+                <Text style={styles.testoCtaFeed}>Tutte le notifiche</Text>
+                <Text style={styles.contatoreFeed}>{notifiche.length}</Text>
               </Pressable>
-            </BloccoDuro>
+            </>
           )}
-        </View>
+        </BloccoDuro>
       </ScrollView>
 
       <View style={[styles.barraInferiore, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
         <View style={styles.vociBarra}>
-          <View style={styles.vocetaBarra}>
-            <View style={styles.iconaHomeAttiva}>
-              <Feather name="home" size={16} color={colori.scuro} />
-            </View>
+          <View style={styles.voceBarra}>
+            <BloccoDuro
+              offset={1.5}
+              colore={colori.menta}
+              raggio={7}
+              contenutoStyle={styles.chipAttivo}
+            >
+              <Feather name="home" size={13} color={colori.scuro} />
+            </BloccoDuro>
             <Text style={styles.etichettaBarra}>HOME</Text>
           </View>
-          <Pressable style={styles.vocetaBarra} onPress={() => router.push('/personale')}>
-            <Feather name="user" size={20} color={colori.scuro} />
+          <Pressable style={styles.voceBarra} onPress={() => router.push('/personale')}>
+            <Feather name="user" size={17} color={colori.scuro} />
             <Text style={styles.etichettaBarra}>PERSONALE</Text>
           </Pressable>
-          <View style={[styles.vocetaBarra, styles.voceCentrale]}>
-            <BloccoDuro offset={2.5} colore={colori.corallo} raggio={999} contenutoStyle={styles.bottoneVoce}>
-              <Feather name="mic" size={22} color="#fff" />
+          <Pressable
+            style={[styles.voceBarra, styles.voceCentrale]}
+            onPress={() => router.push('/assistente')}
+          >
+            <BloccoDuro
+              offset={2.5}
+              colore={colori.corallo}
+              raggio={999}
+              contenutoStyle={styles.bottoneScrivi}
+            >
+              <Feather name="edit-3" size={18} color="#fff" />
             </BloccoDuro>
-            <Text style={styles.etichettaBarra}>VOCE</Text>
-          </View>
-          <Pressable style={styles.vocetaBarra} onPress={() => router.push('/gruppi')}>
-            <Feather name="users" size={20} color={colori.scuro} />
+            <Text style={styles.etichettaBarra}>SCRIVI</Text>
+          </Pressable>
+          <Pressable style={styles.voceBarra} onPress={() => router.push('/gruppi')}>
+            <Feather name="users" size={17} color={colori.scuro} />
             <Text style={styles.etichettaBarra}>GRUPPI</Text>
           </Pressable>
-          <View style={styles.vocetaBarra}>
-            <Feather name="credit-card" size={20} color={colori.scuro} />
+          <View style={styles.voceBarra}>
+            <Feather name="credit-card" size={17} color={colori.scuro} />
             <Text style={styles.etichettaBarra}>SALDI</Text>
           </View>
         </View>
@@ -311,8 +303,8 @@ const styles = StyleSheet.create({
   },
   contenuto: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    gap: 16,
+    paddingHorizontal: 16,
+    gap: 13,
   },
   header: {
     flexDirection: 'row',
@@ -322,16 +314,26 @@ const styles = StyleSheet.create({
   marchioRiga: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
-  logoQuadrato: {
-    width: 40,
-    height: 40,
+  logoVassoio: {
+    width: 28,
+    height: 28,
+    gap: 1.5,
+    overflow: 'hidden',
+  },
+  logoRiga: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 1.5,
+  },
+  logoCella: {
+    flex: 1,
   },
   marchio: {
     ...pesi.extraBold,
-    fontSize: 26,
-    letterSpacing: -0.5,
+    fontSize: 20,
+    letterSpacing: -0.4,
     color: colori.scuro,
   },
   puntoMarchio: {
@@ -340,252 +342,156 @@ const styles = StyleSheet.create({
   azioniHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 9,
   },
   bottoneEsci: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarCerchio: {
-    width: 40,
-    height: 40,
+    width: 29,
+    height: 29,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarTesto: {
     ...pesi.extraBold,
-    fontSize: 15,
+    fontSize: 12,
     color: colori.scuro,
   },
   saluto: {
     ...pesi.extraBold,
-    fontSize: 20,
-    letterSpacing: -0.2,
+    fontSize: 14.5,
+    letterSpacing: 0.1,
     color: colori.scuro,
-    textTransform: 'uppercase',
   },
-  sezioneCompartimenti: {},
-  boxCompartimenti: {
-    padding: 12,
-    paddingTop: 20,
-  },
-  rigaCard: {
+  mosaicoHome: {
     flexDirection: 'row',
-    gap: 12,
+    gap: PARETE,
   },
-  cardWrapper: {
+  colonnaLarga: {
+    flex: 1.06,
+  },
+  colonnaStretta: {
     flex: 1,
+    gap: PARETE,
   },
-  card: {
-    minHeight: 168,
-    padding: 12,
-    justifyContent: 'space-between',
-  },
-  intestazioneCard: {
+  rigaScrivi: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: 6,
-    borderBottomWidth: 2,
-    borderBottomColor: colori.scuro,
+    gap: 9,
+    flexShrink: 1,
   },
-  etichettaCard: {
-    ...pesi.extraBold,
-    fontSize: 11,
-    color: colori.scuro,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  pallino: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 1.5,
+  badgeScrivi: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    borderWidth: 2,
     borderColor: colori.scuro,
-  },
-  caricamentoCard: {
-    marginTop: 20,
-  },
-  corpoCardCentrato: {
-    marginTop: 14,
+    backgroundColor: colori.panna,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  statoPersonale: {
-    ...pesi.extraBold,
-    fontSize: 16,
-    color: colori.scuro,
-  },
-  statoPersonaleSecondario: {
-    ...pesi.bold,
-    fontSize: 13,
-    color: colori.grigioTesto,
-    marginTop: 2,
-  },
-  numeroGruppi: {
-    ...pesi.extraBold,
-    fontSize: 32,
-    color: colori.scuro,
-    lineHeight: 34,
-  },
-  etichettaGruppiAttivi: {
+  nomeScrivi: {
     ...pesi.extraBold,
     fontSize: 9,
-    color: colori.corallo,
+    lineHeight: 13,
+    letterSpacing: 1.17,
     textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    marginTop: 2,
+    color: colori.scuro,
+    flexShrink: 1,
   },
-  nomeGruppo: {
-    ...pesi.bold,
-    fontSize: 10,
-    color: colori.grigioTesto,
-    marginTop: 3,
-    maxWidth: '100%',
+  feed: {
+    borderRadius: 18 - PARETE,
+    overflow: 'hidden',
+    backgroundColor: colori.scuro,
   },
-  pieCard: {
+  righeFeed: {
+    gap: 2,
+    backgroundColor: colori.scuro,
+  },
+  rigaFeed: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 4,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E0D6',
+    gap: 9,
+    backgroundColor: colori.panna,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
   },
-  linkCard: {
-    ...pesi.extraBold,
-    fontSize: 11,
-    color: colori.scuro,
-  },
-  frecciaCard: {
-    ...pesi.bold,
-    fontSize: 12,
-    color: colori.scuro,
-  },
-  sezioneNotifiche: {
-    gap: 8,
-  },
-  intestazioneNotifiche: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  rigaTitoloNotifiche: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  titoloSezione: {
-    ...pesi.extraBold,
-    fontSize: 14,
-    color: colori.scuro,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
-  badgeNonLette: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  testoBadgeNonLette: {
-    ...pesi.extraBold,
-    fontSize: 9,
-    color: '#fff',
-  },
-  linkTutte: {
-    ...pesi.extraBold,
-    fontSize: 11,
-    color: colori.scuro,
-    textTransform: 'uppercase',
-  },
-  nessunaNotifica: {
-    fontSize: 13,
-    color: colori.grigioTesto,
-    textAlign: 'center',
-    paddingVertical: 12,
-  },
-  boxNotifiche: {
-    padding: 12,
-    gap: 10,
-  },
-  notificaSfumata: {
-    opacity: 0.35,
-  },
-  rigaNotifica: {
-    padding: 10,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-  iconaNotifica: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+  segnoFeed: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
     borderWidth: 2,
     borderColor: colori.scuro,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  contenutoNotifica: {
+  testoFeed: {
     flex: 1,
     minWidth: 0,
   },
-  rigaMetaNotifica: {
+  metaFeed: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
   },
-  badgeTipo: {
+  etichettaFeed: {
     ...pesi.extraBold,
-    fontSize: 9,
-    color: colori.scuro,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: colori.scuro,
+    fontSize: 7.5,
+    letterSpacing: 0.75,
     textTransform: 'uppercase',
+    color: colori.soft,
   },
-  tempoNotifica: {
-    ...pesi.bold,
-    fontSize: 10,
-    color: colori.grigioTesto,
-  },
-  testoNotifica: {
+  titoloFeed: {
     ...pesi.extraBold,
-    fontSize: 13,
+    fontSize: 10.5,
     color: colori.scuro,
-    marginTop: 3,
-  },
-  bottoneVediTutte: {
     marginTop: 2,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colori.scuro,
-    backgroundColor: '#fff',
+  },
+  ctaFeed: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 7,
+    backgroundColor: colori.scuro,
+    padding: 9,
   },
-  testoVediTutte: {
+  testoCtaFeed: {
     ...pesi.extraBold,
-    fontSize: 12,
-    color: colori.scuro,
+    fontSize: 8.5,
+    letterSpacing: 1.3,
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    color: colori.crema,
   },
-  frecciaVediTutte: {
+  contatoreFeed: {
     ...pesi.extraBold,
-    fontSize: 14,
+    fontSize: 8.5,
+    letterSpacing: 0.5,
     color: colori.scuro,
+    backgroundColor: colori.oro,
+    borderRadius: 3,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    overflow: 'hidden',
+  },
+  feedVuoto: {
+    backgroundColor: colori.panna,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+  },
+  testoFeedVuoto: {
+    ...pesi.bold,
+    fontSize: 10.5,
+    color: colori.soft,
   },
   /**
    * HOME è mostrata attiva per via statica (siamo sempre su questa
-   * schermata). PERSONALE e GRUPPI portano alle rispettive schermate;
-   * VOCE e SALDI restano solo grafica, non esiste ancora una schermata
-   * per loro.
+   * schermata). SALDI resta solo grafica: non esiste ancora una
+   * schermata per lei.
    */
   barraInferiore: {
     position: 'absolute',
@@ -595,41 +501,37 @@ const styles = StyleSheet.create({
     backgroundColor: colori.crema,
     borderTopWidth: 2.5,
     borderTopColor: colori.scuro,
-    paddingTop: 8,
-    paddingHorizontal: 12,
+    paddingTop: 7,
+    paddingHorizontal: 11,
   },
   vociBarra: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
   },
-  vocetaBarra: {
+  voceBarra: {
+    width: 47,
     alignItems: 'center',
     gap: 4,
-    minWidth: 48,
   },
   etichettaBarra: {
     ...pesi.extraBold,
-    fontSize: 8.5,
+    fontSize: 6.8,
+    letterSpacing: 0.55,
     color: colori.scuro,
-    letterSpacing: 0.2,
   },
-  iconaHomeAttiva: {
-    width: 40,
-    height: 28,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: colori.scuro,
-    backgroundColor: colori.oro,
+  chipAttivo: {
+    width: 34,
+    height: 23,
     alignItems: 'center',
     justifyContent: 'center',
   },
   voceCentrale: {
-    marginTop: -16,
+    marginTop: -15,
   },
-  bottoneVoce: {
-    width: 52,
-    height: 52,
+  bottoneScrivi: {
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
