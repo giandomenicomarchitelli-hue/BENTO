@@ -7,6 +7,10 @@ import { coloriNB, pesiNB } from '@/theme/neoBrutalista';
 /** Lo spessore della parete fra due scomparti. È nero perché È il vassoio. */
 export const PARETE = 2.5;
 
+/** Raggio esterno del vassoio. L'interno deve togliere il bordo, o gli
+ *  angoli degli scomparti sbucano fuori dalla curva. */
+const RAGGIO = 26;
+
 /**
  * Il vassoio: un contenitore nero unico che tiene gli scomparti, al posto
  * di tante card separate ognuna con la sua ombra.
@@ -39,13 +43,13 @@ export function Vassoio({
       style={style}
       offset={5}
       colore={coloriNB.scuro}
-      raggio={20}
+      raggio={RAGGIO}
       contenutoStyle={styles.interno}
     >
       {etichetta !== undefined && (
         <View style={styles.fascia}>
           {iconaEtichetta !== undefined && (
-            <Feather name={iconaEtichetta} size={11} color={coloriNB.crema} />
+            <Feather name={iconaEtichetta} size={14} color={coloriNB.crema} />
           )}
           <Text style={styles.testoFascia}>{etichetta}</Text>
         </View>
@@ -57,24 +61,22 @@ export function Vassoio({
 
 const styles = StyleSheet.create({
   interno: {
-    // Raggio interno = raggio esterno meno il bordo, altrimenti gli angoli
-    // degli scomparti sbucano fuori dalla curva del vassoio.
-    borderRadius: 20 - PARETE,
+    borderRadius: RAGGIO - PARETE,
     overflow: 'hidden',
     backgroundColor: coloriNB.scuro,
   },
   fascia: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 11,
-    paddingTop: 7,
-    paddingBottom: 8,
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingTop: 9,
+    paddingBottom: 10,
   },
   testoFascia: {
     ...pesiNB.extraBold,
-    fontSize: 8.5,
-    letterSpacing: 1.3,
+    fontSize: 11,
+    letterSpacing: 1.7,
     textTransform: 'uppercase',
     color: coloriNB.crema,
   },

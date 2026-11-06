@@ -87,7 +87,7 @@ export function Scomparto({
               {nome !== undefined && (
                 <View style={styles.testa}>
                   <Text style={styles.nome}>{nome}</Text>
-                  {icona !== undefined && <Feather name={icona} size={13} color={coloriNB.scuro} />}
+                  {icona !== undefined && <Feather name={icona} size={17} color={coloriNB.scuro} />}
                 </View>
               )}
               <View>{children}</View>
@@ -95,7 +95,7 @@ export function Scomparto({
           )}
           <View style={styles.azione}>
             <Text style={styles.testoAzione}>{azione}</Text>
-            <Feather name="arrow-right" size={11} color={coloriNB.scuro} />
+            <Feather name="arrow-right" size={14} color={coloriNB.scuro} />
           </View>
         </Animated.View>
       </Pressable>
@@ -126,7 +126,7 @@ export function CifraScomparto({
 
 const styles = StyleSheet.create({
   superficie: {
-    minHeight: 76,
+    minHeight: 99,
   },
   superficieOrizzontale: {
     minHeight: 0,
@@ -136,17 +136,17 @@ const styles = StyleSheet.create({
   },
   corpo: {
     flex: 1,
-    paddingTop: 10,
-    paddingHorizontal: 11,
-    paddingBottom: 9,
+    paddingTop: 13,
+    paddingHorizontal: 14,
+    paddingBottom: 12,
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 10,
   },
   corpoOrizzontale: {
     flex: 1,
-    paddingTop: 10,
-    paddingHorizontal: 11,
-    paddingBottom: 9,
+    paddingTop: 13,
+    paddingHorizontal: 14,
+    paddingBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -156,12 +156,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 6,
+    gap: 8,
   },
   nome: {
     ...pesiNB.extraBold,
-    fontSize: 9,
-    letterSpacing: 1.17,
+    fontSize: 11.5,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
     color: coloriNB.scuro,
   },
@@ -172,38 +172,38 @@ const styles = StyleSheet.create({
    */
   cifra: {
     ...pesiNB.extraBold,
-    fontSize: 44,
-    lineHeight: 35,
-    letterSpacing: -2,
+    fontSize: 57,
+    lineHeight: 46,
+    letterSpacing: -2.6,
     color: coloriNB.scuro,
     fontVariant: ['tabular-nums'],
   },
   unita: {
     ...pesiNB.extraBold,
-    fontSize: 9.5,
-    letterSpacing: 0.95,
+    fontSize: 12.5,
+    letterSpacing: 1.25,
     textTransform: 'uppercase',
     color: coloriNB.scuro,
-    marginTop: 6,
+    marginTop: 8,
   },
   unitaSenzaCifra: {
     marginTop: 0,
   },
   dettaglio: {
     ...pesiNB.bold,
-    fontSize: 9.5,
+    fontSize: 12.5,
     color: coloriNB.soft,
-    marginTop: 4,
+    marginTop: 5,
   },
   azione: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
   testoAzione: {
     ...pesiNB.extraBold,
-    fontSize: 8.5,
-    letterSpacing: 0.85,
+    fontSize: 11,
+    letterSpacing: 1.1,
     textTransform: 'uppercase',
     color: coloriNB.scuro,
   },

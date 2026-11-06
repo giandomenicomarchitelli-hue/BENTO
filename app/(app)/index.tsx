@@ -97,7 +97,7 @@ export default function Homepage() {
             <BloccoDuro
               offset={2}
               colore={colori.scuro}
-              raggio={7}
+              raggio={9}
               contenutoStyle={styles.logoVassoio}
             >
               <View style={styles.logoRiga}>
@@ -115,7 +115,7 @@ export default function Homepage() {
           </View>
           <View style={styles.azioniHeader}>
             <Pressable onPress={() => esci()} hitSlop={8} style={styles.bottoneEsci}>
-              <Feather name="log-out" size={17} color={colori.scuro} />
+              <Feather name="log-out" size={21} color={colori.scuro} />
             </Pressable>
             <Pressable onPress={() => router.push('/profilo')}>
               <BloccoDuro
@@ -187,7 +187,7 @@ export default function Homepage() {
               >
                 <View style={styles.rigaScrivi}>
                   <View style={styles.badgeScrivi}>
-                    <Feather name="edit-3" size={16} color={colori.scuro} />
+                    <Feather name="edit-3" size={20} color={colori.scuro} />
                   </View>
                   <Text style={styles.nomeScrivi}>Scrivi cosa{'\n'}hai fatto</Text>
                 </View>
@@ -198,7 +198,7 @@ export default function Homepage() {
 
         {/* Feed appiattito: le notifiche vivono nelle pareti del loro
             contenitore, come gli scomparti. Nessuna card dentro la card. */}
-        <BloccoDuro offset={4} colore={colori.scuro} raggio={18} contenutoStyle={styles.feed}>
+        <BloccoDuro offset={4} colore={colori.scuro} raggio={23} contenutoStyle={styles.feed}>
           {notificheInCaricamento ? (
             <View style={styles.feedVuoto}>
               <ActivityIndicator color={colori.scuro} />
@@ -215,7 +215,7 @@ export default function Homepage() {
                   return (
                     <View key={notifica.id} style={styles.rigaFeed}>
                       <View style={[styles.segnoFeed, { backgroundColor: colore }]}>
-                        <Feather name={icona} size={12} color={colori.scuro} />
+                        <Feather name={icona} size={15} color={colori.scuro} />
                       </View>
                       <View style={styles.testoFeed}>
                         <View style={styles.metaFeed}>
@@ -250,15 +250,15 @@ export default function Homepage() {
             <BloccoDuro
               offset={1.5}
               colore={colori.menta}
-              raggio={7}
+              raggio={9}
               contenutoStyle={styles.chipAttivo}
             >
-              <Feather name="home" size={13} color={colori.scuro} />
+              <Feather name="home" size={16} color={colori.scuro} />
             </BloccoDuro>
             <Text style={styles.etichettaBarra}>HOME</Text>
           </View>
           <Pressable style={styles.voceBarra} onPress={() => router.push('/personale')}>
-            <Feather name="user" size={17} color={colori.scuro} />
+            <Feather name="user" size={21} color={colori.scuro} />
             <Text style={styles.etichettaBarra}>PERSONALE</Text>
           </Pressable>
           <Pressable
@@ -271,16 +271,16 @@ export default function Homepage() {
               raggio={999}
               contenutoStyle={styles.bottoneScrivi}
             >
-              <Feather name="edit-3" size={18} color="#fff" />
+              <Feather name="edit-3" size={22} color="#fff" />
             </BloccoDuro>
             <Text style={styles.etichettaBarra}>SCRIVI</Text>
           </Pressable>
           <Pressable style={styles.voceBarra} onPress={() => router.push('/gruppi')}>
-            <Feather name="users" size={17} color={colori.scuro} />
+            <Feather name="users" size={21} color={colori.scuro} />
             <Text style={styles.etichettaBarra}>GRUPPI</Text>
           </Pressable>
           <View style={styles.voceBarra}>
-            <Feather name="credit-card" size={17} color={colori.scuro} />
+            <Feather name="credit-card" size={21} color={colori.scuro} />
             <Text style={styles.etichettaBarra}>SALDI</Text>
           </View>
         </View>
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
   contenuto: {
     flexGrow: 1,
     paddingHorizontal: 16,
-    gap: 13,
+    gap: 16,
   },
   header: {
     flexDirection: 'row',
@@ -314,26 +314,26 @@ const styles = StyleSheet.create({
   marchioRiga: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   logoVassoio: {
-    width: 28,
-    height: 28,
-    gap: 1.5,
+    width: 36,
+    height: 36,
+    gap: 2,
     overflow: 'hidden',
   },
   logoRiga: {
     flex: 1,
     flexDirection: 'row',
-    gap: 1.5,
+    gap: 2,
   },
   logoCella: {
     flex: 1,
   },
   marchio: {
     ...pesi.extraBold,
-    fontSize: 20,
-    letterSpacing: -0.4,
+    fontSize: 25,
+    letterSpacing: -0.5,
     color: colori.scuro,
   },
   puntoMarchio: {
@@ -342,28 +342,28 @@ const styles = StyleSheet.create({
   azioniHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 9,
+    gap: 11,
   },
   bottoneEsci: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarCerchio: {
-    width: 29,
-    height: 29,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarTesto: {
     ...pesi.extraBold,
-    fontSize: 12,
+    fontSize: 15,
     color: colori.scuro,
   },
   saluto: {
     ...pesi.extraBold,
-    fontSize: 14.5,
+    fontSize: 18,
     letterSpacing: 0.1,
     color: colori.scuro,
   },
@@ -381,13 +381,13 @@ const styles = StyleSheet.create({
   rigaScrivi: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 9,
+    gap: 11,
     flexShrink: 1,
   },
   badgeScrivi: {
-    width: 32,
-    height: 32,
-    borderRadius: 9,
+    width: 40,
+    height: 40,
+    borderRadius: 11,
     borderWidth: 2,
     borderColor: colori.scuro,
     backgroundColor: colori.panna,
@@ -396,15 +396,15 @@ const styles = StyleSheet.create({
   },
   nomeScrivi: {
     ...pesi.extraBold,
-    fontSize: 9,
-    lineHeight: 13,
-    letterSpacing: 1.17,
+    fontSize: 11,
+    lineHeight: 15,
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
     color: colori.scuro,
     flexShrink: 1,
   },
   feed: {
-    borderRadius: 18 - PARETE,
+    borderRadius: 23 - PARETE,
     overflow: 'hidden',
     backgroundColor: colori.scuro,
   },
@@ -415,15 +415,15 @@ const styles = StyleSheet.create({
   rigaFeed: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 9,
+    gap: 11,
     backgroundColor: colori.panna,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 13,
   },
   segnoFeed: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
+    width: 30,
+    height: 30,
+    borderRadius: 8,
     borderWidth: 2,
     borderColor: colori.scuro,
     alignItems: 'center',
@@ -440,52 +440,52 @@ const styles = StyleSheet.create({
   },
   etichettaFeed: {
     ...pesi.extraBold,
-    fontSize: 7.5,
-    letterSpacing: 0.75,
+    fontSize: 10,
+    letterSpacing: 1,
     textTransform: 'uppercase',
     color: colori.soft,
   },
   titoloFeed: {
     ...pesi.extraBold,
-    fontSize: 10.5,
+    fontSize: 13.5,
     color: colori.scuro,
-    marginTop: 2,
+    marginTop: 3,
   },
   ctaFeed: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 7,
+    gap: 9,
     backgroundColor: colori.scuro,
-    padding: 9,
+    padding: 12,
   },
   testoCtaFeed: {
     ...pesi.extraBold,
-    fontSize: 8.5,
-    letterSpacing: 1.3,
+    fontSize: 11,
+    letterSpacing: 1.7,
     textTransform: 'uppercase',
     color: colori.crema,
   },
   contatoreFeed: {
     ...pesi.extraBold,
-    fontSize: 8.5,
-    letterSpacing: 0.5,
+    fontSize: 11,
+    letterSpacing: 0.6,
     color: colori.scuro,
     backgroundColor: colori.oro,
-    borderRadius: 3,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     overflow: 'hidden',
   },
   feedVuoto: {
     backgroundColor: colori.panna,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
+    paddingVertical: 18,
+    paddingHorizontal: 15,
     alignItems: 'center',
   },
   testoFeedVuoto: {
     ...pesi.bold,
-    fontSize: 10.5,
+    fontSize: 13.5,
     color: colori.soft,
   },
   /**
@@ -501,8 +501,8 @@ const styles = StyleSheet.create({
     backgroundColor: colori.crema,
     borderTopWidth: 2.5,
     borderTopColor: colori.scuro,
-    paddingTop: 7,
-    paddingHorizontal: 11,
+    paddingTop: 9,
+    paddingHorizontal: 10,
   },
   vociBarra: {
     flexDirection: 'row',
@@ -510,28 +510,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   voceBarra: {
-    width: 47,
+    width: 60,
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
   etichettaBarra: {
     ...pesi.extraBold,
-    fontSize: 6.8,
-    letterSpacing: 0.55,
+    fontSize: 9,
+    letterSpacing: 0.7,
     color: colori.scuro,
   },
   chipAttivo: {
-    width: 34,
-    height: 23,
+    width: 44,
+    height: 29,
     alignItems: 'center',
     justifyContent: 'center',
   },
   voceCentrale: {
-    marginTop: -15,
+    marginTop: -18,
   },
   bottoneScrivi: {
-    width: 44,
-    height: 44,
+    width: 54,
+    height: 54,
     alignItems: 'center',
     justifyContent: 'center',
   },
