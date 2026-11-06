@@ -7,15 +7,23 @@ import { cubicBezier } from 'react-native-reanimated';
  * resta sul tema "Hybrid Liquid Glass" di theme/tokens.ts.
  */
 export const coloriNB = {
-  crema: '#F8F9FA',
-  cremaCard: '#F3EFE6',
-  scuro: '#1A1817',
+  crema: '#F7F4EC',
+  /** Riempimento chiaro degli scomparti. Più caldo del fondo, così si stacca. */
+  panna: '#FFFDF6',
+  scuro: '#161412',
   corallo: '#EE5D50',
   oro: '#FDCB4E',
   menta: '#72C4B8',
   viola: '#C4B5FD',
-  grigioTesto: '#716C65',
+  /** Testo secondario dentro uno scomparto: scuro attenuato, non grigio. */
+  soft: 'rgba(22,20,18,0.88)',
 };
+
+/**
+ * Il corallo non riempie mai uno scomparto: resta al marchio e al bottone
+ * centrale della barra. È il prezzo per avere, sulla futura schermata
+ * Saldi, un rosso che legge come "soldi in uscita" e non come "sezione".
+ */
 
 /**
  * Colori del denaro. Si usano SOLO come colore del testo su fondo chiaro,
