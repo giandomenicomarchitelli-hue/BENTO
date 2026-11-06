@@ -143,8 +143,12 @@ export default function Homepage() {
                     <ActivityIndicator color={colori.scuro} style={styles.caricamentoCard} />
                   ) : (
                     <View style={styles.corpoCardCentrato}>
-                      <Text style={styles.statoPersonale}>{liste.length} liste</Text>
-                      <Text style={styles.statoPersonaleSecondario}>{note.length} note</Text>
+                      <Text style={styles.statoPersonale}>
+                        {liste.length} {liste.length === 1 ? 'lista' : 'liste'}
+                      </Text>
+                      <Text style={styles.statoPersonaleSecondario}>
+                        {note.length} {note.length === 1 ? 'nota' : 'note'}
+                      </Text>
                     </View>
                   )}
                 </View>

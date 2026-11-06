@@ -83,9 +83,12 @@ export default function PersonaleHome() {
         </View>
         <Text style={styles.sottotitolo}>I tuoi scomparti riservati e appunti quotidiani 🔒</Text>
 
+        {/* Viola, non corallo come Home: le due schermate avevano lo stesso
+            contenitore rosso ed erano indistinguibili al primo sguardo. Il
+            viola lega anche con le card Liste/Note qui sotto. */}
         <BloccoDuro
           offset={4}
-          gradiente={['#C83528', '#BD3125']}
+          gradiente={['#8E6FE6', '#6B46D9']}
           raggio={28}
           contenutoStyle={styles.boxCompartimenti}
         >
@@ -109,7 +112,7 @@ export default function PersonaleHome() {
                   <View style={styles.corpoCardCentrato}>
                     <Text style={styles.numeroCard}>{liste.length}</Text>
                     <Text style={[styles.etichettaCardSecondaria, { color: colori.oro }]}>
-                      LISTE ATTIVE
+                      {liste.length === 1 ? 'LISTA ATTIVA' : 'LISTE ATTIVE'}
                     </Text>
                   </View>
                 )}
@@ -139,7 +142,7 @@ export default function PersonaleHome() {
                   <View style={styles.corpoCardCentrato}>
                     <Text style={styles.numeroCard}>{note.length}</Text>
                     <Text style={[styles.etichettaCardSecondaria, { color: '#7C3AED' }]}>
-                      NOTE SALVATE
+                      {note.length === 1 ? 'NOTA SALVATA' : 'NOTE SALVATE'}
                     </Text>
                   </View>
                 )}

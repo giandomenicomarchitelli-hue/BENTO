@@ -18,6 +18,19 @@ export const coloriNB = {
 };
 
 /**
+ * Colori del denaro. Si usano SOLO come colore del testo su fondo chiaro,
+ * mai come riempimento di una superficie - altrimenti un importo si
+ * confonde con una sezione. Entrambi sopra 4,5:1 sul fondo panna.
+ *
+ * Decisi ora, prima di rifare la schermata Saldi che li userà: è più
+ * facile fissare la semantica adesso che dopo aver scritto la schermata.
+ */
+export const soldiNB = {
+  credito: '#1E7A4F',
+  debito: '#C53A2B',
+};
+
+/**
  * Nessuna variante 900/Black esiste per Plus Jakarta Sans (vedi
  * useFontBento.ts) - 800 ExtraBold è il peso massimo reale caricato.
  */
