@@ -1,16 +1,11 @@
 import { Feather } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BloccoDuro } from '@/components/BloccoDuro';
+import { CifraScomparto, Scomparto } from '@/components/Scomparto';
+import { PARETE, Vassoio } from '@/components/Vassoio';
 import { useEventiPersonali } from '@/hooks/useEventiPersonali';
 import { useFontBento } from '@/hooks/useFontBento';
 import { useListePersonali } from '@/hooks/useListePersonali';
@@ -65,156 +60,145 @@ export default function PersonaleHome() {
       >
         <View style={styles.header}>
           <View style={styles.marchioRiga}>
-            <BloccoDuro offset={2} colore={colori.corallo} raggio={12} contenutoStyle={styles.logoQuadrato} />
+            <BloccoDuro
+              offset={2}
+              colore={colori.scuro}
+              raggio={7}
+              contenutoStyle={styles.logoVassoio}
+            >
+              <View style={styles.logoRiga}>
+                <View style={[styles.logoCella, { backgroundColor: colori.oro }]} />
+                <View style={[styles.logoCella, { backgroundColor: colori.menta }]} />
+              </View>
+              <View style={styles.logoRiga}>
+                <View style={[styles.logoCella, { backgroundColor: colori.viola }]} />
+                <View style={[styles.logoCella, { backgroundColor: colori.corallo }]} />
+              </View>
+            </BloccoDuro>
             <Text style={styles.marchio}>
               BENTO<Text style={styles.puntoMarchio}>.</Text>
             </Text>
           </View>
-          <BloccoDuro offset={2} colore="#fff" raggio={999} contenutoStyle={styles.avatarCerchio}>
-            <Text style={styles.avatarTesto}>{inizialeNome}</Text>
-          </BloccoDuro>
-        </View>
-
-        <View style={styles.rigaTitolo}>
-          <Text style={styles.titolo}>PERSONALE</Text>
-          <BloccoDuro offset={1.5} colore={colori.scuro} raggio={999} bordo={false} contenutoStyle={styles.badgePrivato}>
-            <Text style={styles.testoBadgePrivato}>PRIVATO</Text>
-          </BloccoDuro>
-        </View>
-        <Text style={styles.sottotitolo}>I tuoi scomparti riservati e appunti quotidiani 🔒</Text>
-
-        {/* Viola, non corallo come Home: le due schermate avevano lo stesso
-            contenitore rosso ed erano indistinguibili al primo sguardo. Il
-            viola lega anche con le card Liste/Note qui sotto. */}
-        <BloccoDuro
-          offset={4}
-          gradiente={['#8E6FE6', '#6B46D9']}
-          raggio={28}
-          contenutoStyle={styles.boxCompartimenti}
-        >
-          <View style={styles.rigaCard}>
+          <Pressable onPress={() => router.push('/profilo')}>
             <BloccoDuro
-              style={styles.cardWrapper}
-              onPress={() => router.push('/personale/liste')}
-              offset={3}
-              colore="#fff"
-              raggio={20}
-              contenutoStyle={styles.card}
+              offset={2}
+              colore={colori.panna}
+              raggio={999}
+              contenutoStyle={styles.avatarCerchio}
             >
-              <View>
-                <View style={styles.intestazioneCard}>
-                  <Text style={styles.etichettaCard}>LISTE</Text>
-                  <View style={[styles.pallino, { backgroundColor: colori.oro }]} />
-                </View>
+              <Text style={styles.avatarTesto}>{inizialeNome}</Text>
+            </BloccoDuro>
+          </Pressable>
+        </View>
+
+        <Text style={styles.titolo}>Personale</Text>
+
+        {/* La fascia del vassoio dice l'unica cosa che conta qui: chi può
+            vedere questa roba. Per questo il sottotitolo di prima è
+            sparito - diceva la stessa cosa, due volte. */}
+        <Vassoio etichetta="Solo tu puoi vederli" iconaEtichetta="lock">
+          <View style={styles.mosaicoPersonale}>
+            <View style={styles.rigaAlta}>
+              <Scomparto
+                style={styles.colonnaLarga}
+                nome="Liste"
+                icona="list"
+                colore={colori.oro}
+                azione="Apri"
+                onPress={() => router.push('/personale/liste')}
+              >
                 {listeInCaricamento ? (
-                  <ActivityIndicator color={colori.scuro} style={styles.caricamentoCard} />
+                  <ActivityIndicator color={colori.scuro} />
                 ) : (
-                  <View style={styles.corpoCardCentrato}>
-                    <Text style={styles.numeroCard}>{liste.length}</Text>
-                    <Text style={[styles.etichettaCardSecondaria, { color: colori.oro }]}>
-                      {liste.length === 1 ? 'LISTA ATTIVA' : 'LISTE ATTIVE'}
-                    </Text>
-                  </View>
+                  <CifraScomparto
+                    cifra={liste.length}
+                    unita={liste.length === 1 ? 'lista attiva' : 'liste attive'}
+                  />
                 )}
-              </View>
-              <View style={styles.pieCard}>
-                <Text style={styles.linkCard}>Apri</Text>
-                <Text style={styles.frecciaCard}>→</Text>
-              </View>
-            </BloccoDuro>
+              </Scomparto>
 
-            <BloccoDuro
-              style={styles.cardWrapper}
-              onPress={() => router.push('/personale/note')}
-              offset={3}
-              colore={colori.viola}
-              raggio={20}
-              contenutoStyle={styles.card}
-            >
-              <View>
-                <View style={styles.intestazioneCard}>
-                  <Text style={styles.etichettaCard}>NOTE</Text>
-                  <View style={[styles.pallino, { backgroundColor: '#7C3AED' }]} />
-                </View>
+              <Scomparto
+                style={styles.colonnaStretta}
+                nome="Note"
+                icona="edit-3"
+                colore={colori.viola}
+                azione="Apri"
+                onPress={() => router.push('/personale/note')}
+              >
                 {noteInCaricamento ? (
-                  <ActivityIndicator color={colori.scuro} style={styles.caricamentoCard} />
+                  <ActivityIndicator color={colori.scuro} />
                 ) : (
-                  <View style={styles.corpoCardCentrato}>
-                    <Text style={styles.numeroCard}>{note.length}</Text>
-                    <Text style={[styles.etichettaCardSecondaria, { color: '#7C3AED' }]}>
-                      {note.length === 1 ? 'NOTA SALVATA' : 'NOTE SALVATE'}
-                    </Text>
-                  </View>
+                  <CifraScomparto
+                    cifra={note.length}
+                    unita={note.length === 1 ? 'nota salvata' : 'note salvate'}
+                  />
                 )}
-              </View>
-              <View style={styles.pieCard}>
-                <Text style={styles.linkCard}>Apri</Text>
-                <Text style={styles.frecciaCard}>→</Text>
-              </View>
-            </BloccoDuro>
-          </View>
+              </Scomparto>
+            </View>
 
-          <BloccoDuro
-            onPress={() => router.push('/personale/calendario')}
-            offset={3}
-            colore={colori.menta}
-            raggio={20}
-            contenutoStyle={styles.cardCalendario}
-          >
-            <View style={styles.rigaCalendarioSinistra}>
-              <View style={styles.iconaCalendario}>
-                <Feather name="calendar" size={20} color={colori.scuro} />
-              </View>
-              <View style={styles.testiCalendario}>
-                <View style={styles.rigaTitoloCalendario}>
-                  <Text style={styles.etichettaCard}>CALENDARIO</Text>
-                  {eventiOggi.length > 0 && (
-                    <View style={styles.badgeOggi}>
-                      <Text style={styles.testoBadgeOggi}>OGGI</Text>
-                    </View>
+            <Scomparto
+              colore={colori.panna}
+              azione="Apri"
+              orizzontale
+              onPress={() => router.push('/personale/calendario')}
+            >
+              <View style={styles.rigaCalendario}>
+                <View style={styles.chipCalendario}>
+                  <Feather name="calendar" size={16} color={colori.scuro} />
+                </View>
+                <View style={styles.testiCalendario}>
+                  <Text style={styles.nomeCalendario}>Calendario</Text>
+                  {eventiInCaricamento ? (
+                    <ActivityIndicator color={colori.scuro} style={styles.caricamentoCalendario} />
+                  ) : (
+                    <Text style={styles.metaCalendario} numberOfLines={1}>
+                      {sommarioCalendario}
+                    </Text>
                   )}
                 </View>
-                {eventiInCaricamento ? (
-                  <ActivityIndicator color={colori.scuro} style={styles.caricamentoCalendario} />
-                ) : (
-                  <Text style={styles.statoCalendario} numberOfLines={1}>
-                    {sommarioCalendario}
-                  </Text>
-                )}
               </View>
-            </View>
-            <View style={styles.pieCardCalendario}>
-              <Text style={styles.linkCard}>Apri</Text>
-              <Text style={styles.frecciaCard}>→</Text>
-            </View>
-          </BloccoDuro>
-        </BloccoDuro>
+            </Scomparto>
+          </View>
+        </Vassoio>
       </ScrollView>
 
       <View style={[styles.barraInferiore, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
         <View style={styles.vociBarra}>
-          <Pressable style={styles.vocetaBarra} onPress={() => router.push('/')}>
-            <Feather name="home" size={20} color={colori.scuro} />
+          <Pressable style={styles.voceBarra} onPress={() => router.push('/')}>
+            <Feather name="home" size={17} color={colori.scuro} />
             <Text style={styles.etichettaBarra}>HOME</Text>
           </Pressable>
-          <View style={styles.vocetaBarra}>
-            <View style={styles.iconaPersonaleAttiva}>
-              <Feather name="user" size={16} color={colori.scuro} />
-            </View>
+          <View style={styles.voceBarra}>
+            <BloccoDuro
+              offset={1.5}
+              colore={colori.viola}
+              raggio={7}
+              contenutoStyle={styles.chipAttivo}
+            >
+              <Feather name="user" size={13} color={colori.scuro} />
+            </BloccoDuro>
             <Text style={styles.etichettaBarra}>PERSONALE</Text>
           </View>
-          <View style={[styles.vocetaBarra, styles.voceCentrale]}>
-            <BloccoDuro offset={2.5} colore={colori.corallo} raggio={999} contenutoStyle={styles.bottoneVoce}>
-              <Feather name="mic" size={22} color="#fff" />
+          <Pressable
+            style={[styles.voceBarra, styles.voceCentrale]}
+            onPress={() => router.push('/assistente')}
+          >
+            <BloccoDuro
+              offset={2.5}
+              colore={colori.corallo}
+              raggio={999}
+              contenutoStyle={styles.bottoneScrivi}
+            >
+              <Feather name="edit-3" size={18} color="#fff" />
             </BloccoDuro>
-            <Text style={styles.etichettaBarra}>VOCE</Text>
-          </View>
-          <Pressable style={styles.vocetaBarra} onPress={() => router.push('/gruppi')}>
-            <Feather name="users" size={20} color={colori.scuro} />
+            <Text style={styles.etichettaBarra}>SCRIVI</Text>
+          </Pressable>
+          <Pressable style={styles.voceBarra} onPress={() => router.push('/gruppi')}>
+            <Feather name="users" size={17} color={colori.scuro} />
             <Text style={styles.etichettaBarra}>GRUPPI</Text>
           </Pressable>
-          <View style={styles.vocetaBarra}>
-            <Feather name="credit-card" size={20} color={colori.scuro} />
+          <View style={styles.voceBarra}>
+            <Feather name="credit-card" size={17} color={colori.scuro} />
             <Text style={styles.etichettaBarra}>SALDI</Text>
           </View>
         </View>
@@ -237,8 +221,8 @@ const styles = StyleSheet.create({
   },
   contenuto: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    gap: 16,
+    paddingHorizontal: 16,
+    gap: 13,
   },
   header: {
     flexDirection: 'row',
@@ -248,201 +232,104 @@ const styles = StyleSheet.create({
   marchioRiga: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
-  logoQuadrato: {
-    width: 40,
-    height: 40,
+  logoVassoio: {
+    width: 28,
+    height: 28,
+    gap: 1.5,
+    overflow: 'hidden',
+  },
+  logoRiga: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 1.5,
+  },
+  logoCella: {
+    flex: 1,
   },
   marchio: {
     ...pesi.extraBold,
-    fontSize: 26,
-    letterSpacing: -0.5,
+    fontSize: 20,
+    letterSpacing: -0.4,
     color: colori.scuro,
   },
   puntoMarchio: {
     color: colori.corallo,
   },
   avatarCerchio: {
-    width: 40,
-    height: 40,
+    width: 29,
+    height: 29,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarTesto: {
     ...pesi.extraBold,
-    fontSize: 15,
-    color: colori.scuro,
-  },
-  rigaTitolo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  titolo: {
-    ...pesi.extraBold,
-    fontSize: 28,
-    letterSpacing: -0.5,
-    color: colori.scuro,
-    textTransform: 'uppercase',
-  },
-  badgePrivato: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  testoBadgePrivato: {
-    ...pesi.extraBold,
-    fontSize: 10,
-    color: colori.oro,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  sottotitolo: {
-    ...pesi.bold,
-    fontSize: 13,
-    color: colori.grigioTesto,
-    marginTop: -8,
-  },
-  boxCompartimenti: {
-    padding: 12,
-    paddingTop: 20,
-    gap: 12,
-  },
-  rigaCard: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  cardWrapper: {
-    flex: 1,
-  },
-  card: {
-    minHeight: 168,
-    padding: 12,
-    justifyContent: 'space-between',
-  },
-  intestazioneCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: 6,
-    borderBottomWidth: 2,
-    borderBottomColor: colori.scuro,
-  },
-  pallino: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 1.5,
-    borderColor: colori.scuro,
-  },
-  etichettaCard: {
-    ...pesi.extraBold,
-    fontSize: 11,
-    color: colori.scuro,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  caricamentoCard: {
-    marginTop: 20,
-  },
-  corpoCardCentrato: {
-    marginTop: 14,
-    alignItems: 'center',
-  },
-  numeroCard: {
-    ...pesi.extraBold,
-    fontSize: 32,
-    color: colori.scuro,
-    lineHeight: 34,
-  },
-  etichettaCardSecondaria: {
-    ...pesi.extraBold,
-    fontSize: 9,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    marginTop: 2,
-  },
-  pieCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 4,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E0D6',
-  },
-  linkCard: {
-    ...pesi.extraBold,
-    fontSize: 11,
-    color: colori.scuro,
-    textTransform: 'uppercase',
-  },
-  frecciaCard: {
-    ...pesi.bold,
     fontSize: 12,
     color: colori.scuro,
   },
-  cardCalendario: {
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  titolo: {
+    ...pesi.extraBold,
+    fontSize: 26,
+    lineHeight: 25,
+    letterSpacing: -0.9,
+    textTransform: 'uppercase',
+    color: colori.scuro,
   },
-  rigaCalendarioSinistra: {
+  mosaicoPersonale: {
+    gap: PARETE,
+  },
+  rigaAlta: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    gap: PARETE,
+  },
+  colonnaLarga: {
+    flex: 1.1,
+  },
+  colonnaStretta: {
     flex: 1,
-    minWidth: 0,
   },
-  iconaCalendario: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+  rigaCalendario: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flexShrink: 1,
+  },
+  chipCalendario: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     borderWidth: 2,
     borderColor: colori.scuro,
-    backgroundColor: '#fff',
+    backgroundColor: colori.menta,
     alignItems: 'center',
     justifyContent: 'center',
   },
   testiCalendario: {
-    flex: 1,
-    minWidth: 0,
+    flexShrink: 1,
   },
-  rigaTitoloCalendario: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  badgeOggi: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colori.scuro,
-    backgroundColor: '#fff',
-  },
-  testoBadgeOggi: {
+  nomeCalendario: {
     ...pesi.extraBold,
     fontSize: 9,
+    letterSpacing: 1.17,
+    textTransform: 'uppercase',
     color: colori.scuro,
   },
-  statoCalendario: {
+  metaCalendario: {
     ...pesi.bold,
-    fontSize: 12,
-    color: colori.scuro,
-    opacity: 0.75,
-    marginTop: 2,
+    fontSize: 9.5,
+    color: colori.soft,
+    marginTop: 4,
   },
   caricamentoCalendario: {
-    marginTop: 4,
     alignSelf: 'flex-start',
+    marginTop: 4,
   },
-  pieCardCalendario: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
+  /**
+   * PERSONALE è mostrata attiva per via statica (siamo sempre su questa
+   * schermata). SALDI resta solo grafica: non esiste ancora una
+   * schermata per lei.
+   */
   barraInferiore: {
     position: 'absolute',
     left: 0,
@@ -451,41 +338,37 @@ const styles = StyleSheet.create({
     backgroundColor: colori.crema,
     borderTopWidth: 2.5,
     borderTopColor: colori.scuro,
-    paddingTop: 8,
-    paddingHorizontal: 12,
+    paddingTop: 7,
+    paddingHorizontal: 11,
   },
   vociBarra: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
   },
-  vocetaBarra: {
+  voceBarra: {
+    width: 47,
     alignItems: 'center',
     gap: 4,
-    minWidth: 48,
   },
   etichettaBarra: {
     ...pesi.extraBold,
-    fontSize: 8.5,
+    fontSize: 6.8,
+    letterSpacing: 0.55,
     color: colori.scuro,
-    letterSpacing: 0.2,
   },
-  iconaPersonaleAttiva: {
-    width: 40,
-    height: 28,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: colori.scuro,
-    backgroundColor: colori.oro,
+  chipAttivo: {
+    width: 34,
+    height: 23,
     alignItems: 'center',
     justifyContent: 'center',
   },
   voceCentrale: {
-    marginTop: -16,
+    marginTop: -15,
   },
-  bottoneVoce: {
-    width: 52,
-    height: 52,
+  bottoneScrivi: {
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
