@@ -166,7 +166,7 @@ export default function PersonaleHome() {
         <View style={styles.vociBarra}>
           <Pressable style={styles.voceBarra} onPress={() => router.push('/')}>
             <Feather name="home" size={21} color={colori.scuro} />
-            <Text style={styles.etichettaBarra}>HOME</Text>
+            <Text style={styles.etichettaBarra} numberOfLines={1}>HOME</Text>
           </Pressable>
           <View style={styles.voceBarra}>
             <BloccoDuro
@@ -177,7 +177,7 @@ export default function PersonaleHome() {
             >
               <Feather name="user" size={16} color={colori.scuro} />
             </BloccoDuro>
-            <Text style={styles.etichettaBarra}>PERSONALE</Text>
+            <Text style={styles.etichettaBarra} numberOfLines={1}>PERSONALE</Text>
           </View>
           <Pressable
             style={[styles.voceBarra, styles.voceCentrale]}
@@ -191,15 +191,15 @@ export default function PersonaleHome() {
             >
               <Feather name="edit-3" size={22} color="#fff" />
             </BloccoDuro>
-            <Text style={styles.etichettaBarra}>SCRIVI</Text>
+            <Text style={styles.etichettaBarra} numberOfLines={1}>SCRIVI</Text>
           </Pressable>
           <Pressable style={styles.voceBarra} onPress={() => router.push('/gruppi')}>
             <Feather name="users" size={21} color={colori.scuro} />
-            <Text style={styles.etichettaBarra}>GRUPPI</Text>
+            <Text style={styles.etichettaBarra} numberOfLines={1}>GRUPPI</Text>
           </Pressable>
           <View style={styles.voceBarra}>
             <Feather name="credit-card" size={21} color={colori.scuro} />
-            <Text style={styles.etichettaBarra}>SALDI</Text>
+            <Text style={styles.etichettaBarra} numberOfLines={1}>SALDI</Text>
           </View>
         </View>
       </View>
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 2.5,
     borderTopColor: colori.scuro,
     paddingTop: 9,
-    paddingHorizontal: 10,
+    paddingHorizontal: 6,
   },
   vociBarra: {
     flexDirection: 'row',
@@ -347,14 +347,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   voceBarra: {
-    width: 60,
+    width: 66,
     alignItems: 'center',
     gap: 5,
   },
   etichettaBarra: {
     ...pesi.extraBold,
-    fontSize: 9,
-    letterSpacing: 0.7,
+    fontSize: 8.5,
+    letterSpacing: 0.4,
     color: colori.scuro,
   },
   chipAttivo: {

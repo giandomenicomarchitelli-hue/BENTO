@@ -173,7 +173,10 @@ const styles = StyleSheet.create({
   cifra: {
     ...pesiNB.extraBold,
     fontSize: 57,
-    lineHeight: 46,
+    // Mai lineHeight < fontSize: in React Native il glifo viene ritagliato
+    // dentro la riga (in CSS invece deborda, ed e' per questo che il render
+    // poteva permettersi line-height 0.8 senza tagliare il numero).
+    lineHeight: 58,
     letterSpacing: -2.6,
     color: coloriNB.scuro,
     fontVariant: ['tabular-nums'],
