@@ -16,7 +16,7 @@ type Props = {
  * Intestazione della lista della spesa: va dentro un BentoScreen con
  * `senzaIntestazione`, che copre già la safe area superiore - questo
  * componente non deve applicare di nuovo `inset.top` (stesso bug già
- * corretto in GroupHeader.tsx nella Fase 2.1).
+ * corretto altrove nella Fase 2.1).
  */
 export function ShoppingListHeader({ nomeGruppo, totale, comprati, onIndietro }: Props) {
   const percentuale = totale > 0 ? comprati / totale : 0;

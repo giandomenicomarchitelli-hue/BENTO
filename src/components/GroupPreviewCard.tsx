@@ -20,7 +20,7 @@ const perTipo: Record<Gruppo['tipo'], { icona: keyof typeof Feather.glyphMap; co
   altro: { icona: 'grid', colore: accenti.viola },
 };
 
-/** Icona e colore d'accento per il tipo di un gruppo - condivisa con GroupHeader. */
+/** Icona e colore d'accento per il tipo di un gruppo - usata anche da gruppi/index.tsx. */
 export function iconaPerTipoGruppo(tipo: Gruppo['tipo']) {
   return perTipo[tipo];
 }
