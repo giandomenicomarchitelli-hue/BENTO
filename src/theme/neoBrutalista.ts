@@ -38,6 +38,23 @@ export const soldiNB = {
   debito: '#C53A2B',
 };
 
+const ACCENTI_CICLICI = [coloriNB.oro, coloriNB.menta, coloriNB.viola, coloriNB.corallo];
+
+/**
+ * Un colore stabile per un id, scelto fra i quattro accenti. Serve dove
+ * non esiste un set fisso di "tipo" da cui derivare un colore con un
+ * significato vero (es. la barra di un impegno in calendario, a
+ * differenza del colore di una notifica): è un segno di riconoscimento
+ * a vista, non una nuova semantica da inventare.
+ */
+export function coloreCiclico(id: string): string {
+  let somma = 0;
+  for (let i = 0; i < id.length; i++) {
+    somma += id.charCodeAt(i);
+  }
+  return ACCENTI_CICLICI[somma % ACCENTI_CICLICI.length];
+}
+
 /**
  * Nessuna variante 900/Black esiste per Plus Jakarta Sans (vedi
  * useFontBento.ts) - 800 ExtraBold è il peso massimo reale caricato.

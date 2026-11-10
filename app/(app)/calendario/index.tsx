@@ -8,16 +8,15 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import type { Impegno } from '@/api/impegni';
 import { aggiungiMesi, dataLocaleISO } from '@/calcolo/ricorrenzaFaccende';
 import { BentoScreen } from '@/components/BentoScreen';
+import { BloccoDuro } from '@/components/BloccoDuro';
 import { CalendarioGriglia } from '@/components/CalendarioGriglia';
-import { GlassCard } from '@/components/GlassCard';
 import { ModificaImpegno, type ValoriImpegno } from '@/components/ModificaImpegno';
-import { SectionHeader } from '@/components/SectionHeader';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useImpegni } from '@/hooks/useImpegni';
 import { confermaAzione } from '@/lib/conferma';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
-import { bento, semantica, spaziatura, tipografia } from '@/theme/tokens';
+import { coloreCiclico, coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 /** Messaggio leggibile da un errore di rete/Supabase, senza assumere una forma precisa (stesso helper di faccende/index.tsx). */
 function messaggioErrore(errore: unknown): string {
@@ -167,7 +166,7 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   if (gruppoInCaricamento || isLoading) {
     return (
       <View style={styles.centrato}>
-        <ActivityIndicator color={bento.testoPrimario} />
+        <ActivityIndicator color={colori.scuro} />
       </View>
     );
   }
@@ -184,14 +183,18 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
       {/* A. Intestazione mese + griglia */}
       <View>
         <View style={styles.rigaMese}>
-          <Pressable onPress={() => setAnnoMeseISO(aggiungiMesi(annoMeseISO, -1))} hitSlop={8} style={styles.bottoneMese}>
-            <Feather name="chevron-left" size={22} color={bento.testoPrimario} />
+          <Pressable onPress={() => setAnnoMeseISO(aggiungiMesi(annoMeseISO, -1))} hitSlop={8}>
+            <BloccoDuro offset={2} colore={colori.panna} raggio={9} contenutoStyle={styles.bottoneMese}>
+              <Feather name="chevron-left" size={15} color={colori.scuro} />
+            </BloccoDuro>
           </Pressable>
           <Text style={styles.titoloMese}>
             {format(new Date(`${annoMeseISO}T00:00:00`), 'MMMM yyyy', { locale: it })}
           </Text>
-          <Pressable onPress={() => setAnnoMeseISO(aggiungiMesi(annoMeseISO, 1))} hitSlop={8} style={styles.bottoneMese}>
-            <Feather name="chevron-right" size={22} color={bento.testoPrimario} />
+          <Pressable onPress={() => setAnnoMeseISO(aggiungiMesi(annoMeseISO, 1))} hitSlop={8}>
+            <BloccoDuro offset={2} colore={colori.panna} raggio={9} contenutoStyle={styles.bottoneMese}>
+              <Feather name="chevron-right" size={15} color={colori.scuro} />
+            </BloccoDuro>
           </Pressable>
         </View>
 
@@ -203,94 +206,103 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
         />
       </View>
 
-      {/* B. Occorrenze del giorno selezionato */}
-      <View style={styles.sezione}>
-        <SectionHeader
-          titolo={format(new Date(`${giornoSelezionato}T00:00:00`), "d MMMM yyyy", { locale: it })}
-        />
+      {/* B. Occorrenze del giorno selezionato, appiattite come il feed di Home. */}
+      <View style={styles.sezioneLista}>
+        <Text style={styles.etichettaGiorno}>
+          {format(new Date(`${giornoSelezionato}T00:00:00`), 'EEEE d MMMM', { locale: it })}
+        </Text>
 
-        {occorrenzeDelGiorno.length === 0 ? (
-          <Text style={styles.testoStatoLista}>Nessun impegno in questo giorno.</Text>
-        ) : (
-          <View style={styles.elencoOccorrenze}>
-            {occorrenzeDelGiorno.map((occorrenza) => {
-              const impegno = impegniPerId.get(occorrenza.impegno_id);
-              const eliminandoQuesta = cancella.isPending && cancella.variables === impegno?.id;
-              const erroreEliminazione =
-                cancella.isError && cancella.variables === impegno?.id ? cancella.error : null;
+        <BloccoDuro offset={4} colore={colori.scuro} raggio={16} contenutoStyle={styles.feed}>
+          {occorrenzeDelGiorno.length === 0 ? (
+            <View style={styles.feedVuoto}>
+              <Text style={styles.testoFeedVuoto}>Nessun impegno in questo giorno.</Text>
+            </View>
+          ) : (
+            <View style={styles.righeFeed}>
+              {occorrenzeDelGiorno.map((occorrenza) => {
+                const impegno = impegniPerId.get(occorrenza.impegno_id);
+                const eliminandoQuesta = cancella.isPending && cancella.variables === impegno?.id;
+                const erroreEliminazione =
+                  cancella.isError && cancella.variables === impegno?.id ? cancella.error : null;
+                const nomeAssegnato =
+                  impegno?.assegnato_a !== null && impegno?.assegnato_a !== undefined
+                    ? membriAttivi.find((m) => m.id === impegno.assegnato_a)?.nome ?? 'Membro non più nel gruppo'
+                    : null;
 
-              return (
-                <GlassCard key={occorrenza.id} elevazione="bassa">
-                  <Text style={styles.titoloOccorrenza}>{impegno?.titolo ?? 'Impegno'}</Text>
-                  {impegno?.descrizione !== null && impegno?.descrizione !== undefined && (
-                    <Text style={styles.descrizioneOccorrenza}>{impegno.descrizione}</Text>
-                  )}
-                  <Text style={styles.oraOccorrenza}>{impegno?.ora ?? 'Tutto il giorno'}</Text>
-                  {impegno?.assegnato_a !== null && impegno?.assegnato_a !== undefined && (
-                    <Text style={styles.oraOccorrenza}>
-                      Assegnato a:{' '}
-                      {membriAttivi.find((m) => m.id === impegno.assegnato_a)?.nome ?? 'Membro non più nel gruppo'}
-                    </Text>
-                  )}
-
-                  {impegno !== undefined && (
-                    <View style={styles.rigaAzioni}>
-                      <Pressable onPress={() => apriModifica(impegno)} hitSlop={8}>
-                        <Text style={styles.testoAzione}>Modifica</Text>
-                      </Pressable>
-                      <Pressable
-                        onPress={() => chiediEliminazione(impegno)}
-                        disabled={eliminandoQuesta}
-                        hitSlop={8}
-                      >
-                        <Text style={[styles.testoAzione, styles.testoElimina]}>
-                          {eliminandoQuesta ? 'Eliminazione…' : 'Elimina'}
+                return (
+                  <View key={occorrenza.id} style={styles.rigaFeed}>
+                    <View style={[styles.barraFeed, { backgroundColor: coloreCiclico(occorrenza.impegno_id) }]} />
+                    <View style={styles.testoFeed}>
+                      <View style={styles.cimaFeed}>
+                        <Text style={styles.titoloFeed} numberOfLines={1}>
+                          {impegno?.titolo ?? 'Impegno'}
                         </Text>
-                      </Pressable>
+                        <Text style={styles.oraFeed}>{impegno?.ora ?? 'Tutto il giorno'}</Text>
+                      </View>
+                      {nomeAssegnato !== null && (
+                        <Text style={styles.metaFeed}>Assegnato a {nomeAssegnato}</Text>
+                      )}
+                      {impegno !== undefined && (
+                        <View style={styles.azioniFeed}>
+                          <Pressable onPress={() => apriModifica(impegno)} hitSlop={8}>
+                            <Text style={styles.testoAzioneFeed}>Modifica</Text>
+                          </Pressable>
+                          <Pressable
+                            onPress={() => chiediEliminazione(impegno)}
+                            disabled={eliminandoQuesta}
+                            hitSlop={8}
+                          >
+                            <Text style={[styles.testoAzioneFeed, styles.testoEliminaFeed]}>
+                              {eliminandoQuesta ? 'Eliminazione…' : 'Elimina'}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      )}
+                      {erroreEliminazione !== null && (
+                        <Text style={styles.testoErroreRiga}>{messaggioErrore(erroreEliminazione)}</Text>
+                      )}
                     </View>
-                  )}
-                  {erroreEliminazione !== null && (
-                    <Text style={styles.testoErroreRiga}>{messaggioErrore(erroreEliminazione)}</Text>
-                  )}
-                </GlassCard>
-              );
-            })}
-          </View>
-        )}
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          <Pressable
+            onPress={() => (modaleAperto !== null ? chiudiModale() : apriCrea())}
+            style={styles.ctaFeed}
+          >
+            <Feather name={modaleAperto !== null ? 'x' : 'plus'} size={13} color={colori.crema} />
+            <Text style={styles.testoCtaFeed}>
+              {modaleAperto !== null ? 'Chiudi' : 'Nuovo impegno'}
+            </Text>
+          </Pressable>
+        </BloccoDuro>
       </View>
 
-      {/* C. Nuovo impegno / modifica */}
-      <View style={styles.sezione}>
-        <SectionHeader
-          titolo="Impegni"
-          azione={{
-            etichetta: modaleAperto !== null ? 'Chiudi' : 'Nuovo impegno',
-            onPress: () => (modaleAperto !== null ? chiudiModale() : apriCrea()),
-          }}
-        />
-
-        {modaleAperto !== null && (
-          <GlassCard>
-            {/* key: ModificaImpegno legge valoriIniziali solo al mount. Senza una key
-                che cambia con il target, passare da "modifica A" a "modifica B" (o da
-                crea a modifica) senza chiudere il form riusa l'istanza e mostra ancora
-                i valori di A mentre si salva su B. */}
-            <ModificaImpegno
-              key={modaleAperto === 'modifica' ? impegnoInModifica?.id ?? 'modifica' : 'crea'}
-              valoriIniziali={valoriInizialiForm()}
-              membri={membriAttivi}
-              membroAssegnatoNonAttivo={
-                impegnoInModifica?.assegnato_a !== null && impegnoInModifica?.assegnato_a !== undefined
-                  ? membri.find((m) => m.id === impegnoInModifica.assegnato_a && m.uscito_il !== null) ?? null
-                  : null
-              }
-              salvando={salvando}
-              onSalva={onSalvaForm}
-            />
-            {erroreForm !== null && <Text style={styles.testoErrore}>{erroreForm}</Text>}
-          </GlassCard>
-        )}
-      </View>
+      {/* C. Form di creazione/modifica - chrome a parte in ModificaImpegno.tsx. */}
+      {modaleAperto !== null && (
+        <View style={styles.sezioneForm}>
+          <ModificaImpegno
+            // key: ModificaImpegno legge valoriIniziali solo al mount. Senza una key
+            // che cambia con il target, passare da "modifica A" a "modifica B" (o da
+            // crea a modifica) senza chiudere il form riusa l'istanza e mostra ancora
+            // i valori di A mentre si salva su B.
+            key={modaleAperto === 'modifica' ? impegnoInModifica?.id ?? 'modifica' : 'crea'}
+            valoriIniziali={valoriInizialiForm()}
+            membri={membriAttivi}
+            membroAssegnatoNonAttivo={
+              impegnoInModifica?.assegnato_a !== null && impegnoInModifica?.assegnato_a !== undefined
+                ? membri.find((m) => m.id === impegnoInModifica.assegnato_a && m.uscito_il !== null) ?? null
+                : null
+            }
+            salvando={salvando}
+            onSalva={onSalvaForm}
+            onAnnulla={chiudiModale}
+          />
+          {erroreForm !== null && <Text style={styles.testoErrore}>{erroreForm}</Text>}
+        </View>
+      )}
     </BentoScreen>
   );
 }
@@ -298,7 +310,7 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 const styles = StyleSheet.create({
   centrato: {
     flex: 1,
-    backgroundColor: bento.sfondo,
+    backgroundColor: colori.crema,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -306,65 +318,138 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spaziatura.sm,
+    marginBottom: 10,
   },
   bottoneMese: {
-    padding: spaziatura.xs,
+    width: 33,
+    height: 33,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   titoloMese: {
-    ...tipografia.titoloSezione,
-    color: bento.testoPrimario,
+    ...pesi.extraBold,
+    fontSize: 19,
+    letterSpacing: -0.3,
     textTransform: 'capitalize',
+    color: colori.scuro,
   },
-  sezione: {
-    gap: spaziatura.md,
+  sezioneLista: {
+    gap: 10,
+    marginTop: 16,
   },
-  testoStatoLista: {
-    fontSize: 14,
-    color: bento.testoSecondario,
-    textAlign: 'center',
-    marginTop: spaziatura.md,
-  },
-  elencoOccorrenze: {
-    gap: spaziatura.sm,
-  },
-  titoloOccorrenza: {
+  etichettaGiorno: {
+    ...pesi.extraBold,
     fontSize: 15,
-    fontWeight: '600',
-    color: bento.testoPrimario,
+    letterSpacing: -0.2,
+    textTransform: 'capitalize',
+    color: colori.scuro,
   },
-  descrizioneOccorrenza: {
-    fontSize: 13,
-    color: bento.testoSecondario,
+  feed: {
+    borderRadius: 16 - 2.5,
+    overflow: 'hidden',
+    backgroundColor: colori.scuro,
+  },
+  righeFeed: {
+    gap: 2,
+    backgroundColor: colori.scuro,
+  },
+  rigaFeed: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+    backgroundColor: colori.panna,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
+  },
+  barraFeed: {
+    width: 3,
+    alignSelf: 'stretch',
+    borderRadius: 2,
+    marginTop: 1,
+  },
+  testoFeed: {
+    flex: 1,
+    minWidth: 0,
+  },
+  cimaFeed: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  titoloFeed: {
+    ...pesi.extraBold,
+    fontSize: 13.5,
+    color: colori.scuro,
+    flexShrink: 1,
+  },
+  oraFeed: {
+    ...pesi.extraBold,
+    fontSize: 11,
+    color: colori.soft,
+  },
+  metaFeed: {
+    ...pesi.bold,
+    fontSize: 11,
+    color: colori.soft,
     marginTop: 2,
   },
-  oraOccorrenza: {
-    fontSize: 12.5,
-    color: bento.testoMuto,
-    marginTop: 4,
-  },
-  rigaAzioni: {
+  azioniFeed: {
     flexDirection: 'row',
-    gap: spaziatura.lg,
-    marginTop: spaziatura.sm,
+    gap: 14,
+    marginTop: 6,
   },
-  testoAzione: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: bento.testoSecondario,
+  testoAzioneFeed: {
+    ...pesi.extraBold,
+    fontSize: 10.5,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colori.soft,
   },
-  testoElimina: {
-    color: semantica.pericolo,
-  },
-  testoErrore: {
-    fontSize: 13,
-    color: semantica.pericolo,
-    textAlign: 'center',
-    marginTop: spaziatura.xs,
+  testoEliminaFeed: {
+    color: colori.corallo,
   },
   testoErroreRiga: {
+    ...pesi.bold,
+    fontSize: 11,
+    color: colori.corallo,
+    marginTop: 4,
+  },
+  feedVuoto: {
+    backgroundColor: colori.panna,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+  },
+  testoFeedVuoto: {
+    ...pesi.bold,
     fontSize: 12.5,
-    color: semantica.pericolo,
-    marginTop: spaziatura.xs,
+    color: colori.soft,
+    textAlign: 'center',
+  },
+  ctaFeed: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    backgroundColor: colori.scuro,
+    paddingVertical: 11,
+  },
+  testoCtaFeed: {
+    ...pesi.extraBold,
+    fontSize: 10.5,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    color: colori.crema,
+  },
+  sezioneForm: {
+    marginTop: 16,
+  },
+  testoErrore: {
+    ...pesi.bold,
+    fontSize: 12.5,
+    color: colori.corallo,
+    textAlign: 'center',
+    marginTop: 6,
   },
 });

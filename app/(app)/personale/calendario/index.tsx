@@ -6,15 +6,13 @@ import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, TextInput, View
 
 import type { EventoPersonale } from '@/api/eventiPersonali';
 import { aggiungiMesi, dataLocaleISO } from '@/calcolo/ricorrenzaFaccende';
-import { BentoButton } from '@/components/BentoButton';
 import { BentoScreen } from '@/components/BentoScreen';
+import { BloccoDuro } from '@/components/BloccoDuro';
 import { CalendarioGriglia } from '@/components/CalendarioGriglia';
-import { GlassCard } from '@/components/GlassCard';
-import { SectionHeader } from '@/components/SectionHeader';
 import { useEventiPersonali } from '@/hooks/useEventiPersonali';
 import { confermaAzione } from '@/lib/conferma';
 import { useAuthStore } from '@/store/authStore';
-import { bento, raggio, semantica, spaziatura, tipografia } from '@/theme/tokens';
+import { coloreCiclico, coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 const DATA_VALIDA = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -118,7 +116,7 @@ export default function CalendarioPersonale() {
   if (isLoading) {
     return (
       <View style={styles.centrato}>
-        <ActivityIndicator color={bento.testoPrimario} />
+        <ActivityIndicator color={colori.scuro} />
       </View>
     );
   }
@@ -135,14 +133,18 @@ export default function CalendarioPersonale() {
       {/* A. Intestazione mese + griglia */}
       <View>
         <View style={styles.rigaMese}>
-          <Pressable onPress={() => setAnnoMeseISO(aggiungiMesi(annoMeseISO, -1))} hitSlop={8} style={styles.bottoneMese}>
-            <Feather name="chevron-left" size={22} color={bento.testoPrimario} />
+          <Pressable onPress={() => setAnnoMeseISO(aggiungiMesi(annoMeseISO, -1))} hitSlop={8}>
+            <BloccoDuro offset={2} colore={colori.panna} raggio={9} contenutoStyle={styles.bottoneMese}>
+              <Feather name="chevron-left" size={15} color={colori.scuro} />
+            </BloccoDuro>
           </Pressable>
           <Text style={styles.titoloMese}>
             {format(new Date(`${annoMeseISO}T00:00:00`), 'MMMM yyyy', { locale: it })}
           </Text>
-          <Pressable onPress={() => setAnnoMeseISO(aggiungiMesi(annoMeseISO, 1))} hitSlop={8} style={styles.bottoneMese}>
-            <Feather name="chevron-right" size={22} color={bento.testoPrimario} />
+          <Pressable onPress={() => setAnnoMeseISO(aggiungiMesi(annoMeseISO, 1))} hitSlop={8}>
+            <BloccoDuro offset={2} colore={colori.panna} raggio={9} contenutoStyle={styles.bottoneMese}>
+              <Feather name="chevron-right" size={15} color={colori.scuro} />
+            </BloccoDuro>
           </Pressable>
         </View>
 
@@ -154,91 +156,98 @@ export default function CalendarioPersonale() {
         />
       </View>
 
-      {/* B. Eventi del giorno selezionato */}
-      <View style={styles.sezione}>
-        <SectionHeader
-          titolo={format(new Date(`${giornoSelezionato}T00:00:00`), "d MMMM yyyy", { locale: it })}
-        />
+      {/* B. Eventi del giorno selezionato, appiattiti come il feed di Home. */}
+      <View style={styles.sezioneLista}>
+        <Text style={styles.etichettaGiorno}>
+          {format(new Date(`${giornoSelezionato}T00:00:00`), 'EEEE d MMMM', { locale: it })}
+        </Text>
 
-        {eventiDelGiorno.length === 0 ? (
-          <Text style={styles.testoStatoLista}>Nessun evento in questo giorno.</Text>
-        ) : (
-          <View style={styles.elencoEventi}>
-            {eventiDelGiorno.map((evento) => {
-              const eliminandoQuesto = elimina.isPending && elimina.variables === evento.id;
-              const erroreEliminazione = elimina.isError && elimina.variables === evento.id ? elimina.error : null;
+        <BloccoDuro offset={4} colore={colori.scuro} raggio={16} contenutoStyle={styles.feed}>
+          {eventiDelGiorno.length === 0 ? (
+            <View style={styles.feedVuoto}>
+              <Text style={styles.testoFeedVuoto}>Nessun evento in questo giorno.</Text>
+            </View>
+          ) : (
+            <View style={styles.righeFeed}>
+              {eventiDelGiorno.map((evento) => {
+                const eliminandoQuesto = elimina.isPending && elimina.variables === evento.id;
+                const erroreEliminazione =
+                  elimina.isError && elimina.variables === evento.id ? elimina.error : null;
 
-              return (
-                <GlassCard key={evento.id} elevazione="bassa">
-                  <Text style={styles.titoloEvento}>{evento.titolo}</Text>
-                  {evento.descrizione !== null && (
-                    <Text style={styles.descrizioneEvento}>{evento.descrizione}</Text>
-                  )}
-                  <Text style={styles.oraEvento}>{evento.ora ?? 'Tutto il giorno'}</Text>
-
-                  <View style={styles.rigaAzioni}>
-                    <Pressable onPress={() => apriModifica(evento)} hitSlop={8}>
-                      <Text style={styles.testoAzione}>Modifica</Text>
-                    </Pressable>
-                    <Pressable onPress={() => chiediEliminazione(evento)} disabled={eliminandoQuesto} hitSlop={8}>
-                      <Text style={[styles.testoAzione, styles.testoElimina]}>
-                        {eliminandoQuesto ? 'Eliminazione…' : 'Elimina'}
-                      </Text>
-                    </Pressable>
+                return (
+                  <View key={evento.id} style={styles.rigaFeed}>
+                    <View style={[styles.barraFeed, { backgroundColor: coloreCiclico(evento.id) }]} />
+                    <View style={styles.testoFeed}>
+                      <View style={styles.cimaFeed}>
+                        <Text style={styles.titoloFeed} numberOfLines={1}>
+                          {evento.titolo}
+                        </Text>
+                        <Text style={styles.oraFeed}>{evento.ora ?? 'Tutto il giorno'}</Text>
+                      </View>
+                      <View style={styles.azioniFeed}>
+                        <Pressable onPress={() => apriModifica(evento)} hitSlop={8}>
+                          <Text style={styles.testoAzioneFeed}>Modifica</Text>
+                        </Pressable>
+                        <Pressable onPress={() => chiediEliminazione(evento)} disabled={eliminandoQuesto} hitSlop={8}>
+                          <Text style={[styles.testoAzioneFeed, styles.testoEliminaFeed]}>
+                            {eliminandoQuesto ? 'Eliminazione…' : 'Elimina'}
+                          </Text>
+                        </Pressable>
+                      </View>
+                      {erroreEliminazione !== null && (
+                        <Text style={styles.testoErroreRiga}>{messaggioErrore(erroreEliminazione)}</Text>
+                      )}
+                    </View>
                   </View>
-                  {erroreEliminazione !== null && (
-                    <Text style={styles.testoErroreRiga}>{messaggioErrore(erroreEliminazione)}</Text>
-                  )}
-                </GlassCard>
-              );
-            })}
-          </View>
-        )}
+                );
+              })}
+            </View>
+          )}
+
+          <Pressable onPress={() => (formAperto !== null ? chiudiForm() : apriCrea())} style={styles.ctaFeed}>
+            <Feather name={formAperto !== null ? 'x' : 'plus'} size={13} color={colori.crema} />
+            <Text style={styles.testoCtaFeed}>{formAperto !== null ? 'Chiudi' : 'Nuovo evento'}</Text>
+          </Pressable>
+        </BloccoDuro>
       </View>
 
-      {/* C. Nuovo evento / modifica */}
-      <View style={styles.sezione}>
-        <SectionHeader
-          titolo="Eventi"
-          azione={{
-            etichetta: formAperto !== null ? 'Chiudi' : 'Nuovo evento',
-            onPress: () => (formAperto !== null ? chiudiForm() : apriCrea()),
-          }}
-        />
-
-        {formAperto !== null && (
-          <GlassCard>
-            {/* key: senza una key che cambia con il target, passare da
-                "modifica A" a "modifica B" (o da crea a modifica) senza
-                chiudere il form riuserebbe lo state e mostrerebbe ancora
-                i valori precedenti mentre si salva sul nuovo target. */}
-            <FormEvento
-              key={formAperto === 'modifica' ? eventoInModifica?.id ?? 'modifica' : 'crea'}
-              valoriIniziali={
-                formAperto === 'modifica' && eventoInModifica !== null
-                  ? {
-                      titolo: eventoInModifica.titolo,
-                      data: eventoInModifica.data,
-                      ora: eventoInModifica.ora,
-                      descrizione: eventoInModifica.descrizione,
-                    }
-                  : { titolo: '', data: giornoSelezionato, ora: null, descrizione: null }
-              }
-              salvando={salvando}
-              onSalva={onSalvaForm}
-            />
-            {erroreForm !== null && <Text style={styles.testoErrore}>{erroreForm}</Text>}
-          </GlassCard>
-        )}
-      </View>
+      {/* C. Form, più corto di quello di gruppo: niente ricorrenza/assegnazione qui. */}
+      {formAperto !== null && (
+        <View style={styles.sezioneForm}>
+          <FormEvento
+            // key: senza una key che cambia con il target, passare da
+            // "modifica A" a "modifica B" (o da crea a modifica) senza
+            // chiudere il form riuserebbe lo state e mostrerebbe ancora
+            // i valori precedenti mentre si salva sul nuovo target.
+            key={formAperto === 'modifica' ? eventoInModifica?.id ?? 'modifica' : 'crea'}
+            valoriIniziali={
+              formAperto === 'modifica' && eventoInModifica !== null
+                ? {
+                    titolo: eventoInModifica.titolo,
+                    data: eventoInModifica.data,
+                    ora: eventoInModifica.ora,
+                    descrizione: eventoInModifica.descrizione,
+                  }
+                : { titolo: '', data: giornoSelezionato, ora: null, descrizione: null }
+            }
+            modifica={formAperto === 'modifica'}
+            salvando={salvando}
+            onSalva={onSalvaForm}
+            onAnnulla={chiudiForm}
+          />
+          {erroreForm !== null && <Text style={styles.testoErrore}>{erroreForm}</Text>}
+        </View>
+      )}
     </BentoScreen>
   );
 }
 
 type PropsFormEvento = {
   valoriIniziali: ValoriEvento;
+  modifica: boolean;
   salvando: boolean;
   onSalva: (valori: ValoriEvento) => void;
+  onAnnulla: () => void;
 };
 
 /**
@@ -248,7 +257,7 @@ type PropsFormEvento = {
  * attivo, così riattivando l'ora non si perde l'ultimo valore scritto),
  * ma senza i campi di ricorrenza/assegnazione che qui non esistono.
  */
-function FormEvento({ valoriIniziali, salvando, onSalva }: PropsFormEvento) {
+function FormEvento({ valoriIniziali, modifica, salvando, onSalva, onAnnulla }: PropsFormEvento) {
   const [titolo, setTitolo] = useState(valoriIniziali.titolo);
   const [data, setData] = useState(valoriIniziali.data);
   const [tuttoIlGiorno, setTuttoIlGiorno] = useState(valoriIniziali.ora == null);
@@ -269,7 +278,9 @@ function FormEvento({ valoriIniziali, salvando, onSalva }: PropsFormEvento) {
   }
 
   return (
-    <View style={styles.form}>
+    <BloccoDuro offset={3} colore={colori.panna} raggio={16} contenutoStyle={styles.form}>
+      <Text style={styles.titoloForm}>{modifica ? 'Modifica evento' : 'Nuovo evento'}</Text>
+
       <View style={styles.campo}>
         <Text style={styles.etichetta}>Titolo</Text>
         <TextInput
@@ -277,7 +288,7 @@ function FormEvento({ valoriIniziali, salvando, onSalva }: PropsFormEvento) {
           value={titolo}
           onChangeText={setTitolo}
           placeholder="Es. Dentista"
-          placeholderTextColor={bento.testoMuto}
+          placeholderTextColor={colori.soft}
           autoFocus
           returnKeyType="next"
         />
@@ -290,7 +301,7 @@ function FormEvento({ valoriIniziali, salvando, onSalva }: PropsFormEvento) {
           value={data}
           onChangeText={setData}
           placeholder="2026-10-27"
-          placeholderTextColor={bento.testoMuto}
+          placeholderTextColor={colori.soft}
           keyboardType="numbers-and-punctuation"
         />
         {!dataValida && <Text style={styles.testoErroreCampo}>Formato: AAAA-MM-GG</Text>}
@@ -309,7 +320,7 @@ function FormEvento({ valoriIniziali, salvando, onSalva }: PropsFormEvento) {
             value={bozzaOra}
             onChangeText={setBozzaOra}
             placeholder="09:00"
-            placeholderTextColor={bento.testoMuto}
+            placeholderTextColor={colori.soft}
             keyboardType="numbers-and-punctuation"
           />
         </View>
@@ -322,20 +333,34 @@ function FormEvento({ valoriIniziali, salvando, onSalva }: PropsFormEvento) {
           value={descrizione}
           onChangeText={setDescrizione}
           placeholder="Es. portare i documenti"
-          placeholderTextColor={bento.testoMuto}
+          placeholderTextColor={colori.soft}
           returnKeyType="done"
         />
       </View>
 
-      <BentoButton etichetta="Salva" onPress={salva} caricando={salvando} disabilitato={titoloVuoto || !dataValida} />
-    </View>
+      <View style={styles.barraSalva}>
+        <Pressable style={[styles.bottone, styles.bottoneAnnulla]} onPress={onAnnulla}>
+          <Text style={styles.testoBottoneAnnulla}>Annulla</Text>
+        </Pressable>
+        <BloccoDuro
+          style={[styles.cellaSalva, (titoloVuoto || !dataValida || salvando) && styles.cellaSalvaDisabilitata]}
+          offset={2.5}
+          colore={colori.corallo}
+          raggio={10}
+          contenutoStyle={styles.bottoneSalva}
+          onPress={titoloVuoto || !dataValida || salvando ? undefined : salva}
+        >
+          {salvando ? <ActivityIndicator color="#fff" /> : <Text style={styles.testoBottoneSalva}>Salva</Text>}
+        </BloccoDuro>
+      </View>
+    </BloccoDuro>
   );
 }
 
 const styles = StyleSheet.create({
   centrato: {
     flex: 1,
-    backgroundColor: bento.sfondo,
+    backgroundColor: colori.crema,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -343,97 +368,219 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spaziatura.sm,
+    marginBottom: 10,
   },
   bottoneMese: {
-    padding: spaziatura.xs,
+    width: 33,
+    height: 33,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   titoloMese: {
-    ...tipografia.titoloSezione,
-    color: bento.testoPrimario,
+    ...pesi.extraBold,
+    fontSize: 19,
+    letterSpacing: -0.3,
     textTransform: 'capitalize',
+    color: colori.scuro,
   },
-  sezione: {
-    gap: spaziatura.md,
+  sezioneLista: {
+    gap: 10,
+    marginTop: 16,
   },
-  testoStatoLista: {
-    fontSize: 14,
-    color: bento.testoSecondario,
-    textAlign: 'center',
-    marginTop: spaziatura.md,
-  },
-  elencoEventi: {
-    gap: spaziatura.sm,
-  },
-  titoloEvento: {
+  etichettaGiorno: {
+    ...pesi.extraBold,
     fontSize: 15,
-    fontWeight: '600',
-    color: bento.testoPrimario,
+    letterSpacing: -0.2,
+    textTransform: 'capitalize',
+    color: colori.scuro,
   },
-  descrizioneEvento: {
-    fontSize: 13,
-    color: bento.testoSecondario,
-    marginTop: 2,
+  feed: {
+    borderRadius: 16 - 2.5,
+    overflow: 'hidden',
+    backgroundColor: colori.scuro,
   },
-  oraEvento: {
-    fontSize: 12.5,
-    color: bento.testoMuto,
-    marginTop: 4,
+  righeFeed: {
+    gap: 2,
+    backgroundColor: colori.scuro,
   },
-  rigaAzioni: {
+  rigaFeed: {
     flexDirection: 'row',
-    gap: spaziatura.lg,
-    marginTop: spaziatura.sm,
+    gap: 10,
+    alignItems: 'flex-start',
+    backgroundColor: colori.panna,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
   },
-  testoAzione: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: bento.testoSecondario,
+  barraFeed: {
+    width: 3,
+    alignSelf: 'stretch',
+    borderRadius: 2,
+    marginTop: 1,
   },
-  testoElimina: {
-    color: semantica.pericolo,
+  testoFeed: {
+    flex: 1,
+    minWidth: 0,
   },
-  testoErrore: {
-    fontSize: 13,
-    color: semantica.pericolo,
-    textAlign: 'center',
-    marginTop: spaziatura.xs,
+  cimaFeed: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  titoloFeed: {
+    ...pesi.extraBold,
+    fontSize: 13.5,
+    color: colori.scuro,
+    flexShrink: 1,
+  },
+  oraFeed: {
+    ...pesi.extraBold,
+    fontSize: 11,
+    color: colori.soft,
+  },
+  azioniFeed: {
+    flexDirection: 'row',
+    gap: 14,
+    marginTop: 6,
+  },
+  testoAzioneFeed: {
+    ...pesi.extraBold,
+    fontSize: 10.5,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colori.soft,
+  },
+  testoEliminaFeed: {
+    color: colori.corallo,
   },
   testoErroreRiga: {
+    ...pesi.bold,
+    fontSize: 11,
+    color: colori.corallo,
+    marginTop: 4,
+  },
+  feedVuoto: {
+    backgroundColor: colori.panna,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+  },
+  testoFeedVuoto: {
+    ...pesi.bold,
     fontSize: 12.5,
-    color: semantica.pericolo,
-    marginTop: spaziatura.xs,
+    color: colori.soft,
+    textAlign: 'center',
+  },
+  ctaFeed: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    backgroundColor: colori.scuro,
+    paddingVertical: 11,
+  },
+  testoCtaFeed: {
+    ...pesi.extraBold,
+    fontSize: 10.5,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    color: colori.crema,
+  },
+  sezioneForm: {
+    marginTop: 16,
+  },
+  testoErrore: {
+    ...pesi.bold,
+    fontSize: 12.5,
+    color: colori.corallo,
+    textAlign: 'center',
+    marginTop: 6,
   },
   form: {
-    gap: spaziatura.lg,
+    padding: 14,
+    gap: 12,
+  },
+  titoloForm: {
+    ...pesi.extraBold,
+    fontSize: 15,
+    textAlign: 'center',
+    color: colori.scuro,
   },
   campo: {
-    gap: spaziatura.xs,
+    gap: 5,
   },
   etichetta: {
-    ...tipografia.etichetta,
-    color: bento.testoSecondario,
+    ...pesi.extraBold,
+    fontSize: 8.8,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: colori.soft,
   },
   input: {
-    borderWidth: 1,
-    borderColor: bento.bordoForte,
-    borderRadius: raggio.sm,
-    paddingHorizontal: spaziatura.md,
-    paddingVertical: spaziatura.sm + 2,
-    fontSize: 16,
-    color: bento.testoPrimario,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 9,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+    fontSize: 14.5,
+    fontWeight: '600',
+    color: colori.scuro,
+    backgroundColor: '#fff',
   },
   inputConErrore: {
-    borderColor: semantica.pericolo,
+    borderColor: colori.corallo,
   },
   testoErroreCampo: {
-    fontSize: 12,
-    color: semantica.pericolo,
+    ...pesi.bold,
+    fontSize: 11,
+    color: colori.corallo,
   },
   rigaSwitch: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: spaziatura.md,
+    gap: 10,
+  },
+  barraSalva: {
+    flexDirection: 'row',
+    gap: 9,
+    marginTop: 2,
+  },
+  bottone: {
+    flex: 1,
+    borderRadius: 10,
+    paddingVertical: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bottoneAnnulla: {
+    backgroundColor: '#fff',
+    borderWidth: 2.5,
+    borderColor: colori.scuro,
+  },
+  testoBottoneAnnulla: {
+    ...pesi.extraBold,
+    fontSize: 11,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: colori.scuro,
+  },
+  cellaSalva: {
+    flex: 1,
+  },
+  cellaSalvaDisabilitata: {
+    opacity: 0.4,
+  },
+  bottoneSalva: {
+    paddingVertical: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  testoBottoneSalva: {
+    ...pesi.extraBold,
+    fontSize: 11,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: '#fff',
   },
 });

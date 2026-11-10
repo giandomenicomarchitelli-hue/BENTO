@@ -3,7 +3,8 @@ import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, TextInput, View
 
 import type { Frequenza } from '@/api/faccende';
 import type { MembroRisolvibile } from '@/calcolo/risoluzioneAzioni';
-import { bento, raggio, spaziatura, tipografia } from '@/theme/tokens';
+import { BloccoDuro } from '@/components/BloccoDuro';
+import { coloriNB, pesiNB } from '@/theme/neoBrutalista';
 
 export type ValoriImpegno = {
   titolo: string;
@@ -27,6 +28,7 @@ type Props = {
   membroAssegnatoNonAttivo?: MembroRisolvibile | null;
   salvando: boolean;
   onSalva: (valori: ValoriImpegno) => void;
+  onAnnulla: () => void;
 };
 
 const FREQUENZE: { valore: Frequenza; etichetta: string }[] = [
@@ -58,6 +60,7 @@ export function ModificaImpegno({
   membroAssegnatoNonAttivo = null,
   salvando,
   onSalva,
+  onAnnulla,
 }: Props) {
   const [titolo, setTitolo] = useState(valoriIniziali?.titolo ?? '');
   const [descrizione, setDescrizione] = useState(valoriIniziali?.descrizione ?? '');
@@ -98,7 +101,7 @@ export function ModificaImpegno({
   }
 
   return (
-    <View style={styles.contenitore}>
+    <BloccoDuro offset={3} colore={coloriNB.panna} raggio={16} contenutoStyle={styles.contenitore}>
       <Text style={styles.titolo}>{valoriIniziali === null ? 'Nuovo impegno' : 'Modifica impegno'}</Text>
 
       <View style={styles.campo}>
@@ -108,7 +111,7 @@ export function ModificaImpegno({
           value={titolo}
           onChangeText={setTitolo}
           placeholder="Es. Dentista"
-          placeholderTextColor={bento.testoMuto}
+          placeholderTextColor={coloriNB.soft}
           autoFocus
           returnKeyType="next"
         />
@@ -121,7 +124,7 @@ export function ModificaImpegno({
           value={descrizione}
           onChangeText={setDescrizione}
           placeholder="Es. portare i documenti"
-          placeholderTextColor={bento.testoMuto}
+          placeholderTextColor={coloriNB.soft}
           returnKeyType="next"
         />
       </View>
@@ -133,7 +136,7 @@ export function ModificaImpegno({
           value={dataInizio}
           onChangeText={setDataInizio}
           placeholder="2026-10-27"
-          placeholderTextColor={bento.testoMuto}
+          placeholderTextColor={coloriNB.soft}
           keyboardType="numbers-and-punctuation"
         />
         {!dataInizioValida && <Text style={styles.testoErrore}>Formato: AAAA-MM-GG</Text>}
@@ -152,7 +155,7 @@ export function ModificaImpegno({
             value={bozzaOra}
             onChangeText={setBozzaOra}
             placeholder="09:00"
-            placeholderTextColor={bento.testoMuto}
+            placeholderTextColor={coloriNB.soft}
             keyboardType="numbers-and-punctuation"
           />
         </View>
@@ -167,9 +170,7 @@ export function ModificaImpegno({
               onPress={() => setFrequenza(f.valore)}
               style={[styles.chip, frequenza === f.valore && styles.chipAttivo]}
             >
-              <Text style={[styles.testoChip, frequenza === f.valore && styles.testoChipAttivo]}>
-                {f.etichetta}
-              </Text>
+              <Text style={styles.testoChip}>{f.etichetta}</Text>
             </Pressable>
           ))}
         </View>
@@ -183,7 +184,7 @@ export function ModificaImpegno({
             value={intervalloRicorrenza}
             onChangeText={setIntervalloRicorrenza}
             placeholder="Es. 3"
-            placeholderTextColor={bento.testoMuto}
+            placeholderTextColor={coloriNB.soft}
             keyboardType="number-pad"
           />
         </View>
@@ -198,9 +199,7 @@ export function ModificaImpegno({
               onPress={() => setPromemoriaMinutiPrima(p.valore)}
               style={[styles.chip, promemoriaMinutiPrima === p.valore && styles.chipAttivo]}
             >
-              <Text style={[styles.testoChip, promemoriaMinutiPrima === p.valore && styles.testoChipAttivo]}>
-                {p.etichetta}
-              </Text>
+              <Text style={styles.testoChip}>{p.etichetta}</Text>
             </Pressable>
           ))}
         </View>
@@ -213,7 +212,7 @@ export function ModificaImpegno({
             onPress={() => setAssegnatoA(null)}
             style={[styles.chip, assegnatoA === null && styles.chipAttivo]}
           >
-            <Text style={[styles.testoChip, assegnatoA === null && styles.testoChipAttivo]}>Nessuno</Text>
+            <Text style={styles.testoChip}>Nessuno</Text>
           </Pressable>
           {membri.map((membro) => (
             <Pressable
@@ -221,9 +220,7 @@ export function ModificaImpegno({
               onPress={() => setAssegnatoA(membro.id)}
               style={[styles.chip, assegnatoA === membro.id && styles.chipAttivo]}
             >
-              <Text style={[styles.testoChip, assegnatoA === membro.id && styles.testoChipAttivo]}>
-                {membro.nome}
-              </Text>
+              <Text style={styles.testoChip}>{membro.nome}</Text>
             </Pressable>
           ))}
           {membroAssegnatoNonAttivo !== null && assegnatoA === membroAssegnatoNonAttivo.id && (
@@ -231,9 +228,7 @@ export function ModificaImpegno({
               onPress={() => setAssegnatoA(membroAssegnatoNonAttivo.id)}
               style={[styles.chip, styles.chipAttivo]}
             >
-              <Text style={[styles.testoChip, styles.testoChipAttivo]}>
-                {membroAssegnatoNonAttivo.nome} (non più nel gruppo)
-              </Text>
+              <Text style={styles.testoChip}>{membroAssegnatoNonAttivo.nome} (non più nel gruppo)</Text>
             </Pressable>
           )}
         </View>
@@ -244,94 +239,136 @@ export function ModificaImpegno({
         <Switch value={modificabileDaTutti} onValueChange={setModificabileDaTutti} />
       </View>
 
-      <Pressable
-        style={[styles.bottone, (titoloVuoto || salvando) && styles.bottoneDisabilitato]}
-        onPress={salva}
-        disabled={titoloVuoto || salvando}
-      >
-        {salvando ? <ActivityIndicator color="#fff" /> : <Text style={styles.testoBottone}>Salva</Text>}
-      </Pressable>
-    </View>
+      <View style={styles.barraSalva}>
+        <Pressable style={[styles.bottone, styles.bottoneAnnulla]} onPress={onAnnulla}>
+          <Text style={styles.testoBottoneAnnulla}>Annulla</Text>
+        </Pressable>
+        <BloccoDuro
+          style={[styles.cellaSalva, (titoloVuoto || salvando) && styles.cellaSalvaDisabilitata]}
+          offset={2.5}
+          colore={coloriNB.corallo}
+          raggio={10}
+          contenutoStyle={styles.bottoneSalva}
+          onPress={titoloVuoto || salvando ? undefined : salva}
+        >
+          {salvando ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.testoBottoneSalva}>Salva</Text>
+          )}
+        </BloccoDuro>
+      </View>
+    </BloccoDuro>
   );
 }
 
 const styles = StyleSheet.create({
   contenitore: {
-    padding: spaziatura.xl,
-    gap: spaziatura.lg,
+    padding: 14,
+    gap: 12,
   },
   titolo: {
-    ...tipografia.titoloSezione,
+    ...pesiNB.extraBold,
+    fontSize: 15,
     textAlign: 'center',
-    color: bento.testoPrimario,
-    marginBottom: spaziatura.xs,
+    color: coloriNB.scuro,
   },
   campo: {
-    gap: spaziatura.xs,
+    gap: 5,
   },
   etichetta: {
-    ...tipografia.etichetta,
-    color: bento.testoSecondario,
+    ...pesiNB.extraBold,
+    fontSize: 8.8,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: coloriNB.soft,
   },
   input: {
-    borderWidth: 1,
-    borderColor: bento.bordoForte,
-    borderRadius: raggio.sm,
-    paddingHorizontal: spaziatura.md,
-    paddingVertical: spaziatura.sm + 2,
-    fontSize: 16,
-    color: bento.testoPrimario,
+    borderWidth: 2,
+    borderColor: coloriNB.scuro,
+    borderRadius: 9,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+    fontSize: 14.5,
+    fontWeight: '600',
+    color: coloriNB.scuro,
+    backgroundColor: '#fff',
   },
   inputConErrore: {
-    borderColor: '#c0392b',
+    borderColor: coloriNB.corallo,
   },
   testoErrore: {
-    fontSize: 12,
-    color: '#c0392b',
+    ...pesiNB.bold,
+    fontSize: 11,
+    color: coloriNB.corallo,
   },
   rigaSwitch: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: spaziatura.md,
+    gap: 10,
   },
   rigaChip: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spaziatura.sm,
+    gap: 7,
   },
   chip: {
-    borderWidth: 1,
-    borderColor: bento.bordoForte,
-    borderRadius: raggio.pillola,
-    paddingHorizontal: spaziatura.md,
-    paddingVertical: spaziatura.sm,
+    borderWidth: 2,
+    borderColor: coloriNB.scuro,
+    borderRadius: 999,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    backgroundColor: '#fff',
   },
   chipAttivo: {
-    backgroundColor: '#2d6cdf',
-    borderColor: '#2d6cdf',
+    backgroundColor: coloriNB.viola,
   },
   testoChip: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: bento.testoSecondario,
+    ...pesiNB.extraBold,
+    fontSize: 10.5,
+    color: coloriNB.scuro,
   },
-  testoChipAttivo: {
-    color: '#fff',
+  barraSalva: {
+    flexDirection: 'row',
+    gap: 9,
+    marginTop: 2,
   },
   bottone: {
-    backgroundColor: '#2d6cdf',
-    borderRadius: raggio.sm,
-    paddingVertical: 14,
+    flex: 1,
+    borderRadius: 10,
+    paddingVertical: 11,
     alignItems: 'center',
-    marginTop: spaziatura.sm,
+    justifyContent: 'center',
   },
-  bottoneDisabilitato: {
+  bottoneAnnulla: {
+    backgroundColor: '#fff',
+    borderWidth: 2.5,
+    borderColor: coloriNB.scuro,
+  },
+  testoBottoneAnnulla: {
+    ...pesiNB.extraBold,
+    fontSize: 11,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: coloriNB.scuro,
+  },
+  cellaSalva: {
+    flex: 1,
+  },
+  cellaSalvaDisabilitata: {
     opacity: 0.4,
   },
-  testoBottone: {
+  bottoneSalva: {
+    paddingVertical: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  testoBottoneSalva: {
+    ...pesiNB.extraBold,
+    fontSize: 11,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
