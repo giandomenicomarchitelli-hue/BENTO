@@ -66,14 +66,22 @@ export async function rinominaGruppo(gruppoId: string, nome: string): Promise<vo
 export async function listaGruppiUtente(): Promise<Gruppo[]> {
   const utenteId = await leggiUtenteIdCorrente();
 
+  // Si parte da `gruppi`, non da `membri`, perché l'ordine va chiesto sulla
+  // tabella in cima: con `from('membri').select('gruppi(*)')` ogni riga porta
+  // un solo gruppo, e un order sulla tabella annidata ordinerebbe dentro
+  // quell'unico elemento, cioè non farebbe niente. Senza un ordine esplicito
+  // Postgres non ne garantisce nessuno, e il mosaico dei gruppi cambiava
+  // disposizione a ogni apertura della schermata.
   const { data, error } = await supabase
-    .from('membri')
-    .select('gruppi(*)')
-    .eq('utente_id', utenteId)
-    .is('uscito_il', null);
+    .from('gruppi')
+    .select('*, membri!inner(utente_id, uscito_il)')
+    .eq('membri.utente_id', utenteId)
+    .is('membri.uscito_il', null)
+    .order('creato_il');
 
   if (error) {
     throw error;
   }
-  return data.map((riga) => riga.gruppi);
+  // `membri` serviva solo a filtrare: fuori da qui un gruppo è un gruppo.
+  return data.map(({ membri, ...gruppo }) => gruppo);
 }
