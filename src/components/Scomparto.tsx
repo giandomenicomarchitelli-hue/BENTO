@@ -1,6 +1,14 @@
 import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, type StyleProp, View, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  type StyleProp,
+  type TextStyle,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { coloriNB, EASE_OUT_NB, pesiNB } from '@/theme/neoBrutalista';
@@ -35,9 +43,10 @@ export function Scomparto({
 }: {
   nome?: string;
   icona?: React.ComponentProps<typeof Feather>['name'];
-  azione: string;
+  azione?: string;
   colore: string;
-  onPress: () => void;
+  /** Senza onPress lo scomparto non e' premibile (es. un messaggio d'errore). */
+  onPress?: () => void;
   style?: StyleProp<ViewStyle>;
   /** Scomparto a fascia (es. Calendario): contenuto e azione sulla stessa riga. */
   orizzontale?: boolean;
@@ -60,7 +69,7 @@ export function Scomparto({
         style,
       ]}
     >
-      <Pressable
+      <Involucro
         onPress={onPress}
         onPressIn={() => setPremuto(true)}
         onPressOut={() => setPremuto(false)}
@@ -93,14 +102,28 @@ export function Scomparto({
               <View>{children}</View>
             </>
           )}
-          <View style={styles.azione}>
-            <Text style={styles.testoAzione}>{azione}</Text>
-            <Feather name="arrow-right" size={14} color={coloriNB.scuro} />
-          </View>
+          {azione !== undefined && (
+            <View style={styles.azione}>
+              <Text style={styles.testoAzione}>{azione}</Text>
+              <Feather name="arrow-right" size={14} color={coloriNB.scuro} />
+            </View>
+          )}
         </Animated.View>
-      </Pressable>
+      </Involucro>
     </Animated.View>
   );
+}
+
+/** Pressable solo dove c'e' qualcosa da premere: un View con `onPress`
+ *  vuoto si annuncerebbe come bottone a VoiceOver senza fare niente. */
+function Involucro({
+  onPress,
+  ...resto
+}: React.ComponentProps<typeof Pressable> & { onPress?: () => void }) {
+  if (onPress === undefined) {
+    return <View style={resto.style as StyleProp<ViewStyle>}>{resto.children as React.ReactNode}</View>;
+  }
+  return <Pressable onPress={onPress} {...resto} />;
 }
 
 /** La cifra grande di uno scomparto, con la sua unità e un'eventuale riga di dettaglio. */
@@ -123,6 +146,18 @@ export function CifraScomparto({
     </>
   );
 }
+
+/**
+ * Lo stile della cifra per i valori che sono testo e non numeri (il nome
+ * di un gruppo, un importo): il chiamante sovrascrive dimensione e
+ * colore, il resto resta allineato alle cifre vere.
+ */
+export const stileValoreScomparto: TextStyle = {
+  ...pesiNB.extraBold,
+  letterSpacing: -0.5,
+  color: coloriNB.scuro,
+  fontVariant: ['tabular-nums'],
+};
 
 const styles = StyleSheet.create({
   superficie: {
