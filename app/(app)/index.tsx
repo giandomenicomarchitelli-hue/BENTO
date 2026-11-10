@@ -7,6 +7,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { esci } from '@/api/auth';
+import { ALTEZZA_BARRA, BarraInferiore } from '@/components/BarraInferiore';
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { CifraScomparto, Scomparto } from '@/components/Scomparto';
 import { PARETE, Vassoio } from '@/components/Vassoio';
@@ -18,14 +19,6 @@ import { useNotifiche } from '@/hooks/useNotifiche';
 import { useProfilo } from '@/hooks/useProfilo';
 import { useAuthStore } from '@/store/authStore';
 import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
-
-/**
- * Altezza del solo contenuto della barra inferiore (senza la safe area,
- * aggiunta a parte) - serve sia allo spazio lasciato in fondo allo
- * ScrollView sia allo stile della barra stessa, deve restare la stessa
- * costante nei due punti.
- */
-const ALTEZZA_BARRA = 64;
 
 /**
  * Quante notifiche entrano nel feed prima del bottone. Il conteggio
@@ -244,47 +237,8 @@ export default function Homepage() {
         </BloccoDuro>
       </ScrollView>
 
-      <View style={[styles.barraInferiore, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
-        <View style={styles.vociBarra}>
-          <View style={styles.voceBarra}>
-            <BloccoDuro
-              offset={1.5}
-              colore={colori.menta}
-              raggio={9}
-              contenutoStyle={styles.chipAttivo}
-            >
-              <Feather name="home" size={16} color={colori.scuro} />
-            </BloccoDuro>
-            <Text style={styles.etichettaBarra} numberOfLines={1}>HOME</Text>
-          </View>
-          <Pressable style={styles.voceBarra} onPress={() => router.push('/personale')}>
-            <Feather name="user" size={21} color={colori.scuro} />
-            <Text style={styles.etichettaBarra} numberOfLines={1}>PERSONALE</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.voceBarra, styles.voceCentrale]}
-            onPress={() => router.push('/assistente')}
-          >
-            <BloccoDuro
-              offset={2.5}
-              colore={colori.corallo}
-              raggio={999}
-              contenutoStyle={styles.bottoneScrivi}
-            >
-              <Feather name="edit-3" size={22} color="#fff" />
-            </BloccoDuro>
-            <Text style={styles.etichettaBarra} numberOfLines={1}>SCRIVI</Text>
-          </Pressable>
-          <Pressable style={styles.voceBarra} onPress={() => router.push('/gruppi')}>
-            <Feather name="users" size={21} color={colori.scuro} />
-            <Text style={styles.etichettaBarra} numberOfLines={1}>GRUPPI</Text>
-          </Pressable>
-          <View style={styles.voceBarra}>
-            <Feather name="credit-card" size={21} color={colori.scuro} />
-            <Text style={styles.etichettaBarra} numberOfLines={1}>SALDI</Text>
-          </View>
-        </View>
-      </View>
+      <BarraInferiore attiva="home" />
+
     </View>
   );
 }
@@ -487,52 +441,5 @@ const styles = StyleSheet.create({
     ...pesi.bold,
     fontSize: 13.5,
     color: colori.soft,
-  },
-  /**
-   * HOME è mostrata attiva per via statica (siamo sempre su questa
-   * schermata). SALDI resta solo grafica: non esiste ancora una
-   * schermata per lei.
-   */
-  barraInferiore: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colori.crema,
-    borderTopWidth: 2.5,
-    borderTopColor: colori.scuro,
-    paddingTop: 9,
-    paddingHorizontal: 6,
-  },
-  vociBarra: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-  },
-  voceBarra: {
-    width: 66,
-    alignItems: 'center',
-    gap: 5,
-  },
-  etichettaBarra: {
-    ...pesi.extraBold,
-    fontSize: 8.5,
-    letterSpacing: 0.4,
-    color: colori.scuro,
-  },
-  chipAttivo: {
-    width: 44,
-    height: 29,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  voceCentrale: {
-    marginTop: -18,
-  },
-  bottoneScrivi: {
-    width: 54,
-    height: 54,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
