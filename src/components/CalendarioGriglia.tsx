@@ -1,7 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { celleGrigliaMese } from '@/calcolo/griglioMensile';
-import { accenti, bento, raggio, spaziatura, tipografia } from '@/theme/tokens';
+import { dataLocaleISO } from '@/calcolo/ricorrenzaFaccende';
+import { CellaVassoio } from '@/components/CellaVassoio';
+import { PARETE, Vassoio } from '@/components/Vassoio';
+import { coloriNB, pesiNB } from '@/theme/neoBrutalista';
 
 type Props = {
   annoMeseISO: string;
@@ -10,13 +13,18 @@ type Props = {
   onSelezionaGiorno: (dataISO: string) => void;
 };
 
-const INIZIALI_GIORNI = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+const INIZIALI_GIORNI = ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
 
 /**
- * Griglia mensile del calendario: intestazione lun-dom + righe di 7 celle
- * da `celleGrigliaMese`. Il tocco su una cella (anche fuori mese, per
- * scorrere al mese adiacente) è sempre riportato allo schermo chiamante:
- * questo componente non decide da solo di cambiare `annoMeseISO`.
+ * Griglia mensile: intestazione lun-dom fuori dalle pareti (è
+ * un'etichetta di colonna, non un dato), poi un `Vassoio` di 42
+ * `CellaVassoio` - stessa tecnica a gap-parete del feed di Home, non il
+ * mosaico a scomparti.
+ *
+ * "Oggi" si calcola qui, nel fuso orario del dispositivo: è un dato
+ * sempre vero per la griglia indipendentemente da quale fuso usino le
+ * occorrenze mostrate sopra, quindi non serve passarlo da fuori - le due
+ * schermate chiamanti restano invariate.
  */
 export function CalendarioGriglia({
   annoMeseISO,
@@ -25,91 +33,65 @@ export function CalendarioGriglia({
   onSelezionaGiorno,
 }: Props) {
   const celle = celleGrigliaMese(annoMeseISO);
+  const oggiISO = dataLocaleISO(new Date(), Intl.DateTimeFormat().resolvedOptions().timeZone);
 
   return (
     <View>
-      <View style={styles.riga}>
-        {INIZIALI_GIORNI.map((iniziale) => (
-          <View key={iniziale} style={styles.cella}>
+      <View style={styles.intestazione}>
+        {INIZIALI_GIORNI.map((iniziale, indice) => (
+          // indice in key: L/M/M/G/V/S/D ha due lettere ripetute.
+          <View key={`${iniziale}-${indice}`} style={styles.celaIntestazione}>
             <Text style={styles.testoIntestazione}>{iniziale}</Text>
           </View>
         ))}
       </View>
 
-      {Array.from({ length: celle.length / 7 }, (_, indiceSettimana) => (
-        <View key={indiceSettimana} style={styles.riga}>
-          {celle.slice(indiceSettimana * 7, indiceSettimana * 7 + 7).map((cella) => {
-            const selezionata = cella.dataISO === giornoSelezionato;
-            const haOccorrenze = (occorrenzePerGiorno[cella.dataISO] ?? 0) > 0;
-            const giorno = Number(cella.dataISO.slice(8, 10));
-
-            return (
-              <Pressable
-                key={cella.dataISO}
-                onPress={() => onSelezionaGiorno(cella.dataISO)}
-                style={[styles.cella, styles.giorno, selezionata && styles.giornoSelezionato]}
-              >
-                <Text
-                  style={[
-                    styles.testoGiorno,
-                    !cella.delMeseCorrente && styles.testoFuoriMese,
-                    selezionata && styles.testoSelezionato,
-                  ]}
-                >
-                  {giorno}
-                </Text>
-                {haOccorrenze && <View style={styles.puntino} />}
-              </Pressable>
-            );
-          })}
+      <Vassoio>
+        <View style={styles.griglia}>
+          {Array.from({ length: celle.length / 7 }, (_, indiceSettimana) => (
+            <View key={indiceSettimana} style={styles.riga}>
+              {celle.slice(indiceSettimana * 7, indiceSettimana * 7 + 7).map((cella) => (
+                <CellaVassoio
+                  key={cella.dataISO}
+                  dataISO={cella.dataISO}
+                  giorno={Number(cella.dataISO.slice(8, 10))}
+                  delMeseCorrente={cella.delMeseCorrente}
+                  oggi={cella.dataISO === oggiISO}
+                  selezionata={cella.dataISO === giornoSelezionato}
+                  haOccorrenze={(occorrenzePerGiorno[cella.dataISO] ?? 0) > 0}
+                  onPress={() => onSelezionaGiorno(cella.dataISO)}
+                />
+              ))}
+            </View>
+          ))}
         </View>
-      ))}
+      </Vassoio>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  riga: {
+  intestazione: {
     flexDirection: 'row',
+    marginBottom: 5,
   },
-  cella: {
+  celaIntestazione: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   testoIntestazione: {
-    ...tipografia.didascalia,
-    color: bento.testoMuto,
-    paddingVertical: spaziatura.sm,
+    ...pesiNB.extraBold,
+    fontSize: 8.5,
+    letterSpacing: 0.7,
+    textTransform: 'uppercase',
+    color: coloriNB.soft,
   },
-  giorno: {
-    aspectRatio: 1,
-    borderRadius: raggio.md,
-    marginVertical: 2,
+  griglia: {
+    gap: PARETE,
+    backgroundColor: coloriNB.scuro,
   },
-  giornoSelezionato: {
-    backgroundColor: bento.superficieTranslucida,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: accenti.indaco,
-  },
-  testoGiorno: {
-    ...tipografia.corpo,
-    color: bento.testoPrimario,
-  },
-  testoFuoriMese: {
-    color: bento.testoMuto,
-    opacity: 0.6,
-  },
-  testoSelezionato: {
-    color: accenti.indaco,
-    fontWeight: '700',
-  },
-  puntino: {
-    position: 'absolute',
-    bottom: 6,
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: accenti.indaco,
+  riga: {
+    flexDirection: 'row',
+    gap: PARETE,
   },
 });
