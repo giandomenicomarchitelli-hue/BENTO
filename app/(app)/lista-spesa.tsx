@@ -1,18 +1,20 @@
+import { Feather } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
-import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ArticoloSpesa } from '@/api/articoliSpesa';
-import { BentoScreen } from '@/components/BentoScreen';
-import { IconBadge } from '@/components/IconBadge';
-import { SectionHeader } from '@/components/SectionHeader';
+import { Baran } from '@/components/Baran';
+import { BloccoDuro } from '@/components/BloccoDuro';
 import { ShoppingListAddForm } from '@/components/ShoppingListAddForm';
 import { ShoppingListHeader } from '@/components/ShoppingListHeader';
-import { ShoppingListRow } from '@/components/ShoppingListRow';
+import { PARETE } from '@/components/Vassoio';
+import { VoceSpuntabile } from '@/components/VoceSpuntabile';
 import { useArticoliSpesa } from '@/hooks/useArticoliSpesa';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
-import { accenti, bento, semantica, spaziatura, tipografia } from '@/theme/tokens';
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 export default function ListaSpesa() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
@@ -25,6 +27,7 @@ export default function ListaSpesa() {
 }
 
 function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
+  const insets = useSafeAreaInsets();
   const { gruppo, membri } = useGruppoAttivo();
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const { articoli, isLoading, error, aggiungi, elimina } = useArticoliSpesa(gruppoAttivoId);
@@ -64,14 +67,14 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const daComprare = articoli.filter((a) => a.stato === 'da_comprare');
   const comprati = articoli.filter((a) => a.stato === 'comprato');
 
-  const sezioni = [
-    ...(daComprare.length > 0 ? [{ titolo: 'Da comprare', dati: daComprare }] : []),
-    ...(comprati.length > 0 ? [{ titolo: 'Comprati', dati: comprati }] : []),
-  ];
-
   return (
-    <BentoScreen senzaIntestazione scroll={false}>
-      <View style={styles.sezioneFissa}>
+    <View style={styles.schermo}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.contenuto,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
+        ]}
+      >
         <ShoppingListHeader
           nomeGruppo={gruppo?.nome ?? null}
           totale={articoli.length}
@@ -79,92 +82,93 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           onIndietro={tornaIndietro}
         />
         <ShoppingListAddForm onAggiungi={aggiungiArticoloAllaLista} />
-      </View>
 
-      {isLoading ? (
-        <View style={styles.statoContenitore}>
-          <ActivityIndicator color={bento.testoPrimario} />
-        </View>
-      ) : error !== null && error !== undefined ? (
-        <View style={styles.statoContenitore}>
-          <IconBadge icona="alert-circle" colore={semantica.pericolo} dimensione={48} />
-          <Text style={styles.statoTesto}>Non riesco a caricare la lista al momento.</Text>
-        </View>
-      ) : articoli.length === 0 ? (
-        <View style={styles.statoContenitore}>
-          <IconBadge icona="shopping-cart" colore={accenti.ciano} dimensione={48} />
-          <Text style={styles.statoTitolo}>Lista della spesa vuota</Text>
-          <Text style={styles.statoTesto}>
-            Aggiungi il primo articolo dal campo qui sopra.
-          </Text>
-        </View>
-      ) : (
-        <SectionList
-          sections={sezioni.map((s) => ({ title: s.titolo, data: s.dati }))}
-          keyExtractor={(articolo) => articolo.id}
-          style={styles.elenco}
-          contentContainerStyle={styles.contenutoElenco}
-          stickySectionHeadersEnabled={false}
-          renderSectionHeader={({ section }) => (
-            <View style={styles.intestazioneSezione}>
-              <SectionHeader titolo={section.title} />
+        {isLoading ? (
+          <View style={styles.statoContenitore}>
+            <ActivityIndicator color={colori.scuro} />
+          </View>
+        ) : error !== null && error !== undefined ? (
+          <View style={styles.statoContenitore}>
+            <Feather name="alert-circle" size={44} color={colori.scuro} />
+            <Text style={styles.statoTesto}>Non riesco a caricare la lista al momento.</Text>
+          </View>
+        ) : articoli.length === 0 ? (
+          <View style={styles.statoContenitore}>
+            <Feather name="shopping-cart" size={44} color={colori.scuro} />
+            <Text style={styles.statoTitolo}>Lista della spesa vuota</Text>
+            <Text style={styles.statoTesto}>Aggiungi il primo articolo dal campo qui sopra.</Text>
+          </View>
+        ) : (
+          <BloccoDuro offset={4} colore={colori.scuro} raggio={18} contenutoStyle={styles.elenco}>
+            <View style={styles.righe}>
+              {daComprare.map((articolo) => (
+                <VoceSpuntabile
+                  key={articolo.id}
+                  testo={articolo.nome}
+                  fatto={false}
+                  nota={articolo.note}
+                  onTocca={() => apriRegistraSpesa(articolo)}
+                  onApriModifica={() => router.push({ pathname: '/articoli/[id]', params: { id: articolo.id } })}
+                  onElimina={() => elimina.mutate(articolo.id)}
+                />
+              ))}
+              {comprati.length > 0 && <Baran etichetta={`Comprati · ${comprati.length}`} />}
+              {comprati.map((articolo) => (
+                <VoceSpuntabile
+                  key={articolo.id}
+                  testo={articolo.nome}
+                  fatto
+                  acquirente={{
+                    nome: membri.find((m) => m.id === articolo.comprato_da)?.nome ?? null,
+                    prezzoCentesimi: articolo.prezzo_centesimi,
+                  }}
+                  onTocca={() => apriRegistraSpesa(articolo)}
+                  onApriModifica={() => router.push({ pathname: '/articoli/[id]', params: { id: articolo.id } })}
+                  onElimina={() => elimina.mutate(articolo.id)}
+                />
+              ))}
             </View>
-          )}
-          renderItem={({ item }) => (
-            <View style={styles.rigaContenitore}>
-              <ShoppingListRow
-                articolo={item}
-                nomeCompratore={membri.find((m) => m.id === item.comprato_da)?.nome ?? null}
-                onTocca={() => apriRegistraSpesa(item)}
-                onApriModifica={() =>
-                  router.push({ pathname: '/articoli/[id]', params: { id: item.id } })
-                }
-                onElimina={() => elimina.mutate(item.id)}
-              />
-            </View>
-          )}
-        />
-      )}
-    </BentoScreen>
+          </BloccoDuro>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  sezioneFissa: {
-    paddingHorizontal: spaziatura.xl,
-    gap: spaziatura.lg,
+  schermo: {
+    flex: 1,
+    backgroundColor: colori.crema,
+  },
+  contenuto: {
+    paddingHorizontal: 16,
+    gap: 14,
   },
   elenco: {
-    flex: 1,
+    borderRadius: 18 - 2.5,
+    overflow: 'hidden',
+    backgroundColor: colori.scuro,
   },
-  contenutoElenco: {
-    paddingHorizontal: spaziatura.xl,
-    paddingTop: spaziatura.lg,
-    paddingBottom: spaziatura.xl,
-  },
-  intestazioneSezione: {
-    marginBottom: spaziatura.sm,
-    marginTop: spaziatura.sm,
-  },
-  rigaContenitore: {
-    marginBottom: spaziatura.sm,
+  righe: {
+    gap: PARETE,
+    backgroundColor: colori.scuro,
   },
   statoContenitore: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spaziatura.xxl,
-    gap: spaziatura.sm,
+    paddingVertical: 40,
+    paddingHorizontal: 24,
+    gap: 8,
   },
   statoTitolo: {
-    ...tipografia.corpo,
-    fontSize: 17,
-    color: bento.testoPrimario,
-    marginTop: spaziatura.sm,
+    ...pesi.extraBold,
+    fontSize: 16,
+    color: colori.scuro,
+    marginTop: 4,
   },
   statoTesto: {
-    fontSize: 14,
-    color: bento.testoSecondario,
+    fontSize: 13,
+    color: colori.soft,
     textAlign: 'center',
   },
 });

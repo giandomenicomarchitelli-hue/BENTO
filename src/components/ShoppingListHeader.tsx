@@ -1,8 +1,8 @@
 import { Feather } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { IconBadge } from '@/components/IconBadge';
-import { accenti, bento, raggio, spaziatura } from '@/theme/tokens';
+import { BloccoDuro } from '@/components/BloccoDuro';
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 type Props = {
   /** Nome del gruppo, null finché non ancora caricato - non si inventa un placeholder. */
@@ -13,10 +13,9 @@ type Props = {
 };
 
 /**
- * Intestazione della lista della spesa: va dentro un BentoScreen con
- * `senzaIntestazione`, che copre già la safe area superiore - questo
- * componente non deve applicare di nuovo `inset.top` (stesso bug già
- * corretto altrove nella Fase 2.1).
+ * Intestazione della lista della spesa: va dentro un involucro che copre
+ * già la safe area superiore - questo componente non deve applicare di
+ * nuovo l'inset (stesso bug corretto altrove nella Fase 2.1).
  */
 export function ShoppingListHeader({ nomeGruppo, totale, comprati, onIndietro }: Props) {
   const percentuale = totale > 0 ? comprati / totale : 0;
@@ -24,12 +23,12 @@ export function ShoppingListHeader({ nomeGruppo, totale, comprati, onIndietro }:
 
   return (
     <View style={styles.contenitore}>
-      <Pressable onPress={onIndietro} hitSlop={8} style={styles.bottoneIndietro}>
-        <Feather name="chevron-left" size={22} color={bento.testoPrimario} />
-      </Pressable>
-
       <View style={styles.rigaTitolo}>
-        <IconBadge icona="shopping-cart" colore={accenti.ciano} dimensione={44} />
+        <Pressable onPress={onIndietro} hitSlop={8}>
+          <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
+            <Feather name="arrow-left" size={17} color={colori.scuro} />
+          </BloccoDuro>
+        </Pressable>
         <View style={styles.testiTitolo}>
           <Text style={styles.titolo}>Lista della spesa</Text>
           {nomeGruppo !== null && (
@@ -52,10 +51,7 @@ export function ShoppingListHeader({ nomeGruppo, totale, comprati, onIndietro }:
             <View
               style={[
                 styles.riempimentoProgresso,
-                {
-                  width: `${Math.round(percentuale * 100)}%`,
-                  backgroundColor: completata ? accenti.menta : accenti.ciano,
-                },
+                { width: `${Math.round(percentuale * 100)}%` },
               ]}
             />
           </View>
@@ -67,36 +63,37 @@ export function ShoppingListHeader({ nomeGruppo, totale, comprati, onIndietro }:
 
 const styles = StyleSheet.create({
   contenitore: {
-    gap: spaziatura.md,
-  },
-  bottoneIndietro: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: -8,
+    gap: 11,
   },
   rigaTitolo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spaziatura.md,
+    gap: 11,
+  },
+  quadrato: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   testiTitolo: {
     flex: 1,
+    minWidth: 0,
   },
   titolo: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: bento.testoPrimario,
+    ...pesi.extraBold,
+    fontSize: 18,
+    letterSpacing: -0.3,
+    color: colori.scuro,
   },
   sottotitolo: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: bento.testoSecondario,
+    ...pesi.bold,
+    fontSize: 10.5,
+    color: colori.soft,
     marginTop: 1,
   },
   blocchProgresso: {
-    gap: 6,
+    gap: 5,
   },
   rigaProgresso: {
     flexDirection: 'row',
@@ -104,21 +101,23 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   testoProgresso: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: bento.testoSecondario,
+    ...pesi.extraBold,
+    fontSize: 11,
+    color: colori.scuro,
   },
   emojiCompletata: {
     fontSize: 13,
   },
   binarioProgresso: {
     height: 8,
-    borderRadius: raggio.pillola,
-    backgroundColor: bento.sfondoAlt,
+    borderWidth: 1.5,
+    borderColor: colori.scuro,
+    borderRadius: 999,
+    backgroundColor: colori.panna,
     overflow: 'hidden',
   },
   riempimentoProgresso: {
     height: '100%',
-    borderRadius: raggio.pillola,
+    backgroundColor: colori.menta,
   },
 });

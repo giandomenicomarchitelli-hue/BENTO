@@ -2,8 +2,8 @@ import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { GlassCard } from '@/components/GlassCard';
-import { accenti, bento, raggio, spaziatura } from '@/theme/tokens';
+import { BloccoDuro } from '@/components/BloccoDuro';
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 type Props = {
   /** Nome (obbligatorio) e nota (opzionale, già pulita: null se vuota). */
@@ -11,12 +11,9 @@ type Props = {
 };
 
 /**
- * Form "aggiungi articolo" in stile Hybrid Liquid Glass. Stessa validazione
- * di prima (nome vuoto = niente da aggiungere): qui si limita a disabilitare
- * visivamente il bottone, la guardia vera resta comunque in
- * lista-spesa.tsx/aggiungiArticoloAllaLista. La nota è opzionale e
- * nascosta finché non la si apre esplicitamente, per non occupare spazio
- * quando non serve.
+ * Form "aggiungi articolo": stessa validazione di prima (nome vuoto =
+ * niente da aggiungere), la nota è opzionale e nascosta finché non la si
+ * apre esplicitamente.
  */
 export function ShoppingListAddForm({ onAggiungi }: Props) {
   const [nome, setNome] = useState('');
@@ -37,31 +34,34 @@ export function ShoppingListAddForm({ onAggiungi }: Props) {
   }
 
   return (
-    <GlassCard style={styles.card}>
+    <View style={styles.contenitore}>
       <View style={styles.rigaInput}>
         <TextInput
           style={styles.input}
           placeholder="Aggiungi un articolo"
-          placeholderTextColor={bento.testoMuto}
+          placeholderTextColor={colori.soft}
           value={nome}
           onChangeText={setNome}
           onSubmitEditing={conferma}
           returnKeyType={notaVisibile ? 'next' : 'done'}
         />
-        <Pressable
-          onPress={conferma}
-          disabled={!puoAggiungere}
-          style={[styles.bottoneAggiungi, !puoAggiungere && styles.bottoneDisabilitato]}
+        <BloccoDuro
+          style={[styles.cellaAggiungi, !puoAggiungere && styles.cellaAggiungiDisabilitata]}
+          offset={2.5}
+          colore={colori.corallo}
+          raggio={11}
+          contenutoStyle={styles.bottoneAggiungi}
+          onPress={puoAggiungere ? conferma : undefined}
         >
-          <Feather name="plus" size={22} color="#fff" />
-        </Pressable>
+          <Feather name="plus" size={20} color="#fff" />
+        </BloccoDuro>
       </View>
 
       {notaVisibile ? (
         <TextInput
           style={styles.inputNota}
           placeholder="Nota (es. la marca)"
-          placeholderTextColor={bento.testoMuto}
+          placeholderTextColor={colori.soft}
           value={nota}
           onChangeText={setNota}
           onSubmitEditing={conferma}
@@ -70,59 +70,67 @@ export function ShoppingListAddForm({ onAggiungi }: Props) {
         />
       ) : (
         <Pressable onPress={() => setNotaVisibile(true)} hitSlop={8} style={styles.linkNota}>
-          <Feather name="plus-circle" size={14} color={accenti.viola} />
+          <Feather name="plus-circle" size={13} color={colori.viola} />
           <Text style={styles.testoLinkNota}>Aggiungi una nota</Text>
         </Pressable>
       )}
-    </GlassCard>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    width: '100%',
+  contenitore: {
+    gap: 8,
   },
   rigaInput: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spaziatura.sm,
+    gap: 8,
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    color: bento.testoPrimario,
-    paddingVertical: 10,
-  },
-  inputNota: {
-    marginTop: spaziatura.sm,
-    fontSize: 14,
-    color: bento.testoPrimario,
-    paddingVertical: 8,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 11,
+    backgroundColor: colori.panna,
     paddingHorizontal: 12,
-    backgroundColor: bento.sfondoAlt,
-    borderRadius: raggio.sm,
+    paddingVertical: 10,
+    fontSize: 13,
+    fontWeight: '700',
+    color: colori.scuro,
+  },
+  cellaAggiungi: {
+    width: 42,
+    height: 42,
+  },
+  cellaAggiungiDisabilitata: {
+    opacity: 0.4,
   },
   bottoneAggiungi: {
-    width: 40,
-    height: 40,
-    borderRadius: raggio.sm,
-    backgroundColor: accenti.ciano,
+    width: 42,
+    height: 42,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bottoneDisabilitato: {
-    opacity: 0.4,
+  inputNota: {
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 11,
+    backgroundColor: colori.panna,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    fontSize: 13,
+    color: colori.scuro,
   },
   linkNota: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: spaziatura.sm,
+    gap: 5,
     alignSelf: 'flex-start',
   },
   testoLinkNota: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: accenti.viola,
+    ...pesi.bold,
+    fontSize: 12,
+    color: colori.viola,
   },
 });
