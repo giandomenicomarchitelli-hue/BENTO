@@ -1,15 +1,22 @@
+import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { creaSpesa } from '@/api/spese';
-import { useSaldiAggregati, useInvalidaSaldiAggregati } from '@/hooks/useSaldiAggregati';
+import { BloccoDuro } from '@/components/BloccoDuro';
+import { PARETE } from '@/components/Vassoio';
+import { RiepilogoTimbrato } from '@/components/RiepilogoTimbrato';
 import { useInvalidaMieiGruppi } from '@/hooks/useMieiGruppi';
+import { useInvalidaSaldiAggregati, useSaldiAggregati } from '@/hooks/useSaldiAggregati';
 import { confermaAzione } from '@/lib/conferma';
 import { formattaEuro } from '@/lib/formato';
+import { coloriNB as colori, pesiNB as pesi, soldiNB } from '@/theme/neoBrutalista';
 
 export default function SaldoConPersona() {
+  const insets = useSafeAreaInsets();
   const { utenteId, nome } = useLocalSearchParams<{ utenteId: string; nome?: string }>();
   const { persone, isLoading } = useSaldiAggregati();
   const invalidaSaldiAggregati = useInvalidaSaldiAggregati();
@@ -17,8 +24,17 @@ export default function SaldoConPersona() {
   const queryClient = useQueryClient();
   const [saldando, setSaldando] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
+  const [timbrato, setTimbrato] = useState(false);
 
   const persona = persone.find((p) => p.utenteId === utenteId);
+
+  function tornaIndietro() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/saldi-personali');
+    }
+  }
 
   async function saldaTutto() {
     if (persona === undefined) {
@@ -61,144 +77,229 @@ export default function SaldoConPersona() {
           queryClient.invalidateQueries({ queryKey: ['spese', riga.gruppoId], refetchType: 'all' })
         ),
       ]);
-      router.back();
+      setTimbrato(true);
     } catch {
       setErrore('Qualcosa è andato storto. Riprova.');
       setSaldando(false);
     }
   }
 
-  if (isLoading) {
-    return (
-      <View style={styles.centrato}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
-
-  if (persona === undefined) {
-    return (
-      <View style={styles.centrato}>
-        <Text style={styles.inPari}>Sei in pari con {nome ?? 'questa persona'}.</Text>
-      </View>
-    );
-  }
-
-  const miDeve = persona.nettoCentesimi > 0;
-
   return (
-    <View style={styles.contenitore}>
-      <Stack.Screen options={{ title: persona.nome }} />
+    <View style={styles.schermo}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.contenuto,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
+        ]}
+      >
+        <View style={styles.rigaTitolo}>
+          <Pressable onPress={tornaIndietro} hitSlop={8} disabled={timbrato}>
+            <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
+              <Feather name="arrow-left" size={17} color={colori.scuro} />
+            </BloccoDuro>
+          </Pressable>
+          <Text style={styles.titolo} numberOfLines={1}>
+            {persona?.nome ?? nome ?? 'Saldo'}
+          </Text>
+        </View>
 
-      <Text style={styles.titolo}>
-        {miDeve ? `${persona.nome} ti deve` : `Devi a ${persona.nome}`}
-      </Text>
-      <Text style={[styles.nettoGrande, miDeve ? styles.testoCredito : styles.testoDebito]}>
-        {formattaEuro(Math.abs(persona.nettoCentesimi))}
-      </Text>
-
-      <Text style={styles.etichetta}>Nei singoli gruppi</Text>
-      {persona.gruppi.map((riga) => {
-        const ioSonoCreditore = riga.importoCentesimi > 0;
-        return (
-          <View key={riga.gruppoId} style={styles.riga}>
-            <Text style={styles.nomeGruppo}>{riga.gruppoNome}</Text>
-            <Text style={ioSonoCreditore ? styles.testoCredito : styles.testoDebito}>
-              {ioSonoCreditore
-                ? `ti deve ${formattaEuro(riga.importoCentesimi)}`
-                : `devi ${formattaEuro(-riga.importoCentesimi)}`}
-            </Text>
+        {isLoading ? (
+          <ActivityIndicator color={colori.scuro} style={styles.caricamento} />
+        ) : persona === undefined ? (
+          <View style={styles.statoVuoto}>
+            <Text style={styles.inPari}>Sei in pari con {nome ?? 'questa persona'}.</Text>
           </View>
-        );
-      })}
-
-      {errore !== null && <Text style={styles.errore}>{errore}</Text>}
-
-      <Pressable style={styles.bottone} onPress={saldaTutto} disabled={saldando}>
-        {saldando ? (
-          <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.testoBottone}>Salda tutto</Text>
+          <>
+            {(() => {
+              const miDeve = persona.nettoCentesimi > 0;
+              return (
+                <BloccoDuro offset={3.5} colore={colori.panna} raggio={17} contenutoStyle={styles.fasciaHero}>
+                  <Text style={styles.etichettaHero}>
+                    {miDeve ? `${persona.nome} ti deve` : `Devi a ${persona.nome}`}
+                  </Text>
+                  <Text style={[styles.cifraHero, { color: miDeve ? soldiNB.credito : soldiNB.debito }]}>
+                    {formattaEuro(Math.abs(persona.nettoCentesimi))}
+                  </Text>
+                </BloccoDuro>
+              );
+            })()}
+
+            <View>
+              <Text style={styles.etichettaFeed}>Nei singoli gruppi</Text>
+              <BloccoDuro offset={3.5} colore={colori.scuro} raggio={17} contenutoStyle={styles.elenco}>
+                <View style={styles.righe}>
+                  {persona.gruppi.map((riga) => {
+                    const ioSonoCreditore = riga.importoCentesimi > 0;
+                    return (
+                      <View key={riga.gruppoId} style={styles.riga}>
+                        <Text style={styles.nomeGruppo} numberOfLines={1}>{riga.gruppoNome}</Text>
+                        <Text style={[styles.importoGruppo, { color: ioSonoCreditore ? soldiNB.credito : soldiNB.debito }]}>
+                          {ioSonoCreditore
+                            ? `ti deve ${formattaEuro(riga.importoCentesimi)}`
+                            : `devi ${formattaEuro(-riga.importoCentesimi)}`}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </BloccoDuro>
+            </View>
+
+            <RiepilogoTimbrato
+              titolo={`Saldo con ${persona.nome}, tutti i gruppi`}
+              cifra={formattaEuro(Math.abs(persona.nettoCentesimi))}
+              coloreCifra={persona.nettoCentesimi > 0 ? soldiNB.credito : soldiNB.debito}
+              timbrato={timbrato}
+              onFineTimbro={tornaIndietro}
+            />
+
+            {errore !== null && <Text style={styles.errore}>{errore}</Text>}
+
+            <BloccoDuro
+              style={(saldando || timbrato) && styles.bottoneDisabilitato}
+              offset={2.5}
+              colore={colori.oro}
+              raggio={12}
+              contenutoStyle={styles.bottoneSalda}
+              onPress={saldando || timbrato ? undefined : saldaTutto}
+            >
+              {saldando ? (
+                <ActivityIndicator color={colori.scuro} />
+              ) : (
+                <Text style={styles.testoBottoneSalda}>Salda tutto</Text>
+              )}
+            </BloccoDuro>
+            <Text style={styles.suggerimento}>
+              Azzera il saldo in ogni gruppo in comune. Per saldare solo in parte, o solo un
+              gruppo specifico, usa «Salda un debito» dentro al singolo gruppo.
+            </Text>
+          </>
         )}
-      </Pressable>
-      <Text style={styles.suggerimento}>
-        Azzera il saldo in ogni gruppo in comune. Per saldare solo in parte, o solo un gruppo
-        specifico, usa «Salda un debito» dentro al singolo gruppo.
-      </Text>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  centrato: {
+  schermo: {
     flex: 1,
+    backgroundColor: colori.crema,
+  },
+  contenuto: {
+    paddingHorizontal: 16,
+    gap: 14,
+  },
+  rigaTitolo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
+  quadrato: {
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
-  },
-  inPari: {
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  contenitore: {
-    flex: 1,
-    padding: 24,
-    gap: 8,
   },
   titolo: {
-    fontSize: 16,
-    color: '#555',
+    ...pesi.extraBold,
+    fontSize: 18,
+    letterSpacing: -0.3,
+    color: colori.scuro,
+    flexShrink: 1,
+  },
+  caricamento: {
+    marginTop: 20,
+  },
+  statoVuoto: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  inPari: {
+    ...pesi.extraBold,
+    fontSize: 15,
+    color: colori.scuro,
     textAlign: 'center',
   },
-  nettoGrande: {
-    fontSize: 36,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 16,
+  fasciaHero: {
+    alignItems: 'center',
+    paddingVertical: 18,
   },
-  testoCredito: {
-    color: '#2e7d32',
+  etichettaHero: {
+    ...pesi.extraBold,
+    fontSize: 11,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: colori.soft,
   },
-  testoDebito: {
-    color: '#c0392b',
+  cifraHero: {
+    ...pesi.extraBold,
+    fontSize: 34,
+    fontVariant: ['tabular-nums'],
+    marginTop: 6,
   },
-  etichetta: {
-    fontSize: 14,
-    color: '#555',
-    marginTop: 8,
+  etichettaFeed: {
+    ...pesi.extraBold,
+    fontSize: 10,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: colori.soft,
+    marginBottom: 7,
+  },
+  elenco: {
+    borderRadius: 17 - 2.5,
+    overflow: 'hidden',
+    backgroundColor: colori.scuro,
+  },
+  righe: {
+    gap: PARETE,
+    backgroundColor: colori.scuro,
   },
   riga: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    backgroundColor: colori.panna,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
+    gap: 10,
   },
   nomeGruppo: {
-    fontSize: 15,
+    flex: 1,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: colori.scuro,
+  },
+  importoGruppo: {
+    ...pesi.extraBold,
+    fontSize: 12.5,
+    fontVariant: ['tabular-nums'],
   },
   errore: {
-    color: '#c0392b',
+    color: colori.corallo,
+    fontSize: 13,
     textAlign: 'center',
   },
-  bottone: {
-    backgroundColor: '#2d6cdf',
-    borderRadius: 8,
-    paddingVertical: 14,
+  bottoneSalda: {
+    paddingVertical: 13,
     alignItems: 'center',
-    marginTop: 16,
+    justifyContent: 'center',
   },
-  testoBottone: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  bottoneDisabilitato: {
+    opacity: 0.6,
+  },
+  testoBottoneSalda: {
+    ...pesi.extraBold,
+    fontSize: 13,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: colori.scuro,
   },
   suggerimento: {
-    fontSize: 12,
-    color: '#888',
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: colori.soft,
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: -6,
   },
 });
