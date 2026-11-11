@@ -10,6 +10,7 @@ import type { Gruppo } from '@/api/gruppi';
 import { altezzaBarraConSafeArea, BarraInferiore } from '@/components/BarraInferiore';
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { iconaPerTipoGruppo } from '@/components/GroupPreviewCard';
+import { MarchioBento } from '@/components/MarchioBento';
 import { CifraScomparto, Scomparto, stileValoreScomparto } from '@/components/Scomparto';
 import { PARETE, Vassoio } from '@/components/Vassoio';
 import { useFontBento } from '@/hooks/useFontBento';
@@ -71,21 +72,7 @@ export default function GruppiHome() {
       >
         <View style={styles.header}>
           <View style={styles.marchioRiga}>
-            <BloccoDuro
-              offset={2}
-              colore={colori.scuro}
-              raggio={9}
-              contenutoStyle={styles.logoVassoio}
-            >
-              <View style={styles.logoRiga}>
-                <View style={[styles.logoCella, { backgroundColor: colori.oro }]} />
-                <View style={[styles.logoCella, { backgroundColor: colori.menta }]} />
-              </View>
-              <View style={styles.logoRiga}>
-                <View style={[styles.logoCella, { backgroundColor: colori.viola }]} />
-                <View style={[styles.logoCella, { backgroundColor: colori.corallo }]} />
-              </View>
-            </BloccoDuro>
+            <MarchioBento />
             <Text style={styles.marchio}>
               BENTO<Text style={styles.puntoMarchio}>.</Text>
             </Text>
@@ -236,20 +223,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-  },
-  logoVassoio: {
-    width: 36,
-    height: 36,
-    gap: 2,
-    overflow: 'hidden',
-  },
-  logoRiga: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 2,
-  },
-  logoCella: {
-    flex: 1,
   },
   marchio: {
     ...pesi.extraBold,

@@ -12,9 +12,16 @@ export const coloriNB = {
   panna: '#FFFDF6',
   scuro: '#161412',
   corallo: '#EE5D50',
-  oro: '#FDCB4E',
-  menta: '#72C4B8',
-  viola: '#C4B5FD',
+  /**
+   * oro/menta/viola più saturi della prima versione (era FDCB4E/72C4B8/
+   * C4B5FD): su marchio e scomparti grandi i pastelli originali leggevano
+   * smorti. Il viola si ferma a 9B82F5 (non più saturo) perché con testo
+   * `scuro` sopra è già al limite: 6,04:1 - un passo oltre (7B57F2)
+   * scendeva a 3,93:1, sotto la soglia 4,5:1 per testo normale.
+   */
+  oro: '#F6A91E',
+  menta: '#17A398',
+  viola: '#9B82F5',
   /** Testo secondario dentro uno scomparto: scuro attenuato, non grigio. */
   soft: 'rgba(22,20,18,0.88)',
 };
