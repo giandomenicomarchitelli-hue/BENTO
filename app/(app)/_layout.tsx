@@ -1,53 +1,51 @@
 import { Stack } from 'expo-router';
 
+// Ogni rotta apre a comparsa (fade, 120ms) e non con lo scorrimento da
+// destra di default di iOS: tutte le schermate condividono lo stesso
+// linguaggio visivo "a vassoio", e un mix di transizioni diverse si
+// notava passando da una all'altra. Le tre rotte già così
+// (index/gruppi/personale) erano le uniche: estesa a tutte le altre.
+const FADE = { animation: 'fade', animationDuration: 120 } as const;
+
 export default function AppLayout() {
   return (
     <Stack>
-      <Stack.Screen
-        name="index"
-        options={{ headerShown: false, animation: 'fade', animationDuration: 120 }}
-      />
-      <Stack.Screen
-        name="gruppi/index"
-        options={{ headerShown: false, animation: 'fade', animationDuration: 120 }}
-      />
-      <Stack.Screen name="crea-profilo" options={{ title: 'Nome utente' }} />
-      <Stack.Screen name="profilo" options={{ title: 'Il mio profilo' }} />
-      <Stack.Screen name="dashboard" options={{ headerShown: false }} />
+      <Stack.Screen name="index" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="gruppi/index" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="crea-profilo" options={{ title: 'Nome utente', ...FADE }} />
+      <Stack.Screen name="profilo" options={{ title: 'Il mio profilo', ...FADE }} />
+      <Stack.Screen name="dashboard" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="prototipo-ui" options={{ headerShown: false }} />
       <Stack.Screen name="prototipo-gruppi" options={{ headerShown: false }} />
       <Stack.Screen name="prototipo-casa" options={{ headerShown: false }} />
-      <Stack.Screen name="lista-spesa" options={{ headerShown: false }} />
-      <Stack.Screen name="articoli/[id]" options={{ title: 'Articolo' }} />
-      <Stack.Screen name="assistente/index" options={{ title: 'Scrivi' }} />
-      <Stack.Screen name="voci/[id]" options={{ title: 'Voce' }} />
-      <Stack.Screen name="spese/nuova" options={{ title: 'Nuova spesa' }} />
-      <Stack.Screen name="saldi/index" options={{ headerShown: false }} />
-      <Stack.Screen name="saldi/salda" options={{ headerShown: false }} />
-      <Stack.Screen name="saldi-personali/index" options={{ headerShown: false }} />
-      <Stack.Screen name="saldi-personali/[utenteId]" options={{ headerShown: false }} />
-      <Stack.Screen name="liste/index" options={{ headerShown: false }} />
-      <Stack.Screen name="liste/[id]" options={{ title: 'Lista' }} />
-      <Stack.Screen
-        name="personale/index"
-        options={{ headerShown: false, animation: 'fade', animationDuration: 120 }}
-      />
-      <Stack.Screen name="personale/liste/index" options={{ headerShown: false }} />
-      <Stack.Screen name="personale/liste/[id]" options={{ title: 'Lista' }} />
-      <Stack.Screen name="personale/note/index" options={{ headerShown: false }} />
-      <Stack.Screen name="personale/note/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="personale/calendario/index" options={{ title: 'Il mio calendario' }} />
-      <Stack.Screen name="gruppo/index" options={{ title: 'Il tuo gruppo' }} />
-      <Stack.Screen name="calendario/index" options={{ title: 'Calendario' }} />
-      <Stack.Screen name="faccende/index" options={{ title: 'Faccende' }} />
-      <Stack.Screen name="sfide/index" options={{ title: 'Sfide' }} />
-      <Stack.Screen name="sfide/nuova" options={{ title: 'Nuova sfida' }} />
-      <Stack.Screen name="sfide/[id]" options={{ title: 'Sfida' }} />
-      <Stack.Screen name="notifiche/index" options={{ title: 'Notifiche' }} />
-      <Stack.Screen name="onboarding/crea-gruppo" options={{ title: 'Crea un gruppo' }} />
+      <Stack.Screen name="lista-spesa" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="articoli/[id]" options={{ title: 'Articolo', ...FADE }} />
+      <Stack.Screen name="assistente/index" options={{ title: 'Scrivi', ...FADE }} />
+      <Stack.Screen name="voci/[id]" options={{ title: 'Voce', ...FADE }} />
+      <Stack.Screen name="spese/nuova" options={{ title: 'Nuova spesa', ...FADE }} />
+      <Stack.Screen name="saldi/index" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="saldi/salda" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="saldi-personali/index" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="saldi-personali/[utenteId]" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="liste/index" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="liste/[id]" options={{ title: 'Lista', ...FADE }} />
+      <Stack.Screen name="personale/index" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="personale/liste/index" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="personale/liste/[id]" options={{ title: 'Lista', ...FADE }} />
+      <Stack.Screen name="personale/note/index" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="personale/note/[id]" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="personale/calendario/index" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="gruppo/index" options={{ title: 'Il tuo gruppo', ...FADE }} />
+      <Stack.Screen name="calendario/index" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="faccende/index" options={{ title: 'Faccende', ...FADE }} />
+      <Stack.Screen name="sfide/index" options={{ title: 'Sfide', ...FADE }} />
+      <Stack.Screen name="sfide/nuova" options={{ title: 'Nuova sfida', ...FADE }} />
+      <Stack.Screen name="sfide/[id]" options={{ title: 'Sfida', ...FADE }} />
+      <Stack.Screen name="notifiche/index" options={{ title: 'Notifiche', ...FADE }} />
+      <Stack.Screen name="onboarding/crea-gruppo" options={{ title: 'Crea un gruppo', ...FADE }} />
       <Stack.Screen
         name="onboarding/unisciti-a-gruppo"
-        options={{ title: 'Unisciti a un gruppo' }}
+        options={{ title: 'Unisciti a un gruppo', ...FADE }}
       />
     </Stack>
   );

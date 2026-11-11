@@ -1,13 +1,13 @@
 import { Feather } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Impegno } from '@/api/impegni';
 import { aggiungiMesi, dataLocaleISO } from '@/calcolo/ricorrenzaFaccende';
-import { BentoScreen } from '@/components/BentoScreen';
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { CalendarioGriglia } from '@/components/CalendarioGriglia';
 import { ModificaImpegno, type ValoriImpegno } from '@/components/ModificaImpegno';
@@ -37,6 +37,7 @@ export default function Calendario() {
 }
 
 function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
+  const insets = useSafeAreaInsets();
   const { membri, membriAttivi, isLoading: gruppoInCaricamento } = useGruppoAttivo();
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const ilMioMembroId = membriAttivi.find((m) => m.utente_id === utenteId)?.id ?? null;
@@ -152,6 +153,14 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     }
   }
 
+  function tornaIndietro() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/gruppi');
+    }
+  }
+
   async function chiediEliminazione(impegno: Impegno) {
     const conferma = await confermaAzione(
       'Eliminare questo impegno?',
@@ -175,10 +184,25 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const erroreForm = crea.isError || modifica.isError ? messaggioErrore(crea.error ?? modifica.error) : null;
 
   return (
-    <BentoScreen>
-      {error !== null && error !== undefined && (
-        <Text style={styles.testoErrore}>Non riesco a caricare il calendario al momento.</Text>
-      )}
+    <View style={styles.schermo}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.contenuto,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
+        ]}
+      >
+        <View style={styles.rigaTitolo}>
+          <Pressable onPress={tornaIndietro} hitSlop={8}>
+            <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
+              <Feather name="arrow-left" size={17} color={colori.scuro} />
+            </BloccoDuro>
+          </Pressable>
+          <Text style={styles.titolo}>Calendario</Text>
+        </View>
+
+        {error !== null && error !== undefined && (
+          <Text style={styles.testoErrore}>Non riesco a caricare il calendario al momento.</Text>
+        )}
 
       {/* A. Intestazione mese + griglia */}
       <View>
@@ -303,7 +327,8 @@ function CalendarioDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           {erroreForm !== null && <Text style={styles.testoErrore}>{erroreForm}</Text>}
         </View>
       )}
-    </BentoScreen>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -313,6 +338,32 @@ const styles = StyleSheet.create({
     backgroundColor: colori.crema,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  schermo: {
+    flex: 1,
+    backgroundColor: colori.crema,
+  },
+  contenuto: {
+    paddingHorizontal: 16,
+    gap: 4,
+  },
+  rigaTitolo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    marginBottom: 14,
+  },
+  quadrato: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titolo: {
+    ...pesi.extraBold,
+    fontSize: 18,
+    letterSpacing: -0.3,
+    color: colori.scuro,
   },
   rigaMese: {
     flexDirection: 'row',
