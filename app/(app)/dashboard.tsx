@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ALTEZZA_BARRA, BarraInferiore } from '@/components/BarraInferiore';
+import { altezzaBarraConSafeArea, BarraInferiore } from '@/components/BarraInferiore';
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { calcolaPosizionePersonale } from '@/components/GroupBalanceCard';
 import { CifraScomparto, Scomparto, stileValoreScomparto } from '@/components/Scomparto';
@@ -120,7 +120,7 @@ export default function Dashboard() {
         style={styles.scroll}
         contentContainerStyle={[
           styles.contenuto,
-          { paddingTop: insets.top + 16, paddingBottom: ALTEZZA_BARRA + 24 },
+          { paddingTop: insets.top + 16, paddingBottom: altezzaBarraConSafeArea(insets.bottom) },
         ]}
       >
         <View style={styles.header}>

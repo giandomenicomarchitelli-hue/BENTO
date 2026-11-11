@@ -3,7 +3,7 @@ import { Redirect, useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ALTEZZA_BARRA, BarraInferiore } from '@/components/BarraInferiore';
+import { altezzaBarraConSafeArea, BarraInferiore } from '@/components/BarraInferiore';
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { CifraScomparto, Scomparto } from '@/components/Scomparto';
 import { PARETE, Vassoio } from '@/components/Vassoio';
@@ -53,7 +53,7 @@ export default function PersonaleHome() {
         style={styles.scroll}
         contentContainerStyle={[
           styles.contenuto,
-          { paddingTop: insets.top + 16, paddingBottom: ALTEZZA_BARRA + 24 },
+          { paddingTop: insets.top + 16, paddingBottom: altezzaBarraConSafeArea(insets.bottom) },
         ]}
       >
         <View style={styles.header}>

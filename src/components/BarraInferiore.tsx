@@ -13,6 +13,21 @@ import { coloriNB, pesiNB } from '@/theme/neoBrutalista';
  */
 export const ALTEZZA_BARRA = 64;
 
+/**
+ * Ingombro vero della barra, safe area inclusa - `paddingTop` della barra
+ * (9) + la stessa safe area che applica a se stessa qui sotto
+ * (`Math.max(insets.bottom, 16) + 12`), con qualche px in più di margine
+ * piuttosto che tagliare per un pixel. Usare questa, non
+ * `ALTEZZA_BARRA + un numero fisso`, per il `paddingBottom` dello
+ * ScrollView delle tre schermate che la mostrano: un numero fisso non
+ * scala con la safe area del device e tagliava l'ultima parte del
+ * contenuto sugli schermi con home indicator (dove insets.bottom, 34pt
+ * circa, supera il margine fisso che si usava prima).
+ */
+export function altezzaBarraConSafeArea(insetsBottom: number): number {
+  return ALTEZZA_BARRA + Math.max(insetsBottom, 16) + 21;
+}
+
 type VoceAttiva = 'home' | 'personale' | 'gruppi';
 
 /**

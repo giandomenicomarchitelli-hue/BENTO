@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { esci } from '@/api/auth';
 import type { Gruppo } from '@/api/gruppi';
-import { ALTEZZA_BARRA, BarraInferiore } from '@/components/BarraInferiore';
+import { altezzaBarraConSafeArea, BarraInferiore } from '@/components/BarraInferiore';
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { iconaPerTipoGruppo } from '@/components/GroupPreviewCard';
 import { CifraScomparto, Scomparto, stileValoreScomparto } from '@/components/Scomparto';
@@ -66,7 +66,7 @@ export default function GruppiHome() {
         style={styles.scroll}
         contentContainerStyle={[
           styles.contenuto,
-          { paddingTop: insets.top + 16, paddingBottom: ALTEZZA_BARRA + 24 },
+          { paddingTop: insets.top + 16, paddingBottom: altezzaBarraConSafeArea(insets.bottom) },
         ]}
       >
         <View style={styles.header}>

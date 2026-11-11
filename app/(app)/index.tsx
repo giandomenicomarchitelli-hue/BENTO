@@ -7,7 +7,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { esci } from '@/api/auth';
-import { ALTEZZA_BARRA, BarraInferiore } from '@/components/BarraInferiore';
+import { altezzaBarraConSafeArea, BarraInferiore } from '@/components/BarraInferiore';
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { CifraScomparto, Scomparto } from '@/components/Scomparto';
 import { PARETE, Vassoio } from '@/components/Vassoio';
@@ -82,7 +82,7 @@ export default function Homepage() {
         style={styles.scroll}
         contentContainerStyle={[
           styles.contenuto,
-          { paddingTop: insets.top + 16, paddingBottom: ALTEZZA_BARRA + 24 },
+          { paddingTop: insets.top + 16, paddingBottom: altezzaBarraConSafeArea(insets.bottom) },
         ]}
       >
         <View style={styles.header}>
