@@ -62,6 +62,7 @@ export function coloreCiclico(id: string): string {
 export const pesiNB = {
   extraBold: { fontFamily: 'PlusJakartaSans_800ExtraBold', fontWeight: '800' as const },
   bold: { fontFamily: 'PlusJakartaSans_700Bold', fontWeight: '700' as const },
+  semiBold: { fontFamily: 'PlusJakartaSans_600SemiBold', fontWeight: '600' as const },
 };
 
 /** Curva di ease-out decisa (skill animate-expo), per il feedback al tocco di BloccoDuro. */
