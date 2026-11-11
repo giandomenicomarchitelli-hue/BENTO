@@ -32,7 +32,7 @@ export default function AppLayout() {
         name="personale/index"
         options={{ headerShown: false, animation: 'fade', animationDuration: 120 }}
       />
-      <Stack.Screen name="personale/liste/index" options={{ title: 'Le mie liste' }} />
+      <Stack.Screen name="personale/liste/index" options={{ headerShown: false }} />
       <Stack.Screen name="personale/liste/[id]" options={{ title: 'Lista' }} />
       <Stack.Screen name="personale/note/index" options={{ headerShown: false }} />
       <Stack.Screen name="personale/note/[id]" options={{ headerShown: false }} />

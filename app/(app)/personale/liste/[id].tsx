@@ -1,14 +1,16 @@
+import { Feather } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import type { VoceListaPersonale } from '@/api/vociListaPersonali';
-import { BentoButton } from '@/components/BentoButton';
 import { BentoScreen } from '@/components/BentoScreen';
-import { GlassCard } from '@/components/GlassCard';
+import { BloccoDuro } from '@/components/BloccoDuro';
+import { PARETE } from '@/components/Vassoio';
+import { VoceSpuntabile } from '@/components/VoceSpuntabile';
 import { useVociListaPersonali } from '@/hooks/useVociListaPersonali';
 import { confermaAzione } from '@/lib/conferma';
-import { accenti, bento, raggio, semantica, spaziatura } from '@/theme/tokens';
+import { coloriNB as colori } from '@/theme/neoBrutalista';
 
 export default function DettaglioListaPersonale() {
   const { id, nome } = useLocalSearchParams<{ id: string; nome?: string }>();
@@ -36,124 +38,104 @@ export default function DettaglioListaPersonale() {
   }
 
   return (
-    <BentoScreen>
+    <View style={styles.contenitore}>
       {nome !== undefined && <Stack.Screen options={{ title: nome }} />}
 
-      <GlassCard>
-        <View style={styles.form}>
+      <BentoScreen>
+        <View style={styles.rigaInput}>
           <TextInput
             style={styles.input}
             placeholder="Aggiungi una voce"
-            placeholderTextColor={bento.testoMuto}
+            placeholderTextColor={colori.soft}
             value={nuovaVoce}
             onChangeText={setNuovaVoce}
             onSubmitEditing={aggiungiVoce}
             returnKeyType="done"
           />
-          <BentoButton
-            etichetta="Aggiungi"
-            onPress={aggiungiVoce}
-            disabilitato={nuovaVoce.trim() === ''}
-          />
+          <BloccoDuro
+            style={nuovaVoce.trim() === '' && styles.cellaAggiungiDisabilitata}
+            offset={2.5}
+            colore={colori.corallo}
+            raggio={11}
+            contenutoStyle={styles.bottoneAggiungi}
+            onPress={nuovaVoce.trim() === '' ? undefined : aggiungiVoce}
+          >
+            <Feather name="plus" size={20} color="#fff" />
+          </BloccoDuro>
         </View>
-      </GlassCard>
 
-      {isLoading ? (
-        <ActivityIndicator color={bento.testoPrimario} style={styles.caricamento} />
-      ) : voci.length === 0 ? (
-        <Text style={styles.vuoto}>Nessuna voce in questa lista.</Text>
-      ) : (
-        <View style={styles.elenco}>
-          {voci.map((voce) => (
-            <GlassCard key={voce.id} elevazione="bassa">
-              <View style={styles.riga}>
-                <Pressable
-                  style={styles.rigaCliccabile}
-                  onPress={() => aggiorna.mutate({ id: voce.id, fatto: !voce.fatto })}
-                >
-                  <View style={[styles.casella, voce.fatto && styles.casellaSelezionata]}>
-                    {voce.fatto && <Text style={styles.segno}>✓</Text>}
-                  </View>
-                  <Text style={[styles.testoVoce, voce.fatto && styles.testoVoceFatto]}>
-                    {voce.testo}
-                  </Text>
-                </Pressable>
-                <Pressable onPress={() => confermaEliminaVoce(voce)} hitSlop={8}>
-                  <Text style={styles.elimina}>Elimina</Text>
-                </Pressable>
-              </View>
-            </GlassCard>
-          ))}
-        </View>
-      )}
-    </BentoScreen>
+        {isLoading ? (
+          <ActivityIndicator color={colori.scuro} style={styles.caricamento} />
+        ) : voci.length === 0 ? (
+          <Text style={styles.vuoto}>Nessuna voce in questa lista.</Text>
+        ) : (
+          <BloccoDuro offset={4} colore={colori.scuro} raggio={16} contenutoStyle={styles.elenco}>
+            <View style={styles.righe}>
+              {voci.map((voce) => (
+                <VoceSpuntabile
+                  key={voce.id}
+                  testo={voce.testo}
+                  fatto={voce.fatto}
+                  onTocca={() => aggiorna.mutate({ id: voce.id, fatto: !voce.fatto })}
+                  onApriModifica={() => confermaEliminaVoce(voce)}
+                  onElimina={() => elimina.mutate(voce.id)}
+                />
+              ))}
+            </View>
+          </BloccoDuro>
+        )}
+      </BentoScreen>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  form: {
-    gap: spaziatura.md,
+  contenitore: {
+    flex: 1,
+  },
+  rigaInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   input: {
-    fontSize: 16,
-    color: bento.testoPrimario,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    backgroundColor: bento.sfondoAlt,
-    borderRadius: raggio.sm,
-  },
-  caricamento: {
-    marginTop: spaziatura.xl,
-  },
-  vuoto: {
-    textAlign: 'center',
-    color: bento.testoSecondario,
-    marginTop: spaziatura.xl,
-  },
-  elenco: {
-    gap: spaziatura.sm,
-  },
-  riga: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spaziatura.md,
-  },
-  rigaCliccabile: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spaziatura.md,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 11,
+    backgroundColor: colori.panna,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13,
+    fontWeight: '700',
+    color: colori.scuro,
   },
-  casella: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: accenti.menta,
+  cellaAggiungiDisabilitata: {
+    opacity: 0.4,
+  },
+  bottoneAggiungi: {
+    width: 42,
+    height: 42,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  casellaSelezionata: {
-    backgroundColor: accenti.menta,
+  caricamento: {
+    marginTop: 24,
   },
-  segno: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  testoVoce: {
-    flex: 1,
-    fontSize: 16,
-    color: bento.testoPrimario,
-  },
-  testoVoceFatto: {
-    textDecorationLine: 'line-through',
-    color: bento.testoMuto,
-  },
-  elimina: {
-    color: semantica.pericolo,
+  vuoto: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
+    color: colori.soft,
+    textAlign: 'center',
+    marginTop: 24,
+  },
+  elenco: {
+    borderRadius: 16 - 2.5,
+    overflow: 'hidden',
+    backgroundColor: colori.scuro,
+  },
+  righe: {
+    gap: PARETE,
+    backgroundColor: colori.scuro,
   },
 });
