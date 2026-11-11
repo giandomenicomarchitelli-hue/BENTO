@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 
@@ -7,8 +7,9 @@ import { dataSicura } from '@/calcolo/campiData';
 import { risolviNome, type MembroRisolvibile } from '@/calcolo/risoluzioneAzioni';
 import type { RispostaInterpretazione } from '@/calcolo/schemaAzioni';
 import type { AzioneRisolta } from '@/api/interpretazione';
-import { BentoButton } from '@/components/BentoButton';
+import { BloccoDuro } from '@/components/BloccoDuro';
 import { formattaEuro } from '@/lib/formato';
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 type Azione = RispostaInterpretazione['azioni'][number];
 
@@ -113,13 +114,20 @@ export function ConfermaAzioni({ azioni, membri, confermando, onConferma }: Prop
         </View>
       ))}
 
-      <BentoButton
-        etichetta="Conferma"
-        onPress={conferma}
-        variante="primario"
-        disabilitato={confermando || nonRisolto || tentativoEseguito}
-        caricando={confermando}
-      />
+      <BloccoDuro
+        style={(confermando || nonRisolto || tentativoEseguito) && styles.bottoneDisabilitato}
+        offset={2.5}
+        colore={colori.menta}
+        raggio={12}
+        contenutoStyle={styles.bottonePieno}
+        onPress={confermando || nonRisolto || tentativoEseguito ? undefined : conferma}
+      >
+        {confermando ? (
+          <ActivityIndicator color={colori.scuro} />
+        ) : (
+          <Text style={styles.testoBottonePieno}>Conferma</Text>
+        )}
+      </BloccoDuro>
       {tentativoEseguito && !confermando && (
         <Text style={styles.testoAvviso}>
           Alcune di queste azioni potrebbero essere già state eseguite. Controlla lista, spese e calendario
@@ -239,19 +247,22 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   messaggioVuoto: {
-    fontSize: 15,
-    color: '#555',
+    ...pesi.bold,
+    fontSize: 14.5,
+    color: colori.soft,
     textAlign: 'center',
   },
   testoAvviso: {
-    fontSize: 13,
-    color: '#c0392b',
+    ...pesi.bold,
+    fontSize: 12.5,
+    color: colori.corallo,
   },
   riga: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 12,
     padding: 12,
+    backgroundColor: colori.panna,
   },
   rigaTesto: {
     flexDirection: 'row',
@@ -260,8 +271,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   testo: {
-    fontSize: 15,
-    color: '#333',
+    ...pesi.semiBold,
+    fontSize: 14.5,
+    color: colori.scuro,
   },
   rigaTesto2: {
     flex: 1,
@@ -270,16 +282,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   testoRimuovi: {
+    ...pesi.extraBold,
     fontSize: 16,
-    color: '#c0392b',
-    fontWeight: '700',
+    color: colori.corallo,
   },
   selettore: {
     marginTop: 8,
   },
   etichettaSelettore: {
-    fontSize: 13,
-    color: '#555',
+    ...pesi.bold,
+    fontSize: 12.5,
+    color: colori.soft,
     marginBottom: 4,
   },
   righeChip: {
@@ -288,21 +301,37 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    backgroundColor: colori.crema,
   },
   chipSelezionato: {
-    backgroundColor: '#2d6cdf',
-    borderColor: '#2d6cdf',
+    backgroundColor: colori.menta,
   },
   testoChip: {
-    fontSize: 14,
-    color: '#333',
+    ...pesi.extraBold,
+    fontSize: 12.5,
+    color: colori.scuro,
   },
   testoChipSelezionato: {
-    color: '#fff',
+    color: colori.scuro,
+  },
+  bottoneDisabilitato: {
+    opacity: 0.5,
+  },
+  bottonePieno: {
+    paddingVertical: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  testoBottonePieno: {
+    ...pesi.extraBold,
+    fontSize: 12,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: colori.scuro,
   },
 });

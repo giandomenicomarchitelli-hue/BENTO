@@ -1,17 +1,19 @@
+import { Feather } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { router } from 'expo-router';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Notifica } from '@/api/notifiche';
-import { BentoScreen } from '@/components/BentoScreen';
-import { GlassCard } from '@/components/GlassCard';
+import { BloccoDuro } from '@/components/BloccoDuro';
 import { useNotifiche } from '@/hooks/useNotifiche';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
-import { accenti, bento, spaziatura } from '@/theme/tokens';
+import { coloreCiclico, coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 /** Notifiche di TUTTI i gruppi dell'utente, non serve più un gruppo attivo. */
 export default function Notifiche() {
+  const insets = useSafeAreaInsets();
   const { notifiche, isLoading, segnaLetta } = useNotifiche();
   const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
 
@@ -34,101 +36,166 @@ export default function Notifiche() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <View style={styles.centrato}>
-        <ActivityIndicator color={bento.testoPrimario} />
-      </View>
-    );
+  function tornaIndietro() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/');
+    }
   }
 
   return (
-    <BentoScreen>
-      {notifiche.length === 0 ? (
-        <Text style={styles.vuoto}>Nessuna notifica ancora.</Text>
-      ) : (
-        <ScrollView contentContainerStyle={styles.contenuto}>
-          {notifiche.map((notifica) => (
-            <GlassCard
-              key={notifica.id}
-              onPress={() => apriNotifica(notifica)}
-              elevazione="bassa"
-              style={notifica.letta_il === null ? styles.nonLetta : undefined}
-            >
-              <View style={styles.rigaTitolo}>
-                {notifica.letta_il === null && <View style={styles.pallinoNonLetta} />}
-                <Text style={styles.titoloNotifica}>{notifica.titolo}</Text>
-              </View>
-              <Text style={styles.corpoNotifica}>{notifica.corpo}</Text>
-              <View style={styles.rigaMeta}>
-                {notifica.gruppi !== null && <Text style={styles.gruppoNotifica}>{notifica.gruppi.nome}</Text>}
-                <Text style={styles.dataNotifica}>
-                  {format(new Date(notifica.creata_il), "d MMMM yyyy 'alle' HH:mm", { locale: it })}
-                </Text>
-              </View>
-            </GlassCard>
-          ))}
-        </ScrollView>
-      )}
-    </BentoScreen>
+    <View style={styles.schermo}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.contenuto,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
+        ]}
+      >
+        <View style={styles.rigaTitolo}>
+          <Pressable onPress={tornaIndietro} hitSlop={8}>
+            <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
+              <Feather name="arrow-left" size={17} color={colori.scuro} />
+            </BloccoDuro>
+          </Pressable>
+          <Text style={styles.titolo}>Notifiche</Text>
+        </View>
+
+        {isLoading ? (
+          <View style={styles.centrato}>
+            <ActivityIndicator color={colori.scuro} />
+          </View>
+        ) : notifiche.length === 0 ? (
+          <Text style={styles.vuoto}>Nessuna notifica ancora.</Text>
+        ) : (
+          <BloccoDuro offset={4} colore={colori.scuro} raggio={16} contenutoStyle={styles.feed}>
+            <View style={styles.righeFeed}>
+              {notifiche.map((notifica) => (
+                <Pressable
+                  key={notifica.id}
+                  style={styles.rigaFeed}
+                  onPress={() => apriNotifica(notifica)}
+                >
+                  <View
+                    style={[
+                      styles.barraFeed,
+                      {
+                        backgroundColor:
+                          notifica.letta_il === null ? colori.oro : coloreCiclico(notifica.id),
+                      },
+                    ]}
+                  />
+                  <View style={styles.testoFeed}>
+                    <Text style={styles.titoloFeed} numberOfLines={1}>
+                      {notifica.titolo}
+                    </Text>
+                    <Text style={styles.corpoFeed} numberOfLines={2}>
+                      {notifica.corpo}
+                    </Text>
+                    <View style={styles.rigaMeta}>
+                      {notifica.gruppi !== null && (
+                        <Text style={styles.metaFeed}>{notifica.gruppi.nome}</Text>
+                      )}
+                      <Text style={styles.metaFeed}>
+                        {format(new Date(notifica.creata_il), "d MMM 'alle' HH:mm", { locale: it })}
+                      </Text>
+                    </View>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          </BloccoDuro>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  centrato: {
+  schermo: {
     flex: 1,
-    backgroundColor: bento.sfondo,
+    backgroundColor: colori.crema,
+  },
+  centrato: {
+    marginTop: 40,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   contenuto: {
-    gap: spaziatura.sm,
-    paddingBottom: spaziatura.xxl,
-  },
-  nonLetta: {
-    borderColor: bento.bordoForte,
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 16,
   },
   rigaTitolo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spaziatura.xs,
+    gap: 11,
+    marginBottom: 18,
   },
-  pallinoNonLetta: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: accenti.rosa,
+  quadrato: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  titoloNotifica: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: bento.testoPrimario,
+  titolo: {
+    ...pesi.extraBold,
+    fontSize: 18,
+    letterSpacing: -0.3,
+    color: colori.scuro,
   },
-  corpoNotifica: {
-    fontSize: 13,
-    color: bento.testoSecondario,
+  vuoto: {
+    ...pesi.bold,
+    fontSize: 14.5,
+    color: colori.soft,
+    textAlign: 'center',
+    marginTop: 40,
+  },
+  feed: {
+    borderRadius: 16 - 2.5,
+    overflow: 'hidden',
+    backgroundColor: colori.scuro,
+  },
+  righeFeed: {
+    gap: 2,
+    backgroundColor: colori.scuro,
+  },
+  rigaFeed: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+    backgroundColor: colori.panna,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  barraFeed: {
+    width: 3,
+    alignSelf: 'stretch',
+    borderRadius: 2,
+    marginTop: 1,
+  },
+  testoFeed: {
+    flex: 1,
+    minWidth: 0,
+  },
+  titoloFeed: {
+    ...pesi.extraBold,
+    fontSize: 14,
+    color: colori.scuro,
+  },
+  corpoFeed: {
+    ...pesi.semiBold,
+    fontSize: 12.5,
+    color: colori.soft,
     marginTop: 2,
   },
   rigaMeta: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spaziatura.xs,
-    marginTop: 4,
+    gap: 10,
+    marginTop: 6,
   },
-  gruppoNotifica: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: bento.testoMuto,
-  },
-  dataNotifica: {
-    fontSize: 11,
-    color: bento.testoMuto,
-  },
-  vuoto: {
-    fontSize: 14,
-    color: bento.testoSecondario,
-    textAlign: 'center',
-    marginTop: spaziatura.xxl,
+  metaFeed: {
+    ...pesi.extraBold,
+    fontSize: 10.5,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colori.soft,
   },
 });

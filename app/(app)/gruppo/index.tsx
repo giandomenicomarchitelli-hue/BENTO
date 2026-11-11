@@ -5,6 +5,7 @@ import { useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   Share,
   StyleSheet,
   Switch,
@@ -12,19 +13,27 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { rinominaGruppo } from '@/api/gruppi';
 import { esciDalGruppo, impostaNotificheSilenziate } from '@/api/membri';
 import { pushSupportata } from '@/lib/pushNotifiche';
-import { Avatar } from '@/components/Avatar';
-import { Badge } from '@/components/Badge';
+import { BloccoDuro } from '@/components/BloccoDuro';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useInvalidaMieiGruppi } from '@/hooks/useMieiGruppi';
 import { useSaldi } from '@/hooks/useSaldi';
 import { confermaAzione } from '@/lib/conferma';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
-import { colori, raggio, spaziatura, tipografia } from '@/theme/tokens';
+import { coloreCiclico, coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
+
+function Cerchietto({ nome }: { nome: string }) {
+  return (
+    <View style={[styles.cerchietto, { backgroundColor: coloreCiclico(nome) }]}>
+      <Text style={styles.inizialeCerchietto}>{nome.charAt(0).toUpperCase()}</Text>
+    </View>
+  );
+}
 
 export default function Gruppo() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
@@ -33,6 +42,7 @@ export default function Gruppo() {
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
   const invalidaMieiGruppi = useInvalidaMieiGruppi();
+  const insets = useSafeAreaInsets();
   const [copiato, setCopiato] = useState(false);
   const [uscendo, setUscendo] = useState(false);
   const [cambiandoNotifiche, setCambiandoNotifiche] = useState(false);
@@ -51,7 +61,7 @@ export default function Gruppo() {
   if (isLoading || gruppo === null) {
     return (
       <View style={styles.centrato}>
-        <ActivityIndicator />
+        <ActivityIndicator color={colori.scuro} />
       </View>
     );
   }
@@ -146,98 +156,127 @@ export default function Gruppo() {
     }
   };
 
+  function tornaIndietro() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/gruppi');
+    }
+  }
+
   return (
-    <View style={styles.contenitore}>
-      {modificandoNomeGruppo ? (
-        <View style={styles.rigaModifica}>
-          <TextInput
-            style={styles.inputTitolo}
-            value={bozzaNomeGruppo}
-            onChangeText={setBozzaNomeGruppo}
-            autoFocus
-          />
-          {salvandoNomeGruppo ? (
-            <ActivityIndicator />
-          ) : (
-            <>
-              <Pressable onPress={salvaNomeGruppo} hitSlop={8}>
-                <Text style={styles.linkSalva}>Salva</Text>
-              </Pressable>
-              <Pressable onPress={() => setModificandoNomeGruppo(false)} hitSlop={8}>
-                <Text style={styles.linkAnnulla}>Annulla</Text>
-              </Pressable>
-            </>
-          )}
-        </View>
-      ) : (
-        <Pressable style={styles.rigaTitolo} onPress={apriModificaNomeGruppo}>
-          <Text style={styles.titolo}>{gruppo.nome}</Text>
-          <Text style={styles.linkModifica}>Modifica</Text>
-        </Pressable>
-      )}
-
-      <Text style={styles.etichetta}>Codice invito</Text>
-      <Pressable style={styles.riquadroCodice} onPress={copiaCodice}>
-        <Text style={styles.codice}>{gruppo.codice_invito}</Text>
-      </Pressable>
-      <Text style={styles.suggerimento}>
-        {copiato ? 'Copiato!' : 'Tocca il codice per copiarlo'}
-      </Text>
-
-      <Pressable style={styles.bottone} onPress={condividiCodice}>
-        <Feather name="share-2" size={16} color="#fff" />
-        <Text style={styles.testoBottone}>Condividi invito</Text>
-      </Pressable>
-
-      {pushSupportata() && ilMioMembro !== undefined && (
-        <View style={styles.rigaNotifiche}>
-          <View style={styles.testiRigaNotifiche}>
-            <Text style={styles.etichettaNotifiche}>Notifiche per questo gruppo</Text>
-            <Text style={styles.suggerimento}>
-              Le notifiche push vanno attivate una volta sola da Impostazioni profilo.
-            </Text>
-          </View>
-          {cambiandoNotifiche ? (
-            <ActivityIndicator />
-          ) : (
-            <Switch
-              value={!ilMioMembro.notifiche_silenziate}
-              onValueChange={(attiva) => alternaNotifiche(!attiva)}
-            />
-          )}
-        </View>
-      )}
-
-      <View style={styles.rigaEtichettaMembri}>
-        <Text style={styles.etichetta}>Membri</Text>
-        <Badge testo={String(membriAttivi.length)} tono="blu" />
-      </View>
-      <View style={styles.cartaMembri}>
-        {membriAttivi.map((membro, indice) => (
-          <View
-            key={membro.id}
-            style={[styles.rigaMembro, indice > 0 && styles.rigaMembroDivisa]}
-          >
-            <Avatar nome={membro.nome} dimensione={32} />
-            <Text style={styles.nomeMembro}>
-              {membro.nome}
-              {membro.id === ilMioMembro?.id ? ' (tu)' : ''}
-            </Text>
-          </View>
-        ))}
-      </View>
-
-      <Pressable
-        style={styles.bottoneEsci}
-        onPress={confermaUscita}
-        disabled={uscendo || saldiInCaricamento}
+    <View style={styles.schermo}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.contenuto,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
+        ]}
       >
-        {uscendo ? (
-          <ActivityIndicator color={colori.rosso600} />
+        <View style={styles.rigaTitolo}>
+          <Pressable onPress={tornaIndietro} hitSlop={8}>
+            <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
+              <Feather name="arrow-left" size={17} color={colori.scuro} />
+            </BloccoDuro>
+          </Pressable>
+          <Text style={styles.titolo}>Gruppo</Text>
+        </View>
+
+        {modificandoNomeGruppo ? (
+          <View style={styles.rigaModifica}>
+            <TextInput
+              style={styles.inputTitolo}
+              value={bozzaNomeGruppo}
+              onChangeText={setBozzaNomeGruppo}
+              autoFocus
+            />
+            {salvandoNomeGruppo ? (
+              <ActivityIndicator color={colori.scuro} />
+            ) : (
+              <>
+                <Pressable onPress={salvaNomeGruppo} hitSlop={8}>
+                  <Text style={styles.linkSalva}>Salva</Text>
+                </Pressable>
+                <Pressable onPress={() => setModificandoNomeGruppo(false)} hitSlop={8}>
+                  <Text style={styles.linkAnnulla}>Annulla</Text>
+                </Pressable>
+              </>
+            )}
+          </View>
         ) : (
-          <Text style={styles.testoBottoneEsci}>Esci dal gruppo</Text>
+          <Pressable style={styles.rigaNomeGruppo} onPress={apriModificaNomeGruppo}>
+            <Text style={styles.nomeGruppo} numberOfLines={1}>
+              {gruppo.nome}
+            </Text>
+            <Text style={styles.linkModifica}>Modifica</Text>
+          </Pressable>
         )}
-      </Pressable>
+
+        <Text style={styles.etichetta}>Codice invito</Text>
+        <Pressable onPress={copiaCodice}>
+          <BloccoDuro offset={3} colore={colori.scuro} raggio={14} contenutoStyle={styles.riquadroCodice}>
+            <Text style={styles.codice}>{gruppo.codice_invito}</Text>
+          </BloccoDuro>
+        </Pressable>
+        <Text style={styles.suggerimento}>
+          {copiato ? 'Copiato!' : 'Tocca il codice per copiarlo'}
+        </Text>
+
+        <Pressable style={styles.bottoneCondividi} onPress={condividiCodice}>
+          <Feather name="share-2" size={15} color={colori.crema} />
+          <Text style={styles.testoBottoneCondividi}>Condividi invito</Text>
+        </Pressable>
+
+        {pushSupportata() && ilMioMembro !== undefined && (
+          <View style={styles.rigaNotifiche}>
+            <View style={styles.testiRigaNotifiche}>
+              <Text style={styles.etichettaNotifiche}>Notifiche per questo gruppo</Text>
+              <Text style={styles.suggerimento}>
+                Le notifiche push vanno attivate una volta sola da Impostazioni profilo.
+              </Text>
+            </View>
+            {cambiandoNotifiche ? (
+              <ActivityIndicator color={colori.scuro} />
+            ) : (
+              <Switch
+                value={!ilMioMembro.notifiche_silenziate}
+                onValueChange={(attiva) => alternaNotifiche(!attiva)}
+                trackColor={{ false: colori.panna, true: colori.menta }}
+                thumbColor={colori.crema}
+              />
+            )}
+          </View>
+        )}
+
+        <View style={styles.rigaEtichettaMembri}>
+          <Text style={styles.etichetta}>Membri</Text>
+          <Text style={styles.contatoreMembri}>{membriAttivi.length}</Text>
+        </View>
+        <BloccoDuro offset={4} colore={colori.scuro} raggio={16} contenutoStyle={styles.pareteMembri}>
+          <View style={styles.righeMembri}>
+            {membriAttivi.map((membro) => (
+              <View key={membro.id} style={styles.rigaMembro}>
+                <Cerchietto nome={membro.nome} />
+                <Text style={styles.nomeMembro}>
+                  {membro.nome}
+                  {membro.id === ilMioMembro?.id ? ' (tu)' : ''}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </BloccoDuro>
+
+        <Pressable
+          style={styles.bottoneEsci}
+          onPress={confermaUscita}
+          disabled={uscendo || saldiInCaricamento}
+        >
+          {uscendo ? (
+            <ActivityIndicator color={colori.corallo} />
+          ) : (
+            <Text style={styles.testoBottoneEsci}>Esci dal gruppo</Text>
+          )}
+        </Pressable>
+      </ScrollView>
     </View>
   );
 }
@@ -245,155 +284,198 @@ export default function Gruppo() {
 const styles = StyleSheet.create({
   centrato: {
     flex: 1,
+    backgroundColor: colori.crema,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  contenitore: {
+  schermo: {
     flex: 1,
-    backgroundColor: colori.sfondoApp,
-    padding: spaziatura.xl,
+    backgroundColor: colori.crema,
+  },
+  contenuto: {
+    paddingHorizontal: 16,
   },
   rigaTitolo: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
+    gap: 11,
+    marginBottom: 18,
+  },
+  quadrato: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    marginBottom: spaziatura.xl,
   },
   titolo: {
-    ...tipografia.titolo,
+    ...pesi.extraBold,
+    fontSize: 18,
+    letterSpacing: -0.3,
+    color: colori.scuro,
+  },
+  rigaNomeGruppo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 18,
+  },
+  nomeGruppo: {
+    ...pesi.extraBold,
     fontSize: 24,
-    textAlign: 'center',
-    color: colori.inchiostro900,
+    letterSpacing: -0.4,
+    color: colori.scuro,
+    flexShrink: 1,
   },
   rigaModifica: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: spaziatura.lg,
+    marginBottom: 18,
   },
   inputTitolo: {
     flex: 1,
-    fontSize: 20,
-    fontWeight: '600',
-    borderWidth: 1,
-    borderColor: colori.blu600,
-    borderRadius: raggio.sm,
+    ...pesi.bold,
+    fontSize: 18,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    color: colori.inchiostro900,
+    color: colori.scuro,
+    backgroundColor: colori.panna,
   },
   linkModifica: {
-    color: colori.blu600,
-    fontSize: 13,
-    fontWeight: '600',
+    ...pesi.extraBold,
+    fontSize: 12.5,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colori.soft,
   },
   linkSalva: {
-    color: colori.blu600,
+    ...pesi.extraBold,
     fontSize: 14,
-    fontWeight: '700',
+    color: colori.menta,
   },
   linkAnnulla: {
-    color: colori.inchiostro500,
+    ...pesi.bold,
     fontSize: 14,
+    color: colori.soft,
   },
   etichetta: {
-    fontSize: 14,
-    color: colori.inchiostro500,
-    marginBottom: spaziatura.sm,
+    ...pesi.extraBold,
+    fontSize: 12.5,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colori.soft,
+    marginBottom: 8,
   },
   riquadroCodice: {
-    backgroundColor: colori.superficie,
-    borderWidth: 1,
-    borderColor: colori.blu600,
-    borderRadius: raggio.sm,
-    paddingVertical: 16,
+    paddingVertical: 18,
     alignItems: 'center',
+    backgroundColor: colori.panna,
   },
   codice: {
+    ...pesi.extraBold,
     fontSize: 28,
-    fontWeight: '700',
     letterSpacing: 2,
-    color: colori.blu600,
+    color: colori.scuro,
   },
   suggerimento: {
-    fontSize: 13,
-    color: colori.inchiostro500,
+    ...pesi.bold,
+    fontSize: 12.5,
+    color: colori.soft,
     textAlign: 'center',
-    marginTop: spaziatura.sm,
+    marginTop: 8,
   },
-  bottone: {
+  bottoneCondividi: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: colori.blu600,
-    borderRadius: raggio.sm,
-    paddingVertical: 14,
-    marginTop: spaziatura.lg,
+    backgroundColor: colori.scuro,
+    borderRadius: 12,
+    paddingVertical: 13,
+    marginTop: 18,
   },
-  testoBottone: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  testoBottoneCondividi: {
+    ...pesi.extraBold,
+    fontSize: 13,
+    letterSpacing: 0.3,
+    color: colori.crema,
   },
   rigaNotifiche: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: spaziatura.md,
-    marginTop: spaziatura.xxl,
+    gap: 12,
+    marginTop: 24,
   },
   testiRigaNotifiche: {
     flex: 1,
   },
   etichettaNotifiche: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colori.inchiostro900,
+    ...pesi.bold,
+    fontSize: 14.5,
+    color: colori.scuro,
     marginBottom: 2,
   },
   rigaEtichettaMembri: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'baseline',
     justifyContent: 'space-between',
-    marginTop: spaziatura.xxl,
+    marginTop: 24,
   },
-  cartaMembri: {
-    backgroundColor: colori.superficie,
-    borderRadius: raggio.md,
-    borderWidth: 1,
-    borderColor: colori.inchiostro150,
+  contatoreMembri: {
+    ...pesi.extraBold,
+    fontSize: 12.5,
+    color: colori.soft,
+  },
+  pareteMembri: {
+    borderRadius: 16 - 2.5,
     overflow: 'hidden',
+    backgroundColor: colori.scuro,
+  },
+  righeMembri: {
+    gap: 2,
+    backgroundColor: colori.scuro,
   },
   rigaMembro: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spaziatura.md,
-    paddingVertical: 10,
-    paddingHorizontal: spaziatura.md,
+    gap: 10,
+    backgroundColor: colori.panna,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
   },
-  rigaMembroDivisa: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colori.inchiostro150,
+  cerchietto: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inizialeCerchietto: {
+    ...pesi.extraBold,
+    fontSize: 13,
+    color: colori.scuro,
   },
   nomeMembro: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colori.inchiostro900,
+    ...pesi.bold,
+    fontSize: 14.5,
+    color: colori.scuro,
   },
   bottoneEsci: {
-    marginTop: spaziatura.xxl,
+    marginTop: 28,
     alignSelf: 'center',
-    borderRadius: raggio.sm,
+    borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderWidth: 1,
-    borderColor: colori.rosso600,
+    borderWidth: 2,
+    borderColor: colori.corallo,
   },
   testoBottoneEsci: {
-    color: colori.rosso600,
-    fontSize: 15,
-    fontWeight: '600',
+    ...pesi.extraBold,
+    fontSize: 13.5,
+    color: colori.corallo,
   },
 });

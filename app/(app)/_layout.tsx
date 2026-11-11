@@ -20,7 +20,7 @@ export default function AppLayout() {
       <Stack.Screen name="prototipo-casa" options={{ headerShown: false }} />
       <Stack.Screen name="lista-spesa" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="articoli/[id]" options={{ title: 'Articolo', ...FADE }} />
-      <Stack.Screen name="assistente/index" options={{ title: 'Scrivi', ...FADE }} />
+      <Stack.Screen name="assistente/index" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="voci/[id]" options={{ title: 'Voce', ...FADE }} />
       <Stack.Screen name="spese/nuova" options={{ title: 'Nuova spesa', ...FADE }} />
       <Stack.Screen name="saldi/index" options={{ headerShown: false, ...FADE }} />
@@ -35,13 +35,13 @@ export default function AppLayout() {
       <Stack.Screen name="personale/note/index" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="personale/note/[id]" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="personale/calendario/index" options={{ headerShown: false, ...FADE }} />
-      <Stack.Screen name="gruppo/index" options={{ title: 'Il tuo gruppo', ...FADE }} />
+      <Stack.Screen name="gruppo/index" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="calendario/index" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="faccende/index" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="sfide/index" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="sfide/nuova" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="sfide/[id]" options={{ headerShown: false, ...FADE }} />
-      <Stack.Screen name="notifiche/index" options={{ title: 'Notifiche', ...FADE }} />
+      <Stack.Screen name="notifiche/index" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="onboarding/crea-gruppo" options={{ title: 'Crea un gruppo', ...FADE }} />
       <Stack.Screen
         name="onboarding/unisciti-a-gruppo"
