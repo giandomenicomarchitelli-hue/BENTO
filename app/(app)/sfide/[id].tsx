@@ -1,19 +1,18 @@
+import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { OpzioneSfida, TurnoSfida } from '@/api/sfide';
 import { percentualeOpzione } from '@/calcolo/risultatoSfida';
-import { BentoButton } from '@/components/BentoButton';
-import { BentoScreen } from '@/components/BentoScreen';
-import { GlassCard } from '@/components/GlassCard';
-import { SectionHeader } from '@/components/SectionHeader';
+import { BloccoDuro } from '@/components/BloccoDuro';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useSfidaDettaglio } from '@/hooks/useSfidaDettaglio';
 import { useSfide } from '@/hooks/useSfide';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
-import { accenti, bento, raggio, semantica, spaziatura } from '@/theme/tokens';
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 /** Messaggio leggibile da un errore di rete/Supabase, senza assumere una forma precisa. */
 function messaggioErrore(errore: unknown): string {
@@ -46,6 +45,12 @@ function formattaIstante(iso: string): string {
   return `${data} alle ${ora}`;
 }
 
+/**
+ * Ogni opzione è una chip larga quanto la riga (qui il testo può essere
+ * lungo), non una pillola inline - stessa interfaccia per voto normale e
+ * spareggio: cambia solo quante se ne possono selezionare (maxScelte),
+ * mai due componenti diversi.
+ */
 function SelettoreOpzioni({
   opzioni,
   maxScelte,
@@ -69,38 +74,32 @@ function SelettoreOpzioni({
 }) {
   return (
     <View style={styles.sezioneVoto}>
-      <View style={styles.rigaChip}>
-        {opzioni.map((opzione) => (
-          <Pressable
-            key={opzione.id}
-            onPress={() => onToggleOpzione(opzione.id)}
-            style={[styles.chip, selezionate.includes(opzione.id) && styles.chipAttivo]}
-          >
-            <Text style={[styles.testoChip, selezionate.includes(opzione.id) && styles.testoChipAttivo]}>
-              {opzione.testo_opzione}
-            </Text>
-          </Pressable>
-        ))}
-        {mostraProposta && (
-          <Pressable onPress={onAlternaProposta} style={[styles.chip, propostaAttiva && styles.chipAttivo]}>
-            <Text style={[styles.testoChip, propostaAttiva && styles.testoChipAttivo]}>
-              + Proponi un&apos;altra opzione
-            </Text>
-          </Pressable>
-        )}
-      </View>
+      <Text style={styles.contatore}>
+        {selezionate.length + (propostaAttiva ? 1 : 0)} di {maxScelte} {maxScelte === 1 ? 'scelta' : 'scelte'}
+      </Text>
+      {opzioni.map((opzione) => (
+        <Pressable
+          key={opzione.id}
+          onPress={() => onToggleOpzione(opzione.id)}
+          style={[styles.opzioneChip, selezionate.includes(opzione.id) && styles.opzioneChipAttiva]}
+        >
+          <Text style={styles.testoOpzioneChip}>{opzione.testo_opzione}</Text>
+        </Pressable>
+      ))}
+      {mostraProposta && (
+        <Pressable onPress={onAlternaProposta} style={[styles.opzioneChip, propostaAttiva && styles.opzioneChipAttiva]}>
+          <Text style={styles.testoOpzioneChip}>+ Proponi un&apos;altra opzione</Text>
+        </Pressable>
+      )}
       {propostaAttiva && (
         <TextInput
           style={styles.inputDomanda}
           placeholder="La tua proposta"
-          placeholderTextColor={bento.testoMuto}
+          placeholderTextColor={colori.soft}
           value={propostaTesto}
           onChangeText={onCambiaProposta}
         />
       )}
-      <Text style={styles.testoContatore}>
-        {selezionate.length + (propostaAttiva ? 1 : 0)} di {maxScelte} {maxScelte === 1 ? 'scelta' : 'scelte'}
-      </Text>
     </View>
   );
 }
@@ -188,17 +187,41 @@ function FormVoto({
         onCambiaProposta={setPropostaTesto}
       />
       {confermaVoti.isError && <Text style={styles.testoErrore}>{messaggioErrore(confermaVoti.error)}</Text>}
-      <BentoButton
-        etichetta={spareggio ? 'Conferma la mia scelta' : 'Conferma le mie 3 scelte'}
-        onPress={invia}
-        disabilitato={!formValido}
-        caricando={confermaVoti.isPending}
-      />
+      <BloccoDuro
+        style={!formValido && styles.bottoneDisabilitato}
+        offset={2.5}
+        colore={colori.corallo}
+        raggio={12}
+        contenutoStyle={styles.bottonePieno}
+        onPress={formValido && !confermaVoti.isPending ? invia : undefined}
+      >
+        {confermaVoti.isPending ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.testoBottonePieno}>
+            {spareggio ? 'Conferma la mia scelta' : 'Conferma le mie 3 scelte'}
+          </Text>
+        )}
+      </BloccoDuro>
     </>
   );
 }
 
+function Testata({ titolo, onTornaIndietro }: { titolo: string; onTornaIndietro: () => void }) {
+  return (
+    <View style={styles.rigaTitolo}>
+      <Pressable onPress={onTornaIndietro} hitSlop={8}>
+        <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
+          <Feather name="arrow-left" size={17} color={colori.scuro} />
+        </BloccoDuro>
+      </Pressable>
+      <Text style={styles.titolo} numberOfLines={1}>{titolo}</Text>
+    </View>
+  );
+}
+
 export default function DettaglioSfida() {
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
   const { membri } = useGruppoAttivo();
@@ -216,26 +239,29 @@ export default function DettaglioSfida() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gruppoAttivoId]);
 
-  if (isLoading) {
+  function tornaIndietro() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/sfide');
+    }
+  }
+
+  if (isLoading || dettaglio === undefined) {
     return (
       <View style={styles.centrato}>
-        <ActivityIndicator color={bento.testoPrimario} />
+        <ActivityIndicator color={colori.scuro} />
       </View>
     );
   }
 
   if (error !== null && error !== undefined) {
     return (
-      <BentoScreen>
-        <Text style={styles.testoStato}>Questa sfida non è disponibile.</Text>
-      </BentoScreen>
-    );
-  }
-
-  if (dettaglio === undefined) {
-    return (
-      <View style={styles.centrato}>
-        <ActivityIndicator color={bento.testoPrimario} />
+      <View style={styles.schermo}>
+        <View style={[styles.contenuto, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }]}>
+          <Testata titolo="Sfida" onTornaIndietro={tornaIndietro} />
+          <Text style={styles.testoStato}>Questa sfida non è disponibile.</Text>
+        </View>
       </View>
     );
   }
@@ -256,228 +282,327 @@ export default function DettaglioSfida() {
   const turnoCorrente: TurnoSfida | undefined = turni[turni.length - 1];
 
   return (
-    <BentoScreen>
-      <Stack.Screen options={{ title: sfida.titolo }} />
-      <ScrollView contentContainerStyle={styles.contenuto}>
-        <GlassCard>
-          <SectionHeader titolo={sfida.titolo} />
+    <View style={styles.schermo}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.contenuto,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
+        ]}
+      >
+        <Testata titolo={sfida.titolo} onTornaIndietro={tornaIndietro} />
+
+        <View style={styles.dcard}>
           <Text style={styles.testoMeta}>Creata da {organizzatore}</Text>
           <Text style={styles.testoMeta}>Attività: {formattaIstante(sfida.attivita_inizio)}</Text>
-        </GlassCard>
+        </View>
 
         {sfida.stato === 'annullata' && (
-          <GlassCard>
+          <View style={styles.dcard}>
             <Text style={styles.testoStato}>Questa sfida è stata annullata.</Text>
-          </GlassCard>
+          </View>
         )}
 
         {sfida.stato === 'conclusa_vincitore' && (
-          <GlassCard>
-            <SectionHeader titolo="Abbiamo un vincitore! 🎉" />
-            <Text style={styles.nomeVincitore}>
-              {opzioniPerId.get(sfida.opzione_vincente_id ?? '')?.testo_opzione ?? 'Opzione'}
-            </Text>
-            <View style={styles.classifica}>
-              {[...risultatiTurnoCorrente]
-                .sort((a, b) => b.voti_ricevuti - a.voti_ricevuti)
-                .map((risultato) => (
-                  <View key={risultato.opzione_id} style={styles.rigaClassifica}>
-                    <Text style={styles.testoOpzioneClassifica}>
+          <View style={styles.dcard}>
+            <Text style={styles.titoloRisultato}>Abbiamo un vincitore! 🎉</Text>
+            {(() => {
+              const risultatiOrdinati = [...risultatiTurnoCorrente].sort((a, b) => b.voti_ricevuti - a.voti_ricevuti);
+              return risultatiOrdinati.map((risultato, indice) => {
+                const vincente = indice === 0;
+                const percentuale = percentualeOpzione(risultato.voti_ricevuti, partecipantiTotali);
+                return (
+                  <View key={risultato.opzione_id} style={styles.rigaRisultato}>
+                    <Text
+                      style={[styles.testoOpzioneRisultato, vincente && pesi.extraBold]}
+                      numberOfLines={1}
+                    >
                       {opzioniPerId.get(risultato.opzione_id)?.testo_opzione ?? 'Opzione'}
                     </Text>
-                    <Text style={styles.testoVotiClassifica}>
-                      {risultato.voti_ricevuti} voti · {percentualeOpzione(risultato.voti_ricevuti, partecipantiTotali)}%
+                    <View style={styles.barraRisultato}>
+                      <View
+                        style={[
+                          styles.riempimentoBarraRisultato,
+                          { width: `${percentuale}%`, backgroundColor: vincente ? colori.oro : colori.viola },
+                        ]}
+                      />
+                    </View>
+                    <Text style={styles.testoVotiRisultato}>
+                      {risultato.voti_ricevuti} voti · {percentuale}%
                     </Text>
                   </View>
-                ))}
-            </View>
-          </GlassCard>
+                );
+              });
+            })()}
+          </View>
         )}
 
         {(sfida.stato === 'conclusa_senza_accordo' || sfida.stato === 'conclusa_scaduta') && (
-          <GlassCard>
-            <SectionHeader
-              titolo={sfida.stato === 'conclusa_senza_accordo' ? 'Nessun accordo! 😅' : 'Sfida scaduta'}
-            />
+          <View style={styles.dcard}>
+            <Text style={styles.titoloRisultato}>
+              {sfida.stato === 'conclusa_senza_accordo' ? 'Nessun accordo! 😅' : 'Sfida scaduta'}
+            </Text>
             <Text style={styles.testoStato}>
               {sfida.stato === 'conclusa_senza_accordo'
                 ? 'Il gruppo non ha trovato una preferenza condivisa.'
                 : 'La sfida è scaduta prima che tutti votassero.'}
             </Text>
             {ripeti.isError && <Text style={styles.testoErrore}>{messaggioErrore(ripeti.error)}</Text>}
-            <BentoButton
-              etichetta="Riprova"
-              onPress={() =>
-                ripeti.mutate(sfida.id, {
-                  // La Realtime di useSfidaDettaglio arriverebbe comunque
-                  // (sfide_turni cambia), ma invalidare subito evita di
-                  // aspettare quel giro di rete dopo un tap esplicito.
-                  onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sfide', 'dettaglio', sfida.id] }),
-                })
+            <BloccoDuro
+              style={ripeti.isPending && styles.bottoneDisabilitato}
+              offset={2.5}
+              colore={colori.corallo}
+              raggio={12}
+              contenutoStyle={styles.bottonePieno}
+              onPress={
+                ripeti.isPending
+                  ? undefined
+                  : () =>
+                      ripeti.mutate(sfida.id, {
+                        // La Realtime di useSfidaDettaglio arriverebbe comunque
+                        // (sfide_turni cambia), ma invalidare subito evita di
+                        // aspettare quel giro di rete dopo un tap esplicito.
+                        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sfide', 'dettaglio', sfida.id] }),
+                      })
               }
-              caricando={ripeti.isPending}
-            />
-          </GlassCard>
+            >
+              {ripeti.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.testoBottonePieno}>Riprova</Text>}
+            </BloccoDuro>
+          </View>
         )}
 
-        {sfida.stato === 'in_corso' && turnoCorrente !== undefined && turnoCorrente.stato === 'in_corso' && (
-          mioStatoPartecipazione === 'in_attesa' ? (
-            <GlassCard>
-              <SectionHeader titolo="Ti hanno invitato a questa sfida" />
+        {sfida.stato === 'in_corso' &&
+          turnoCorrente !== undefined &&
+          turnoCorrente.stato === 'in_corso' &&
+          (mioStatoPartecipazione === 'in_attesa' ? (
+            <View style={styles.dcard}>
+              <Text style={styles.titoloRisultato}>Ti hanno invitato a questa sfida</Text>
               <Text style={styles.testoMeta}>
                 Accetta per votare le tue preferite, oppure rifiuta se non vuoi partecipare.
               </Text>
-              {rispondiInvito.isError && (
-                <Text style={styles.testoErrore}>{messaggioErrore(rispondiInvito.error)}</Text>
-              )}
+              {rispondiInvito.isError && <Text style={styles.testoErrore}>{messaggioErrore(rispondiInvito.error)}</Text>}
               <View style={styles.rigaBottoniInvito}>
-                <View style={styles.bottoneInvito}>
-                  <BentoButton
-                    etichetta="Accetta"
-                    onPress={() => rispondiInvito.mutate(true)}
-                    caricando={rispondiInvito.isPending}
-                  />
-                </View>
-                <View style={styles.bottoneInvito}>
-                  <BentoButton
-                    etichetta="Rifiuta"
-                    variante="vetro"
-                    onPress={() => rispondiInvito.mutate(false)}
-                    disabilitato={rispondiInvito.isPending}
+                <BloccoDuro
+                  style={[styles.bottoneInvito, rispondiInvito.isPending && styles.bottoneDisabilitato]}
+                  offset={2.5}
+                  colore={colori.menta}
+                  raggio={11}
+                  contenutoStyle={styles.bottonePieno}
+                  onPress={rispondiInvito.isPending ? undefined : () => rispondiInvito.mutate(true)}
+                >
+                  <Text style={styles.testoBottonePieno}>Accetta</Text>
+                </BloccoDuro>
+                <BloccoDuro
+                  style={[styles.bottoneInvito, rispondiInvito.isPending && styles.bottoneDisabilitato]}
+                  offset={2.5}
+                  colore={colori.corallo}
+                  raggio={11}
+                  contenutoStyle={styles.bottonePieno}
+                  onPress={rispondiInvito.isPending ? undefined : () => rispondiInvito.mutate(false)}
+                >
+                  <Text style={styles.testoBottonePieno}>Rifiuta</Text>
+                </BloccoDuro>
+              </View>
+            </View>
+          ) : mioStatoPartecipazione === 'rifiutata' ? (
+            <View style={styles.dcard}>
+              <Text style={styles.testoStato}>Hai rifiutato questa sfida.</Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.dcard}>
+                <Text style={styles.testoMeta}>Scade {formattaIstante(turnoCorrente.scadenza)}</Text>
+                <Text style={styles.contatore}>
+                  {partecipantiCheHannoVotatoNelTurnoCorrente} di {partecipantiTotali} hanno votato
+                </Text>
+                <View style={styles.binarioProgresso}>
+                  <View
+                    style={[
+                      styles.riempimentoProgresso,
+                      {
+                        width: `${
+                          partecipantiTotali > 0
+                            ? Math.round((partecipantiCheHannoVotatoNelTurnoCorrente / partecipantiTotali) * 100)
+                            : 0
+                        }%`,
+                      },
+                    ]}
                   />
                 </View>
               </View>
-            </GlassCard>
-          ) : mioStatoPartecipazione === 'rifiutata' ? (
-            <GlassCard>
-              <Text style={styles.testoStato}>Hai rifiutato questa sfida.</Text>
-            </GlassCard>
-          ) : (
-            <GlassCard>
-              <Text style={styles.testoMeta}>Scade {formattaIstante(turnoCorrente.scadenza)}</Text>
-              <Text style={styles.testoMeta}>
-                {partecipantiCheHannoVotatoNelTurnoCorrente} di {partecipantiTotali} persone hanno votato
-              </Text>
 
               {hoGiaVotatoNelTurnoCorrente ? (
-                <Text style={styles.testoStato}>Hai già votato. In attesa degli altri.</Text>
+                <View style={styles.dcard}>
+                  <Text style={styles.testoStato}>Hai già votato. In attesa degli altri.</Text>
+                </View>
               ) : (
-                <FormVoto
-                  key={turnoCorrente.id}
-                  turno={turnoCorrente}
-                  opzioniVisibili={opzioniVisibili}
-                  confermaVoti={confermaVoti}
-                />
+                <View style={styles.dcard}>
+                  <FormVoto key={turnoCorrente.id} turno={turnoCorrente} opzioniVisibili={opzioniVisibili} confermaVoti={confermaVoti} />
+                </View>
               )}
-            </GlassCard>
-          )
-        )}
+            </>
+          ))}
       </ScrollView>
-    </BentoScreen>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   centrato: {
     flex: 1,
-    backgroundColor: bento.sfondo,
+    backgroundColor: colori.crema,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  schermo: {
+    flex: 1,
+    backgroundColor: colori.crema,
+  },
   contenuto: {
-    gap: spaziatura.lg,
-    paddingBottom: spaziatura.xxl,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  rigaTitolo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
+  quadrato: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titolo: {
+    ...pesi.extraBold,
+    flexShrink: 1,
+    fontSize: 16,
+    letterSpacing: -0.2,
+    color: colori.scuro,
+  },
+  dcard: {
+    borderWidth: 2.5,
+    borderColor: colori.scuro,
+    borderRadius: 15,
+    backgroundColor: colori.panna,
+    padding: 12,
+    gap: 6,
   },
   testoMeta: {
-    fontSize: 13,
-    color: bento.testoSecondario,
-    marginTop: 4,
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: colori.soft,
   },
   testoStato: {
-    fontSize: 14,
-    color: bento.testoSecondario,
+    fontSize: 13,
+    fontWeight: '600',
+    color: colori.soft,
     textAlign: 'center',
-    marginTop: spaziatura.sm,
   },
-  sezioneVoto: {
-    marginTop: spaziatura.sm,
-    gap: spaziatura.sm,
+  titoloRisultato: {
+    ...pesi.extraBold,
+    fontSize: 13,
+    color: colori.scuro,
+  },
+  contatore: {
+    ...pesi.extraBold,
+    fontSize: 11,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colori.scuro,
+  },
+  binarioProgresso: {
+    height: 7,
+    borderWidth: 1.5,
+    borderColor: colori.scuro,
+    borderRadius: 999,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+    marginTop: 2,
+  },
+  riempimentoProgresso: {
+    height: '100%',
+    backgroundColor: colori.oro,
+  },
+  rigaRisultato: {
+    gap: 4,
+  },
+  testoOpzioneRisultato: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: colori.scuro,
+  },
+  barraRisultato: {
+    height: 6,
+    borderWidth: 1.3,
+    borderColor: colori.scuro,
+    borderRadius: 999,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+  },
+  riempimentoBarraRisultato: {
+    height: '100%',
+  },
+  testoVotiRisultato: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colori.soft,
   },
   rigaBottoniInvito: {
     flexDirection: 'row',
-    gap: spaziatura.sm,
-    marginTop: spaziatura.sm,
+    gap: 8,
+    marginTop: 4,
   },
   bottoneInvito: {
     flex: 1,
   },
-  rigaChip: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spaziatura.xs,
+  sezioneVoto: {
+    gap: 6,
   },
-  chip: {
+  opzioneChip: {
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 11,
+    paddingVertical: 10,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: raggio.pillola,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: bento.bordoForte,
+    backgroundColor: '#fff',
   },
-  chipAttivo: {
-    backgroundColor: accenti.menta,
-    borderColor: accenti.menta,
+  opzioneChipAttiva: {
+    backgroundColor: colori.viola,
   },
-  testoChip: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: bento.testoSecondario,
-  },
-  testoChipAttivo: {
-    color: '#fff',
-  },
-  testoContatore: {
-    fontSize: 13,
-    color: bento.testoSecondario,
+  testoOpzioneChip: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: colori.scuro,
   },
   inputDomanda: {
-    backgroundColor: bento.superficieForte,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: bento.bordoForte,
-    borderRadius: raggio.sm,
-    paddingHorizontal: 14,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 11,
+    backgroundColor: '#fff',
+    paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 15,
-    color: bento.testoPrimario,
-  },
-  nomeVincitore: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: bento.testoPrimario,
-    marginTop: spaziatura.xs,
-    marginBottom: spaziatura.sm,
-  },
-  classifica: {
-    gap: spaziatura.xs,
-  },
-  rigaClassifica: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: spaziatura.xs,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: bento.bordoSoft,
-  },
-  testoOpzioneClassifica: {
-    fontSize: 14,
-    color: bento.testoPrimario,
-  },
-  testoVotiClassifica: {
     fontSize: 13,
-    color: bento.testoSecondario,
+    color: colori.scuro,
   },
   testoErrore: {
-    fontSize: 13,
-    color: semantica.pericolo,
+    ...pesi.bold,
+    fontSize: 12.5,
+    color: colori.corallo,
     textAlign: 'center',
-    marginTop: spaziatura.xs,
+  },
+  bottoneDisabilitato: {
+    opacity: 0.5,
+  },
+  bottonePieno: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  testoBottonePieno: {
+    ...pesi.extraBold,
+    fontSize: 11.5,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: '#fff',
   },
 });
