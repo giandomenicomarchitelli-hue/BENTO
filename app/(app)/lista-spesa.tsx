@@ -1,6 +1,8 @@
 import { Feather } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
+import { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ArticoloSpesa } from '@/api/articoliSpesa';
@@ -31,6 +33,7 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const { gruppo, membri } = useGruppoAttivo();
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const { articoli, isLoading, error, aggiungi, elimina } = useArticoliSpesa(gruppoAttivoId);
+  const [compratiVisibili, setCompratiVisibili] = useState(false);
 
   const ilMioMembroId = membri.find((m) => m.utente_id === utenteId)?.id ?? null;
 
@@ -112,21 +115,29 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
                   onElimina={() => elimina.mutate(articolo.id)}
                 />
               ))}
-              {comprati.length > 0 && <Baran etichetta={`Comprati · ${comprati.length}`} />}
-              {comprati.map((articolo) => (
-                <VoceSpuntabile
-                  key={articolo.id}
-                  testo={articolo.nome}
-                  fatto
-                  acquirente={{
-                    nome: membri.find((m) => m.id === articolo.comprato_da)?.nome ?? null,
-                    prezzoCentesimi: articolo.prezzo_centesimi,
-                  }}
-                  onTocca={() => apriRegistraSpesa(articolo)}
-                  onApriModifica={() => router.push({ pathname: '/articoli/[id]', params: { id: articolo.id } })}
-                  onElimina={() => elimina.mutate(articolo.id)}
+              {comprati.length > 0 && (
+                <Baran
+                  etichetta={`Comprati · ${comprati.length}`}
+                  onPress={() => setCompratiVisibili((v) => !v)}
+                  aperto={compratiVisibili}
                 />
-              ))}
+              )}
+              {compratiVisibili &&
+                comprati.map((articolo) => (
+                  <Animated.View key={articolo.id} entering={FadeIn.duration(150)} exiting={FadeOut.duration(120)}>
+                    <VoceSpuntabile
+                      testo={articolo.nome}
+                      fatto
+                      acquirente={{
+                        nome: membri.find((m) => m.id === articolo.comprato_da)?.nome ?? null,
+                        prezzoCentesimi: articolo.prezzo_centesimi,
+                      }}
+                      onTocca={() => apriRegistraSpesa(articolo)}
+                      onApriModifica={() => router.push({ pathname: '/articoli/[id]', params: { id: articolo.id } })}
+                      onElimina={() => elimina.mutate(articolo.id)}
+                    />
+                  </Animated.View>
+                ))}
             </View>
           </BloccoDuro>
         )}

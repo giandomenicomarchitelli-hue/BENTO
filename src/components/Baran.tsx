@@ -1,8 +1,15 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { coloriNB, pesiNB } from '@/theme/neoBrutalista';
 
-type Props = { etichetta: string };
+type Props = {
+  etichetta: string;
+  /** Se presente, il baran diventa toccabile e mostra una freccia (vedi lista-spesa.tsx). */
+  onPress?: () => void;
+  /** Stato della freccia quando `onPress` è presente: true = sezione aperta. */
+  aperto?: boolean;
+};
 
 const LARGHEZZA_DENTE = 8;
 // shortcut: riga fissa di denti invece di calcolarne il numero in base alla
@@ -23,16 +30,31 @@ const NUMERO_DENTI = 56;
  * ripagava. Stesso effetto con una fila di quadratini ruotati di 45°,
  * tagliata a metà dal contenitore: pura View, nessuna nuova dipendenza.
  */
-export function Baran({ etichetta }: Props) {
-  return (
+export function Baran({ etichetta, onPress, aperto }: Props) {
+  const corpo = (
     <View style={styles.contenitore}>
       <View style={styles.rigaDenti} pointerEvents="none">
         {Array.from({ length: NUMERO_DENTI }).map((_, indice) => (
           <View key={indice} style={styles.dente} />
         ))}
       </View>
-      <Text style={styles.etichetta}>{etichetta}</Text>
+      <View style={styles.rigaEtichetta}>
+        <Text style={styles.etichetta}>{etichetta}</Text>
+        {onPress !== undefined && (
+          <Feather name={aperto === true ? 'chevron-up' : 'chevron-down'} size={12} color={coloriNB.scuro} />
+        )}
+      </View>
     </View>
+  );
+
+  if (onPress === undefined) {
+    return corpo;
+  }
+
+  return (
+    <Pressable onPress={onPress} hitSlop={4}>
+      {corpo}
+    </Pressable>
   );
 }
 
@@ -56,6 +78,11 @@ const styles = StyleSheet.create({
     height: LARGHEZZA_DENTE,
     backgroundColor: coloriNB.scuro,
     transform: [{ rotate: '45deg' }],
+  },
+  rigaEtichetta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   etichetta: {
     ...pesiNB.extraBold,
