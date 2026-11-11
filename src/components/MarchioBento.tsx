@@ -42,6 +42,12 @@ const styles = StyleSheet.create({
     height: 36,
     flexDirection: 'row',
     gap: 2,
+    // Senza questo gli angoli quadrati delle celle sporgono oltre il
+    // bordo arrotondato esterno di BloccoDuro (raggio 9, bordo 2px a
+    // offset<=2): il raggio interno deve essere concentrico, raggio
+    // esterno meno lo spessore del bordo (9-2=7), non solo "overflow
+    // hidden" senza un proprio borderRadius.
+    borderRadius: 7,
     overflow: 'hidden',
   },
   colonnaDestra: {
