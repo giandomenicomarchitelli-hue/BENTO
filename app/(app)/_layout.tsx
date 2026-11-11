@@ -22,10 +22,10 @@ export default function AppLayout() {
       <Stack.Screen name="assistente/index" options={{ title: 'Scrivi' }} />
       <Stack.Screen name="voci/[id]" options={{ title: 'Voce' }} />
       <Stack.Screen name="spese/nuova" options={{ title: 'Nuova spesa' }} />
-      <Stack.Screen name="saldi/index" options={{ title: 'Saldi e spese' }} />
-      <Stack.Screen name="saldi/salda" options={{ title: 'Salda un debito' }} />
-      <Stack.Screen name="saldi-personali/index" options={{ title: 'I miei saldi' }} />
-      <Stack.Screen name="saldi-personali/[utenteId]" options={{ title: 'Saldo' }} />
+      <Stack.Screen name="saldi/index" options={{ headerShown: false }} />
+      <Stack.Screen name="saldi/salda" options={{ headerShown: false }} />
+      <Stack.Screen name="saldi-personali/index" options={{ headerShown: false }} />
+      <Stack.Screen name="saldi-personali/[utenteId]" options={{ headerShown: false }} />
       <Stack.Screen name="liste/index" options={{ headerShown: false }} />
       <Stack.Screen name="liste/[id]" options={{ title: 'Lista' }} />
       <Stack.Screen
