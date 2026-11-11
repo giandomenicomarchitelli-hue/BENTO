@@ -2,16 +2,14 @@ import { Feather } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SfidaConStato } from '@/api/sfide';
-import { BentoButton } from '@/components/BentoButton';
-import { BentoScreen } from '@/components/BentoScreen';
-import { GlassCard } from '@/components/GlassCard';
-import { SectionHeader } from '@/components/SectionHeader';
+import { BloccoDuro } from '@/components/BloccoDuro';
 import { useListe } from '@/hooks/useListe';
 import { useSfide } from '@/hooks/useSfide';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
-import { bento, spaziatura } from '@/theme/tokens';
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 type Sezione = 'da_accettare' | 'in_attesa' | 'spareggi' | 'attive' | 'concluse';
 
@@ -65,33 +63,29 @@ function ModalSceltaLista({
         <View style={styles.modalIntestazione}>
           <Text style={styles.modalTitolo}>Scegli una lista</Text>
           <Pressable onPress={onChiudi} hitSlop={12}>
-            <Feather name="x" size={22} color={bento.testoPrimario} />
+            <Feather name="x" size={22} color={colori.scuro} />
           </Pressable>
         </View>
         {isLoading ? (
-          <ActivityIndicator color={bento.testoPrimario} style={{ marginTop: spaziatura.xl }} />
+          <ActivityIndicator color={colori.scuro} style={styles.caricamentoModal} />
         ) : liste.length === 0 ? (
-          <Text style={styles.vuotoModal}>
-            Nessuna lista disponibile. Crea prima una lista con almeno 3 voci.
-          </Text>
+          <Text style={styles.vuotoModal}>Nessuna lista disponibile. Crea prima una lista con almeno 3 voci.</Text>
         ) : (
           <FlatList
             data={liste}
             keyExtractor={(l) => l.id}
             contentContainerStyle={styles.modalLista}
             renderItem={({ item }) => (
-              <GlassCard
+              <Pressable
+                style={styles.rigaLista}
                 onPress={() => {
                   onChiudi();
                   router.push({ pathname: '/sfide/nuova', params: { listaId: item.id } });
                 }}
-                elevazione="bassa"
               >
-                <View style={styles.rigaLista}>
-                  <Text style={styles.nomeLista}>{item.nome}</Text>
-                  <Feather name="chevron-right" size={16} color={bento.testoMuto} />
-                </View>
-              </GlassCard>
+                <Text style={styles.nomeLista}>{item.nome}</Text>
+                <Feather name="chevron-right" size={16} color={colori.soft} />
+              </Pressable>
             )}
           />
         )}
@@ -111,6 +105,7 @@ export default function Sfide() {
 }
 
 function SfideDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
+  const insets = useSafeAreaInsets();
   const { sfide, isLoading, sincronizzaScadenze } = useSfide(gruppoAttivoId);
   const [mostraSceltaLista, setMostraSceltaLista] = useState(false);
 
@@ -119,135 +114,231 @@ function SfideDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gruppoAttivoId]);
 
-  if (isLoading) {
-    return (
-      <View style={styles.centrato}>
-        <ActivityIndicator color={bento.testoPrimario} />
-      </View>
-    );
+  function tornaIndietro() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/gruppi');
+    }
   }
 
   return (
-    <BentoScreen>
-      <ModalSceltaLista
-        visibile={mostraSceltaLista}
-        onChiudi={() => setMostraSceltaLista(false)}
-        gruppoId={gruppoAttivoId}
-      />
+    <View style={styles.schermo}>
+      <ModalSceltaLista visibile={mostraSceltaLista} onChiudi={() => setMostraSceltaLista(false)} gruppoId={gruppoAttivoId} />
 
-      {sfide.length === 0 ? (
-        <View style={styles.vuotoContenitore}>
-          <Text style={styles.vuoto}>Nessuna sfida ancora.</Text>
-          <BentoButton
-            etichetta="Inizia nuova sfida"
-            variante="vetro"
-            onPress={() => setMostraSceltaLista(true)}
-          />
+      <ScrollView
+        contentContainerStyle={[
+          styles.contenuto,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
+        ]}
+      >
+        <View style={styles.rigaTitolo}>
+          <Pressable onPress={tornaIndietro} hitSlop={8}>
+            <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
+              <Feather name="arrow-left" size={17} color={colori.scuro} />
+            </BloccoDuro>
+          </Pressable>
+          <Text style={styles.titolo}>Sfide</Text>
         </View>
-      ) : (
-        <ScrollView contentContainerStyle={styles.contenuto}>
-          <BentoButton
-            etichetta="Inizia nuova sfida"
-            variante="vetro"
-            onPress={() => setMostraSceltaLista(true)}
-          />
-          {SEZIONI.map(({ chiave, titolo }) => {
+
+        <BloccoDuro
+          offset={2.5}
+          colore={colori.corallo}
+          raggio={12}
+          contenutoStyle={styles.bottonePieno}
+          onPress={() => setMostraSceltaLista(true)}
+        >
+          <Feather name="plus" size={14} color="#fff" />
+          <Text style={styles.testoBottonePieno}>Inizia nuova sfida</Text>
+        </BloccoDuro>
+
+        {isLoading ? (
+          <ActivityIndicator color={colori.scuro} style={styles.caricamento} />
+        ) : sfide.length === 0 ? (
+          <Text style={styles.vuoto}>Nessuna sfida ancora.</Text>
+        ) : (
+          SEZIONI.map(({ chiave, titolo }) => {
             const sfideSezione = sfide.filter((s) => sezioneDi(s) === chiave);
             if (sfideSezione.length === 0) {
               return null;
             }
             return (
               <View key={chiave} style={styles.sezione}>
-                <SectionHeader titolo={titolo} />
-                {sfideSezione.map(({ sfida }) => (
-                  <Pressable
-                    key={sfida.id}
-                    onPress={() => router.push({ pathname: '/sfide/[id]', params: { id: sfida.id } })}
-                  >
-                    <GlassCard elevazione="bassa">
-                      <Text style={styles.titoloSfida}>{sfida.titolo}</Text>
-                    </GlassCard>
-                  </Pressable>
-                ))}
+                <Text style={styles.etichettaSezione}>{titolo}</Text>
+                {sfideSezione.map(({ sfida, turnoCorrente }) => {
+                  const spareggio = chiave === 'spareggi' && turnoCorrente?.tipo_turno === 'spareggio';
+                  return (
+                    <Pressable
+                      key={sfida.id}
+                      style={[styles.rigaSfida, sfida.stato !== 'in_corso' && styles.rigaConclusa]}
+                      onPress={() => router.push({ pathname: '/sfide/[id]', params: { id: sfida.id } })}
+                    >
+                      <Text style={styles.titoloSfida} numberOfLines={1}>{sfida.titolo}</Text>
+                      {spareggio ? (
+                        <View style={styles.pillSpareggio}>
+                          <Text style={styles.testoPillSpareggio}>Spareggio</Text>
+                        </View>
+                      ) : (
+                        <Feather name="chevron-right" size={14} color={colori.soft} />
+                      )}
+                    </Pressable>
+                  );
+                })}
               </View>
             );
-          })}
-        </ScrollView>
-      )}
-    </BentoScreen>
+          })
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  centrato: {
+  schermo: {
     flex: 1,
-    backgroundColor: bento.sfondo,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: colori.crema,
   },
   contenuto: {
-    gap: spaziatura.lg,
-    paddingBottom: spaziatura.xxl,
+    paddingHorizontal: 16,
+    gap: 16,
   },
-  vuotoContenitore: {
-    flex: 1,
+  rigaTitolo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
+  quadrato: {
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spaziatura.lg,
-    paddingHorizontal: spaziatura.xl,
   },
-  sezione: {
-    gap: spaziatura.sm,
+  titolo: {
+    ...pesi.extraBold,
+    fontSize: 18,
+    letterSpacing: -0.3,
+    color: colori.scuro,
   },
-  titoloSfida: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: bento.testoPrimario,
+  bottonePieno: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    paddingVertical: 12,
+  },
+  testoBottonePieno: {
+    ...pesi.extraBold,
+    fontSize: 11.5,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: '#fff',
+  },
+  caricamento: {
+    marginTop: 20,
   },
   vuoto: {
-    fontSize: 14,
-    color: bento.testoSecondario,
+    ...pesi.bold,
+    fontSize: 13,
+    color: colori.soft,
     textAlign: 'center',
+    marginTop: 20,
+  },
+  sezione: {
+    gap: 5,
+  },
+  etichettaSezione: {
+    ...pesi.extraBold,
+    fontSize: 9.5,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colori.soft,
+    paddingLeft: 2,
+  },
+  rigaSfida: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    backgroundColor: colori.panna,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 11,
+    paddingVertical: 10,
+    paddingHorizontal: 11,
+  },
+  rigaConclusa: {
+    opacity: 0.6,
+  },
+  titoloSfida: {
+    flex: 1,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: colori.scuro,
+  },
+  pillSpareggio: {
+    borderWidth: 1.5,
+    borderColor: colori.scuro,
+    borderRadius: 999,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    backgroundColor: colori.oro,
+  },
+  testoPillSpareggio: {
+    ...pesi.extraBold,
+    fontSize: 8,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colori.scuro,
   },
   // Modal
   modalContenitore: {
     flex: 1,
-    backgroundColor: bento.sfondo,
-    paddingTop: spaziatura.lg,
+    backgroundColor: colori.crema,
+    paddingTop: 16,
   },
   modalIntestazione: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spaziatura.lg,
-    paddingBottom: spaziatura.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: bento.bordoForte,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: colori.scuro,
   },
   modalTitolo: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: bento.testoPrimario,
+    ...pesi.extraBold,
+    fontSize: 16,
+    color: colori.scuro,
+  },
+  caricamentoModal: {
+    marginTop: 24,
   },
   modalLista: {
-    padding: spaziatura.lg,
-    gap: spaziatura.sm,
+    padding: 16,
+    gap: 8,
   },
   rigaLista: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spaziatura.sm,
+    gap: 8,
+    backgroundColor: colori.panna,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 11,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
   },
   nomeLista: {
     flex: 1,
-    fontSize: 15,
-    fontWeight: '500',
-    color: bento.testoPrimario,
+    fontSize: 13,
+    fontWeight: '700',
+    color: colori.scuro,
   },
   vuotoModal: {
-    fontSize: 14,
-    color: bento.testoSecondario,
+    ...pesi.bold,
+    fontSize: 13,
+    color: colori.soft,
     textAlign: 'center',
-    margin: spaziatura.xl,
+    margin: 24,
   },
 });
