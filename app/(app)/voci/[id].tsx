@@ -1,14 +1,16 @@
 import { Redirect, Stack, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import type { VoceLista } from '@/api/vociLista';
 import { ModificaAcquisto } from '@/components/ModificaAcquisto';
 import { ModificaVoceDaFare } from '@/components/ModificaVoceDaFare';
 import { useVociLista } from '@/hooks/useVociLista';
+import { confermaAzione } from '@/lib/conferma';
 
 export default function ModificaVoce() {
   const { id, listaId } = useLocalSearchParams<{ id: string; listaId?: string }>();
-  const { voci, isLoading, aggiorna } = useVociLista(listaId ?? null);
+  const { voci, isLoading, aggiorna, elimina } = useVociLista(listaId ?? null);
   const [annullando, setAnnullando] = useState(false);
 
   if (listaId === undefined) {
@@ -23,6 +25,17 @@ export default function ModificaVoce() {
         <ActivityIndicator />
       </View>
     );
+  }
+
+  async function confermaEliminaVoce(voceCorrente: VoceLista) {
+    const conferma = await confermaAzione(
+      `Eliminare "${voceCorrente.testo}"?`,
+      'La voce verrà rimossa dalla lista.',
+      'Elimina'
+    );
+    if (conferma) {
+      elimina.mutate(voceCorrente.id, { onSuccess: () => router.back() });
+    }
   }
 
   return (
@@ -63,6 +76,22 @@ export default function ModificaVoce() {
           }}
         />
       )}
+
+      <Pressable onPress={() => confermaEliminaVoce(voce)} hitSlop={8} style={styles.eliminaContenitore}>
+        <Text style={styles.elimina}>Elimina voce</Text>
+      </Pressable>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  eliminaContenitore: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  elimina: {
+    color: '#c0392b',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+});

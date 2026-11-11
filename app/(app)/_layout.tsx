@@ -26,7 +26,7 @@ export default function AppLayout() {
       <Stack.Screen name="saldi/salda" options={{ title: 'Salda un debito' }} />
       <Stack.Screen name="saldi-personali/index" options={{ title: 'I miei saldi' }} />
       <Stack.Screen name="saldi-personali/[utenteId]" options={{ title: 'Saldo' }} />
-      <Stack.Screen name="liste/index" options={{ title: 'Liste' }} />
+      <Stack.Screen name="liste/index" options={{ headerShown: false }} />
       <Stack.Screen name="liste/[id]" options={{ title: 'Lista' }} />
       <Stack.Screen
         name="personale/index"
