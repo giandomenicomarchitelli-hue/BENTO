@@ -35,7 +35,7 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const insets = useSafeAreaInsets();
   const { gruppo, membri } = useGruppoAttivo();
   const { transazioni, isLoading: saldiInCaricamento } = useSaldi(gruppoAttivoId);
-  const { spese, isLoading: speseInCaricamento, annulla } = useSpese(gruppoAttivoId);
+  const { spese, isLoading: speseInCaricamento } = useSpese(gruppoAttivoId);
 
   const nomeMembro = (membroId: string) =>
     membri.find((m) => m.id === membroId)?.nome ?? 'Qualcuno';
@@ -62,9 +62,6 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           </Text>
         </View>
         <Text style={styles.importoSpesa}>{formattaEuro(spesa.importo_centesimi)}</Text>
-        <Pressable onPress={() => annulla.mutate(spesa.id)} hitSlop={11} style={styles.bottoneAnnulla}>
-          <Feather name="x" size={13} color={colori.soft} />
-        </Pressable>
       </View>
     );
   }
@@ -324,11 +321,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontVariant: ['tabular-nums'],
     color: colori.scuro,
-  },
-  bottoneAnnulla: {
-    width: 22,
-    height: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
