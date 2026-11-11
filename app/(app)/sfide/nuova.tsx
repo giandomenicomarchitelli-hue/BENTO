@@ -1,20 +1,20 @@
+import { Feather } from '@expo/vector-icons';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { campoNumericoSicuro as due, dataSicura } from '@/calcolo/campiData';
 import { deduciCategoria, generaDomanda } from '@/calcolo/domandaSfida';
 import { formattaConGiorno, risolviQuando, type EsitoDatazione, type SceltaQuando } from '@/calcolo/datazioneSfida';
 import { generaIdRichiesta } from '@/calcolo/identificativi';
 import { dataLocaleISO } from '@/calcolo/ricorrenzaFaccende';
-import { BentoButton } from '@/components/BentoButton';
-import { BentoScreen } from '@/components/BentoScreen';
-import { SectionHeader } from '@/components/SectionHeader';
+import { BloccoDuro } from '@/components/BloccoDuro';
 import { useListe } from '@/hooks/useListe';
 import { useSfide } from '@/hooks/useSfide';
 import { useVociLista } from '@/hooks/useVociLista';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
-import { accenti, bento, raggio, semantica, spaziatura } from '@/theme/tokens';
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 const FUSO_ORARIO = 'Europe/Rome';
 
@@ -79,6 +79,7 @@ function CampoDataOra({
       <TextInput
         style={[styles.inputData, styles.inputGiorno]}
         placeholder="GG"
+        placeholderTextColor={colori.soft}
         keyboardType="number-pad"
         value={gg}
         onChangeText={onCambiaGg}
@@ -88,6 +89,7 @@ function CampoDataOra({
       <TextInput
         style={[styles.inputData, styles.inputGiorno]}
         placeholder="MM"
+        placeholderTextColor={colori.soft}
         keyboardType="number-pad"
         value={mm}
         onChangeText={onCambiaMm}
@@ -97,6 +99,7 @@ function CampoDataOra({
       <TextInput
         style={[styles.inputData, styles.inputAnno]}
         placeholder="AAAA"
+        placeholderTextColor={colori.soft}
         keyboardType="number-pad"
         value={aaaa}
         onChangeText={onCambiaAaaa}
@@ -107,6 +110,7 @@ function CampoDataOra({
           <TextInput
             style={[styles.inputData, styles.inputGiorno, styles.inputOra]}
             placeholder="HH"
+            placeholderTextColor={colori.soft}
             keyboardType="number-pad"
             value={hh}
             onChangeText={onCambiaHh}
@@ -116,6 +120,7 @@ function CampoDataOra({
           <TextInput
             style={[styles.inputData, styles.inputGiorno]}
             placeholder="MM"
+            placeholderTextColor={colori.soft}
             keyboardType="number-pad"
             value={min}
             onChangeText={onCambiaMin}
@@ -160,6 +165,7 @@ export default function NuovaSfida() {
 }
 
 function NuovaSfidaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
+  const insets = useSafeAreaInsets();
   const { listaId } = useLocalSearchParams<{ listaId: string }>();
   const { liste } = useListe(gruppoAttivoId);
   const { voci, isLoading: vociInCaricamento } = useVociLista(listaId ?? null);
@@ -303,6 +309,14 @@ function NuovaSfidaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     (esitoQuando.precisione !== 'orario' || votazioneScadeIl.getTime() <= new Date(esitoQuando.inizioISO).getTime());
   const formValido = totaleScelte === 3 && propostaValida && scadenzaValida && domanda.trim() !== '';
 
+  function tornaIndietro() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/sfide');
+    }
+  }
+
   function inviaSfida() {
     if (!formValido || listaId === undefined) {
       return;
@@ -329,10 +343,24 @@ function NuovaSfidaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   }
 
   return (
-    <BentoScreen>
-      <ScrollView contentContainerStyle={styles.contenuto}>
+    <View style={styles.schermo}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.contenuto,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
+        ]}
+      >
+        <View style={styles.rigaTitolo}>
+          <Pressable onPress={tornaIndietro} hitSlop={8}>
+            <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
+              <Feather name="arrow-left" size={17} color={colori.scuro} />
+            </BloccoDuro>
+          </Pressable>
+          <Text style={styles.titolo}>Nuova sfida</Text>
+        </View>
+
         <View style={styles.sezione}>
-          <SectionHeader titolo="Quando?" />
+          <Text style={styles.etichettaSezione}>Quando?</Text>
           <View style={styles.rigaChip}>
             {SCELTE_RAPIDE.map((scelta) => (
               <Pressable
@@ -341,34 +369,22 @@ function NuovaSfidaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
                   setModoQuando('rapida');
                   setValoreRapido(scelta.valore);
                 }}
-                style={[
-                  styles.chip,
-                  modoQuando === 'rapida' && valoreRapido === scelta.valore && styles.chipAttivo,
-                ]}
+                style={[styles.chip, modoQuando === 'rapida' && valoreRapido === scelta.valore && styles.chipAttivo]}
               >
-                <Text
-                  style={[
-                    styles.testoChip,
-                    modoQuando === 'rapida' && valoreRapido === scelta.valore && styles.testoChipAttivo,
-                  ]}
-                >
-                  {scelta.etichetta}
-                </Text>
+                <Text style={styles.testoChip}>{scelta.etichetta}</Text>
               </Pressable>
             ))}
             <Pressable
               onPress={() => setModoQuando('data')}
               style={[styles.chip, modoQuando === 'data' && styles.chipAttivo]}
             >
-              <Text style={[styles.testoChip, modoQuando === 'data' && styles.testoChipAttivo]}>Scegli data</Text>
+              <Text style={styles.testoChip}>Scegli data</Text>
             </Pressable>
             <Pressable
               onPress={() => setModoQuando('data_ora')}
               style={[styles.chip, modoQuando === 'data_ora' && styles.chipAttivo]}
             >
-              <Text style={[styles.testoChip, modoQuando === 'data_ora' && styles.testoChipAttivo]}>
-                Scegli data e ora
-              </Text>
+              <Text style={styles.testoChip}>Scegli data e ora</Text>
             </Pressable>
           </View>
 
@@ -392,7 +408,9 @@ function NuovaSfidaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
         </View>
 
         <View style={styles.sezione}>
-          <SectionHeader titolo="Domanda" />
+          <Text style={styles.etichettaSezione}>
+            Domanda {domandaToccata ? '(modificata a mano)' : '(stima automatica)'}
+          </Text>
           <TextInput
             style={styles.inputDomanda}
             value={domanda}
@@ -405,34 +423,34 @@ function NuovaSfidaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
         </View>
 
         <View style={styles.sezione}>
-          <SectionHeader titolo={`Opzioni (${totaleScelte} di 3 scelte)`} />
+          <Text style={styles.etichettaSezione}>Opzioni</Text>
+          <Text style={styles.contatore}>{totaleScelte} di 3 scelte</Text>
           {vociInCaricamento ? (
-            <ActivityIndicator color={bento.testoPrimario} />
+            <ActivityIndicator color={colori.scuro} />
           ) : (
-            <View style={styles.rigaChip}>
+            <>
               {voci.map((voce) => (
                 <Pressable
                   key={voce.id}
                   onPress={() => selezionaVoce(voce.id)}
-                  style={[styles.chip, opzioniSelezionate.includes(voce.id) && styles.chipAttivo]}
+                  style={[styles.opzioneChip, opzioniSelezionate.includes(voce.id) && styles.opzioneChipAttiva]}
                 >
-                  <Text style={[styles.testoChip, opzioniSelezionate.includes(voce.id) && styles.testoChipAttivo]}>
-                    {voce.testo}
-                  </Text>
+                  <Text style={styles.testoOpzioneChip}>{voce.testo}</Text>
                 </Pressable>
               ))}
-              <Pressable onPress={alternaProposta} style={[styles.chip, propostaAttiva && styles.chipAttivo]}>
-                <Text style={[styles.testoChip, propostaAttiva && styles.testoChipAttivo]}>
-                  + Proponi un&apos;altra opzione
-                </Text>
+              <Pressable
+                onPress={alternaProposta}
+                style={[styles.opzioneChip, propostaAttiva && styles.opzioneChipAttiva]}
+              >
+                <Text style={styles.testoOpzioneChip}>+ Proponi un&apos;altra opzione</Text>
               </Pressable>
-            </View>
+            </>
           )}
           {propostaAttiva && (
             <TextInput
               style={styles.inputDomanda}
               placeholder="La tua proposta"
-              placeholderTextColor={bento.testoMuto}
+              placeholderTextColor={colori.soft}
               value={propostaTesto}
               onChangeText={setPropostaTesto}
             />
@@ -440,7 +458,7 @@ function NuovaSfidaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
         </View>
 
         <View style={styles.sezione}>
-          <SectionHeader titolo="Scadenza voto" />
+          <Text style={styles.etichettaSezione}>Scadenza voto</Text>
           <View style={styles.rigaChip}>
             {SCADENZE_RAPIDE.map((scelta) => (
               <Pressable
@@ -451,25 +469,14 @@ function NuovaSfidaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
                   modoScadenza === 'relativa' && scadenzaToccata && minutiScadenza === scelta.minuti && styles.chipAttivo,
                 ]}
               >
-                <Text
-                  style={[
-                    styles.testoChip,
-                    modoScadenza === 'relativa' && scadenzaToccata && minutiScadenza === scelta.minuti && styles.testoChipAttivo,
-                  ]}
-                >
-                  {scelta.etichetta}
-                </Text>
+                <Text style={styles.testoChip}>{scelta.etichetta}</Text>
               </Pressable>
             ))}
             <Pressable
               onPress={() => toccaScadenzaManuale('gg', ggScadenza)}
               style={[styles.chip, modoScadenza === 'data_ora' && scadenzaToccata && styles.chipAttivo]}
             >
-              <Text
-                style={[styles.testoChip, modoScadenza === 'data_ora' && scadenzaToccata && styles.testoChipAttivo]}
-              >
-                Scegli data e ora
-              </Text>
+              <Text style={styles.testoChip}>Scegli data e ora</Text>
             </Pressable>
           </View>
 
@@ -492,21 +499,25 @@ function NuovaSfidaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           <Text style={styles.testoData}>
             Si chiude {format2(votazioneScadeIl)}
             {!scadenzaValida && esitoQuando.precisione === 'orario'
-              ? ' - deve essere prima dell\'orario scelto per l\'attività'
+              ? " - deve essere prima dell'orario scelto per l'attività"
               : ''}
           </Text>
         </View>
 
         {crea.isError && <Text style={styles.testoErrore}>{messaggioErrore(crea.error)}</Text>}
 
-        <BentoButton
-          etichetta="Invia sfida"
-          onPress={inviaSfida}
-          disabilitato={!formValido}
-          caricando={crea.isPending}
-        />
+        <BloccoDuro
+          style={(!formValido || crea.isPending) && styles.bottoneDisabilitato}
+          offset={2.5}
+          colore={colori.corallo}
+          raggio={12}
+          contenutoStyle={styles.bottonePieno}
+          onPress={formValido && !crea.isPending ? inviaSfida : undefined}
+        >
+          {crea.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.testoBottonePieno}>Invia sfida</Text>}
+        </BloccoDuro>
       </ScrollView>
-    </BentoScreen>
+    </View>
   );
 }
 
@@ -516,50 +527,99 @@ function format2(data: Date): string {
 }
 
 const styles = StyleSheet.create({
+  schermo: {
+    flex: 1,
+    backgroundColor: colori.crema,
+  },
   contenuto: {
-    gap: spaziatura.lg,
-    paddingBottom: spaziatura.xxl,
+    paddingHorizontal: 16,
+    gap: 16,
+  },
+  rigaTitolo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
+  quadrato: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titolo: {
+    ...pesi.extraBold,
+    fontSize: 18,
+    letterSpacing: -0.3,
+    color: colori.scuro,
   },
   sezione: {
-    gap: spaziatura.sm,
+    gap: 8,
+  },
+  etichettaSezione: {
+    ...pesi.extraBold,
+    fontSize: 10,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: colori.soft,
   },
   rigaChip: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spaziatura.xs,
+    gap: 6,
   },
   chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: raggio.pillola,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: bento.bordoForte,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 999,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    backgroundColor: '#fff',
   },
   chipAttivo: {
-    backgroundColor: accenti.menta,
-    borderColor: accenti.menta,
+    backgroundColor: colori.viola,
   },
   testoChip: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: bento.testoSecondario,
+    ...pesi.extraBold,
+    fontSize: 10.5,
+    color: colori.scuro,
   },
-  testoChipAttivo: {
-    color: '#fff',
+  opzioneChip: {
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 11,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: '#fff',
+  },
+  opzioneChipAttiva: {
+    backgroundColor: colori.viola,
+  },
+  testoOpzioneChip: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: colori.scuro,
+  },
+  contatore: {
+    ...pesi.extraBold,
+    fontSize: 10.5,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colori.scuro,
   },
   testoData: {
-    fontSize: 13,
-    color: bento.testoSecondario,
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: colori.soft,
   },
   inputDomanda: {
-    backgroundColor: bento.superficieForte,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: bento.bordoForte,
-    borderRadius: raggio.sm,
-    paddingHorizontal: 14,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 11,
+    backgroundColor: colori.panna,
+    paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 15,
-    color: bento.testoPrimario,
+    fontSize: 13,
+    color: colori.scuro,
   },
   rigaDataOra: {
     flexDirection: 'row',
@@ -567,32 +627,50 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   inputData: {
-    backgroundColor: bento.superficieForte,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: bento.bordoForte,
-    borderRadius: raggio.sm,
-    paddingHorizontal: 8,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 9,
+    backgroundColor: colori.panna,
+    paddingHorizontal: 7,
     paddingVertical: 8,
-    fontSize: 14,
-    color: bento.testoPrimario,
+    fontSize: 13,
+    fontWeight: '700',
+    color: colori.scuro,
     textAlign: 'center',
   },
   inputGiorno: {
     width: 44,
   },
   inputAnno: {
-    width: 64,
+    width: 62,
   },
   inputOra: {
-    marginLeft: spaziatura.sm,
+    marginLeft: 8,
   },
   separatoreData: {
-    fontSize: 14,
-    color: bento.testoMuto,
+    ...pesi.extraBold,
+    fontSize: 13,
+    color: colori.soft,
   },
   testoErrore: {
-    fontSize: 13,
-    color: semantica.pericolo,
+    ...pesi.bold,
+    fontSize: 12.5,
+    color: colori.corallo,
     textAlign: 'center',
+  },
+  bottoneDisabilitato: {
+    opacity: 0.5,
+  },
+  bottonePieno: {
+    paddingVertical: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  testoBottonePieno: {
+    ...pesi.extraBold,
+    fontSize: 12,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: '#fff',
   },
 });
