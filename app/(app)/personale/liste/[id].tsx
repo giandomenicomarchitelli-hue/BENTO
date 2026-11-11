@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -76,7 +77,12 @@ export default function DettaglioListaPersonale() {
                   key={voce.id}
                   testo={voce.testo}
                   fatto={voce.fatto}
-                  onTocca={() => aggiorna.mutate({ id: voce.id, fatto: !voce.fatto })}
+                  onTocca={() => {
+                    if (!voce.fatto) {
+                      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
+                    aggiorna.mutate({ id: voce.id, fatto: !voce.fatto });
+                  }}
                   onApriModifica={() => confermaEliminaVoce(voce)}
                   onElimina={() => elimina.mutate(voce.id)}
                 />

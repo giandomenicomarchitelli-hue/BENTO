@@ -62,7 +62,7 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           </Text>
         </View>
         <Text style={styles.importoSpesa}>{formattaEuro(spesa.importo_centesimi)}</Text>
-        <Pressable onPress={() => annulla.mutate(spesa.id)} hitSlop={8} style={styles.bottoneAnnulla}>
+        <Pressable onPress={() => annulla.mutate(spesa.id)} hitSlop={11} style={styles.bottoneAnnulla}>
           <Feather name="x" size={13} color={colori.soft} />
         </Pressable>
       </View>

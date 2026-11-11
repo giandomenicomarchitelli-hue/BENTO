@@ -152,6 +152,7 @@ export default function SaldoConPersona() {
               coloreCifra={persona.nettoCentesimi > 0 ? soldiNB.credito : soldiNB.debito}
               timbrato={timbrato}
               onFineTimbro={tornaIndietro}
+              contoChiuso
             />
 
             {errore !== null && <Text style={styles.errore}>{errore}</Text>}

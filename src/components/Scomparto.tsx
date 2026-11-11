@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 import {
   Pressable,
@@ -30,6 +31,10 @@ import { coloriNB, EASE_OUT_NB, pesiNB } from '@/theme/neoBrutalista';
  *
  * `minHeight` e mai altezze fisse: è quello che fa reggere il mosaico
  * quando i dati sono zero o il testo di sistema è ingrandito.
+ *
+ * `selectionAsync()` al tocco (HANDOFF sezione 4, "Scomparto premuto"):
+ * sul commit (`onPress`), non su `onPressIn` - un dito che scivola via
+ * prima del rilascio non deve far vibrare niente.
  */
 export function Scomparto({
   nome,
@@ -70,7 +75,14 @@ export function Scomparto({
       ]}
     >
       <Involucro
-        onPress={onPress}
+        onPress={
+          onPress === undefined
+            ? undefined
+            : () => {
+                void Haptics.selectionAsync();
+                onPress();
+              }
+        }
         onPressIn={() => setPremuto(true)}
         onPressOut={() => setPremuto(false)}
         pressRetentionOffset={16}

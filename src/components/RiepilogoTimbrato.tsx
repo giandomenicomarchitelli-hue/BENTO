@@ -22,6 +22,13 @@ type Props = {
   timbrato: boolean;
   /** Chiamato a fine animazione (200ms): il chiamante ci fa `router.back()`. */
   onFineTimbro: () => void;
+  /**
+   * "Conto chiuso" (HANDOFF sezione 4): in più rispetto all'impatto del
+   * timbro (sempre presente), un `notificationAsync(Success)` - solo per
+   * "Salda tutto", che azzera davvero un conto, non per il pagamento di
+   * un singolo debito.
+   */
+  contoChiuso?: boolean;
 };
 
 // Tempi tarati in HANDOFF.md sezione 3 ("Tempi e Peso"): 200ms totali,
@@ -42,7 +49,14 @@ const ASSESTAMENTO_MS = DURATA_MS - IMPATTO_MS - RIMBALZO_MS;
  * e "Salda tutto": stesso riquadro, stesso timbro, cambia solo titolo e
  * cifra.
  */
-export function RiepilogoTimbrato({ titolo, cifra, coloreCifra, timbrato, onFineTimbro }: Props) {
+export function RiepilogoTimbrato({
+  titolo,
+  cifra,
+  coloreCifra,
+  timbrato,
+  onFineTimbro,
+  contoChiuso = false,
+}: Props) {
   const scalaTimbro = useSharedValue(0);
   const colpoCarta = useSharedValue(0);
 
@@ -64,6 +78,9 @@ export function RiepilogoTimbrato({ titolo, cifra, coloreCifra, timbrato, onFine
     const idColpo = setTimeout(() => {
       colpoCarta.value = withSequence(withTiming(1, { duration: 50 }), withTiming(0, { duration: 90 }));
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      if (contoChiuso) {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
     }, IMPATTO_MS);
 
     return () => clearTimeout(idColpo);

@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -132,6 +133,9 @@ export default function DettaglioLista() {
                           },
                         });
                       } else {
+                        if (!voce.fatto) {
+                          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        }
                         aggiorna.mutate({ id: voce.id, fatto: !voce.fatto });
                       }
                     }}

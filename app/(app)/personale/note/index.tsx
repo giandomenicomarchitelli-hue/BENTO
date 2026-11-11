@@ -105,7 +105,7 @@ export default function NotePersonali() {
                       {nota.contenuto !== '' ? `  ${nota.contenuto}` : ''}
                     </Text>
                   </Pressable>
-                  <Pressable onPress={() => confermaEliminaNota(nota)} hitSlop={8} style={styles.bottoneElimina}>
+                  <Pressable onPress={() => confermaEliminaNota(nota)} hitSlop={10} style={styles.bottoneElimina}>
                     <Feather name="trash-2" size={16} color={colori.corallo} />
                   </Pressable>
                 </View>
