@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
+
+import { BloccoDuro } from '@/components/BloccoDuro';
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 type Props = {
   nome: string;
@@ -25,6 +28,7 @@ export function ModificaArticoloDaComprare({ nome, note, salvando, onSalva }: Pr
           value={bozzaNome}
           onChangeText={setBozzaNome}
           placeholder="Nome articolo"
+          placeholderTextColor={colori.soft}
           autoFocus
           returnKeyType="next"
         />
@@ -37,25 +41,29 @@ export function ModificaArticoloDaComprare({ nome, note, salvando, onSalva }: Pr
           value={bozzaNote}
           onChangeText={setBozzaNote}
           placeholder="Es. la marca, la quantità…"
+          placeholderTextColor={colori.soft}
           returnKeyType="done"
         />
       </View>
 
-      <Pressable
-        style={[styles.bottone, (invariato || bozzaNome.trim() === '') && styles.bottoneDisabilitato]}
-        onPress={() => {
-          const nomeFinale = bozzaNome.trim();
-          if (nomeFinale === '' || salvando) return;
-          onSalva(nomeFinale, bozzaNote.trim() === '' ? null : bozzaNote.trim());
-        }}
-        disabled={invariato || bozzaNome.trim() === '' || salvando}
+      <BloccoDuro
+        style={(invariato || bozzaNome.trim() === '' || salvando) && styles.bottoneDisabilitato}
+        offset={2.5}
+        colore={colori.menta}
+        raggio={12}
+        contenutoStyle={styles.bottonePieno}
+        onPress={
+          invariato || bozzaNome.trim() === '' || salvando
+            ? undefined
+            : () => onSalva(bozzaNome.trim(), bozzaNote.trim() === '' ? null : bozzaNote.trim())
+        }
       >
         {salvando ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colori.scuro} />
         ) : (
-          <Text style={styles.testoBottone}>Salva modifiche</Text>
+          <Text style={styles.testoBottonePieno}>Salva modifiche</Text>
         )}
-      </Pressable>
+      </BloccoDuro>
     </View>
   );
 }
@@ -66,39 +74,48 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   titolo: {
+    ...pesi.extraBold,
     fontSize: 22,
-    fontWeight: '700',
+    letterSpacing: -0.4,
     textAlign: 'center',
+    color: colori.scuro,
     marginBottom: 8,
   },
   campo: {
     gap: 4,
   },
   etichetta: {
-    fontSize: 13,
-    color: '#888',
+    ...pesi.extraBold,
+    fontSize: 12.5,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colori.soft,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 14,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 11,
+    backgroundColor: colori.panna,
+    paddingHorizontal: 13,
     paddingVertical: 10,
-    fontSize: 16,
-  },
-  bottone: {
-    backgroundColor: '#2d6cdf',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 8,
+    ...pesi.semiBold,
+    fontSize: 15,
+    color: colori.scuro,
   },
   bottoneDisabilitato: {
-    opacity: 0.4,
+    opacity: 0.5,
   },
-  testoBottone: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  bottonePieno: {
+    paddingVertical: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  testoBottonePieno: {
+    ...pesi.extraBold,
+    fontSize: 12,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: colori.scuro,
   },
 });

@@ -1,24 +1,21 @@
+import { Feather } from '@expo/vector-icons';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { aggiornaArticolo } from '@/api/articoliSpesa';
 import { aggiornaVoce } from '@/api/vociLista';
 import { dividiEqualmente } from '@/calcolo/divisioni';
+import { BloccoDuro } from '@/components/BloccoDuro';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useSpese } from '@/hooks/useSpese';
 import { euroInCentesimi } from '@/lib/formato';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 const schema = z.object({
   importoCentesimi: z.number().int().positive('Inserisci un importo valido'),
@@ -43,6 +40,7 @@ export default function NuovaSpesa() {
 }
 
 function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
+  const insets = useSafeAreaInsets();
   const { membriAttivi } = useGruppoAttivo();
   const { crea } = useSpese(gruppoAttivoId);
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
@@ -107,6 +105,14 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
 
   const [errore, setErrore] = useState<string | null>(null);
   const [inviando, setInviando] = useState(false);
+
+  function tornaIndietro() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/lista-spesa');
+    }
+  }
 
   function alternaMembro(membroId: string) {
     setMembriSelezionati(
@@ -185,160 +191,210 @@ function NuovaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   }
 
   return (
-    <View style={styles.contenitore}>
-      {collegamento?.testo !== undefined && (
-        <Text style={styles.hintArticolo}>
-          Hai segnato «{collegamento.testo}»: quanto hai pagato?
-        </Text>
-      )}
+    <View style={styles.schermo}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.contenuto,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
+        ]}
+      >
+        <View style={styles.rigaTitolo}>
+          <Pressable onPress={tornaIndietro} hitSlop={8}>
+            <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
+              <Feather name="arrow-left" size={17} color={colori.scuro} />
+            </BloccoDuro>
+          </Pressable>
+          <Text style={styles.titolo}>Nuova spesa</Text>
+        </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Importo (es. 12,50)"
-        keyboardType="decimal-pad"
-        value={importoEuro}
-        onChangeText={setImportoEuro}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Descrizione (opzionale)"
-        value={descrizione}
-        onChangeText={setDescrizione}
-      />
-      {collegamento !== null && (
+        {collegamento?.testo !== undefined && (
+          <Text style={styles.hintArticolo}>
+            Hai segnato «{collegamento.testo}»: quanto hai pagato?
+          </Text>
+        )}
+
         <TextInput
           style={styles.input}
-          placeholder="Note (opzionale, es. marca)"
-          value={note}
-          onChangeText={setNote}
+          placeholder="Importo (es. 12,50)"
+          placeholderTextColor={colori.soft}
+          keyboardType="decimal-pad"
+          value={importoEuro}
+          onChangeText={setImportoEuro}
         />
-      )}
+        <TextInput
+          style={styles.input}
+          placeholder="Descrizione (opzionale)"
+          placeholderTextColor={colori.soft}
+          value={descrizione}
+          onChangeText={setDescrizione}
+        />
+        {collegamento !== null && (
+          <TextInput
+            style={styles.input}
+            placeholder="Note (opzionale, es. marca)"
+            placeholderTextColor={colori.soft}
+            value={note}
+            onChangeText={setNote}
+          />
+        )}
 
-      <Text style={styles.etichetta}>Pagato da</Text>
-      <View style={styles.righeChip}>
-        {membriAttivi.map((membro) => (
-          <Pressable
-            key={membro.id}
-            style={[styles.chip, pagatoDaEffettivo === membro.id && styles.chipSelezionato]}
-            onPress={() => setPagatoDa(membro.id)}
-          >
-            <Text
-              style={[
-                styles.testoChip,
-                pagatoDaEffettivo === membro.id && styles.testoChipSelezionato,
-              ]}
-            >
-              {membro.nome}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <Text style={styles.etichetta}>Diviso tra</Text>
-      <View style={styles.righeChip}>
-        {membriAttivi.map((membro) => {
-          const selezionato = membriSelezionatiEffettivo.includes(membro.id);
-          return (
+        <Text style={styles.etichetta}>Pagato da</Text>
+        <View style={styles.righeChip}>
+          {membriAttivi.map((membro) => (
             <Pressable
               key={membro.id}
-              style={[styles.chip, selezionato && styles.chipSelezionato]}
-              onPress={() => alternaMembro(membro.id)}
+              style={[styles.chip, pagatoDaEffettivo === membro.id && styles.chipAttivo]}
+              onPress={() => setPagatoDa(membro.id)}
             >
-              <Text style={[styles.testoChip, selezionato && styles.testoChipSelezionato]}>
-                {membro.nome}
-              </Text>
+              <Text style={styles.testoChip}>{membro.nome}</Text>
             </Pressable>
-          );
-        })}
-      </View>
+          ))}
+        </View>
 
-      {errore !== null && <Text style={styles.errore}>{errore}</Text>}
+        <Text style={styles.etichetta}>Diviso tra</Text>
+        <View style={styles.righeChip}>
+          {membriAttivi.map((membro) => {
+            const selezionato = membriSelezionatiEffettivo.includes(membro.id);
+            return (
+              <Pressable
+                key={membro.id}
+                style={[styles.chip, selezionato && styles.chipAttivo]}
+                onPress={() => alternaMembro(membro.id)}
+              >
+                <Text style={styles.testoChip}>{membro.nome}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
-      <Pressable style={styles.bottone} onPress={inviaForm} disabled={inviando}>
-        {inviando ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.testoBottone}>Registra spesa</Text>
+        {errore !== null && <Text style={styles.testoErrore}>{errore}</Text>}
+
+        <BloccoDuro
+          style={inviando && styles.bottoneDisabilitato}
+          offset={2.5}
+          colore={colori.menta}
+          raggio={12}
+          contenutoStyle={styles.bottonePieno}
+          onPress={inviando ? undefined : inviaForm}
+        >
+          {inviando ? (
+            <ActivityIndicator color={colori.scuro} />
+          ) : (
+            <Text style={styles.testoBottonePieno}>Registra spesa</Text>
+          )}
+        </BloccoDuro>
+
+        {collegamento !== null && (
+          <Pressable onPress={segnaFattoSenzaSpesa} disabled={inviando} hitSlop={8}>
+            <Text style={styles.linkSecondario}>Segna fatto senza registrare la spesa</Text>
+          </Pressable>
         )}
-      </Pressable>
-
-      {collegamento !== null && (
-        <Pressable onPress={segnaFattoSenzaSpesa} disabled={inviando}>
-          <Text style={styles.linkSecondario}>Segna fatto senza registrare la spesa</Text>
-        </Pressable>
-      )}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  contenitore: {
+  schermo: {
     flex: 1,
-    padding: 24,
+    backgroundColor: colori.crema,
+  },
+  contenuto: {
+    paddingHorizontal: 16,
     gap: 12,
   },
+  rigaTitolo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    marginBottom: 6,
+  },
+  quadrato: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titolo: {
+    ...pesi.extraBold,
+    fontSize: 18,
+    letterSpacing: -0.3,
+    color: colori.scuro,
+  },
   hintArticolo: {
-    fontSize: 15,
-    color: '#555',
+    ...pesi.bold,
+    fontSize: 14,
+    color: colori.soft,
     textAlign: 'center',
     marginBottom: 4,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 14,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 11,
+    backgroundColor: colori.panna,
+    paddingHorizontal: 13,
     paddingVertical: 12,
-    fontSize: 16,
+    ...pesi.semiBold,
+    fontSize: 15,
+    color: colori.scuro,
   },
   etichetta: {
-    fontSize: 14,
-    color: '#555',
+    ...pesi.extraBold,
+    fontSize: 12.5,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colori.soft,
     marginTop: 4,
   },
   righeChip: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   chip: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    backgroundColor: colori.panna,
   },
-  chipSelezionato: {
-    backgroundColor: '#2d6cdf',
-    borderColor: '#2d6cdf',
+  chipAttivo: {
+    backgroundColor: colori.menta,
   },
   testoChip: {
-    fontSize: 14,
-    color: '#333',
+    ...pesi.extraBold,
+    fontSize: 12.5,
+    color: colori.scuro,
   },
-  testoChipSelezionato: {
-    color: '#fff',
-  },
-  errore: {
-    color: '#c0392b',
+  testoErrore: {
+    ...pesi.bold,
+    fontSize: 12.5,
+    color: colori.corallo,
     textAlign: 'center',
   },
-  bottone: {
-    backgroundColor: '#2d6cdf',
-    borderRadius: 8,
-    paddingVertical: 14,
+  bottoneDisabilitato: {
+    opacity: 0.5,
+  },
+  bottonePieno: {
+    paddingVertical: 13,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 8,
   },
-  testoBottone: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  testoBottonePieno: {
+    ...pesi.extraBold,
+    fontSize: 12,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: colori.scuro,
   },
   linkSecondario: {
     textAlign: 'center',
-    color: '#555',
-    fontSize: 14,
-    marginTop: 4,
+    ...pesi.bold,
+    fontSize: 12.5,
+    color: colori.soft,
+    marginTop: 6,
   },
 });

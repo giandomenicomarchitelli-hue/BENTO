@@ -1,21 +1,22 @@
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoceListaPersonale } from '@/api/vociListaPersonali';
-import { BentoScreen } from '@/components/BentoScreen';
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { PARETE } from '@/components/Vassoio';
 import { VoceSpuntabile } from '@/components/VoceSpuntabile';
 import { useVociListaPersonali } from '@/hooks/useVociListaPersonali';
 import { confermaAzione } from '@/lib/conferma';
-import { coloriNB as colori } from '@/theme/neoBrutalista';
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 export default function DettaglioListaPersonale() {
   const { id, nome } = useLocalSearchParams<{ id: string; nome?: string }>();
   const { voci, isLoading, aggiungi, aggiorna, elimina } = useVociListaPersonali(id ?? null);
+  const insets = useSafeAreaInsets();
   const [nuovaVoce, setNuovaVoce] = useState('');
 
   function aggiungiVoce() {
@@ -38,11 +39,33 @@ export default function DettaglioListaPersonale() {
     }
   }
 
-  return (
-    <View style={styles.contenitore}>
-      {nome !== undefined && <Stack.Screen options={{ title: nome }} />}
+  function tornaIndietro() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/personale/liste');
+    }
+  }
 
-      <BentoScreen>
+  return (
+    <View style={styles.schermo}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.contenuto,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
+        ]}
+      >
+        <View style={styles.rigaTitolo}>
+          <Pressable onPress={tornaIndietro} hitSlop={8}>
+            <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
+              <Feather name="arrow-left" size={17} color={colori.scuro} />
+            </BloccoDuro>
+          </Pressable>
+          <Text style={styles.titolo} numberOfLines={1}>
+            {nome ?? 'Lista'}
+          </Text>
+        </View>
+
         <View style={styles.rigaInput}>
           <TextInput
             style={styles.input}
@@ -90,14 +113,37 @@ export default function DettaglioListaPersonale() {
             </View>
           </BloccoDuro>
         )}
-      </BentoScreen>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  contenitore: {
+  schermo: {
     flex: 1,
+    backgroundColor: colori.crema,
+  },
+  contenuto: {
+    paddingHorizontal: 16,
+    gap: 16,
+  },
+  rigaTitolo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
+  quadrato: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titolo: {
+    ...pesi.extraBold,
+    fontSize: 18,
+    letterSpacing: -0.3,
+    color: colori.scuro,
+    flexShrink: 1,
   },
   rigaInput: {
     flexDirection: 'row',

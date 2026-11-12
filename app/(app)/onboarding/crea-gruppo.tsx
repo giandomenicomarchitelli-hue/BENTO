@@ -1,18 +1,15 @@
+import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
 import { creaGruppo } from '@/api/gruppi';
+import { BloccoDuro } from '@/components/BloccoDuro';
 import { useInvalidaMieiGruppi } from '@/hooks/useMieiGruppi';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 const TIPI_GRUPPO = [
   { valore: 'casa' as const, etichetta: 'Casa' },
@@ -26,6 +23,7 @@ const schema = z.object({
 });
 
 export default function CreaGruppo() {
+  const insets = useSafeAreaInsets();
   const [nome, setNome] = useState('');
   const [tipo, setTipo] = useState<(typeof TIPI_GRUPPO)[number]['valore']>('casa');
   const [errore, setErrore] = useState<string | null>(null);
@@ -33,6 +31,14 @@ export default function CreaGruppo() {
 
   const invalidaMieiGruppi = useInvalidaMieiGruppi();
   const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
+
+  function tornaIndietro() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/gruppi');
+    }
+  }
 
   async function inviaForm() {
     const risultato = schema.safeParse({ nome });
@@ -56,106 +62,139 @@ export default function CreaGruppo() {
   }
 
   return (
-    <View style={styles.contenitore}>
-      <Text style={styles.titolo}>Crea un gruppo</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Nome del gruppo (es. Casa di Via Roma)"
-        value={nome}
-        onChangeText={setNome}
-      />
-
-      <View style={styles.righeTipo}>
-        {TIPI_GRUPPO.map((opzione) => (
-          <Pressable
-            key={opzione.valore}
-            style={[styles.chip, tipo === opzione.valore && styles.chipSelezionato]}
-            onPress={() => setTipo(opzione.valore)}
-          >
-            <Text
-              style={[
-                styles.testoChip,
-                tipo === opzione.valore && styles.testoChipSelezionato,
-              ]}
-            >
-              {opzione.etichetta}
-            </Text>
-          </Pressable>
-        ))}
+    <View style={[styles.schermo, { paddingTop: insets.top + 16, paddingBottom: insets.bottom }]}>
+      <View style={styles.rigaTitolo}>
+        <Pressable onPress={tornaIndietro} hitSlop={8}>
+          <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
+            <Feather name="arrow-left" size={17} color={colori.scuro} />
+          </BloccoDuro>
+        </Pressable>
+        <Text style={styles.titolo}>Crea un gruppo</Text>
       </View>
 
-      {errore !== null && <Text style={styles.errore}>{errore}</Text>}
+      <View style={styles.contenuto}>
+        <TextInput
+          style={styles.input}
+          placeholder="Nome del gruppo (es. Casa di Via Roma)"
+          placeholderTextColor={colori.soft}
+          value={nome}
+          onChangeText={setNome}
+        />
 
-      <Pressable style={styles.bottone} onPress={inviaForm} disabled={inviando}>
-        {inviando ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.testoBottone}>Crea</Text>
-        )}
-      </Pressable>
+        <View style={styles.righeChip}>
+          {TIPI_GRUPPO.map((opzione) => (
+            <Pressable
+              key={opzione.valore}
+              style={[styles.chip, tipo === opzione.valore && styles.chipAttivo]}
+              onPress={() => setTipo(opzione.valore)}
+            >
+              <Text style={styles.testoChip}>{opzione.etichetta}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {errore !== null && <Text style={styles.testoErrore}>{errore}</Text>}
+
+        <BloccoDuro
+          style={inviando && styles.bottoneDisabilitato}
+          offset={2.5}
+          colore={colori.menta}
+          raggio={12}
+          contenutoStyle={styles.bottonePieno}
+          onPress={inviando ? undefined : inviaForm}
+        >
+          {inviando ? (
+            <ActivityIndicator color={colori.scuro} />
+          ) : (
+            <Text style={styles.testoBottonePieno}>Crea</Text>
+          )}
+        </BloccoDuro>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  contenitore: {
+  schermo: {
     flex: 1,
+    backgroundColor: colori.crema,
+    paddingHorizontal: 16,
+  },
+  rigaTitolo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    marginBottom: 18,
+  },
+  quadrato: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
-    gap: 12,
   },
   titolo: {
-    fontSize: 24,
-    fontWeight: '600',
-    marginBottom: 12,
-    textAlign: 'center',
+    ...pesi.extraBold,
+    fontSize: 18,
+    letterSpacing: -0.3,
+    color: colori.scuro,
+  },
+  contenuto: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: 12,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 14,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 11,
+    backgroundColor: colori.panna,
+    paddingHorizontal: 13,
     paddingVertical: 12,
-    fontSize: 16,
+    ...pesi.semiBold,
+    fontSize: 15,
+    color: colori.scuro,
   },
-  righeTipo: {
+  righeChip: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   chip: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    backgroundColor: colori.panna,
   },
-  chipSelezionato: {
-    backgroundColor: '#2d6cdf',
-    borderColor: '#2d6cdf',
+  chipAttivo: {
+    backgroundColor: colori.menta,
   },
   testoChip: {
-    fontSize: 14,
-    color: '#333',
+    ...pesi.extraBold,
+    fontSize: 12.5,
+    color: colori.scuro,
   },
-  testoChipSelezionato: {
-    color: '#fff',
-  },
-  errore: {
-    color: '#c0392b',
+  testoErrore: {
+    ...pesi.bold,
+    fontSize: 12.5,
+    color: colori.corallo,
     textAlign: 'center',
   },
-  bottone: {
-    backgroundColor: '#2d6cdf',
-    borderRadius: 8,
-    paddingVertical: 14,
+  bottoneDisabilitato: {
+    opacity: 0.5,
+  },
+  bottonePieno: {
+    paddingVertical: 13,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 8,
   },
-  testoBottone: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  testoBottonePieno: {
+    ...pesi.extraBold,
+    fontSize: 12,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: colori.scuro,
   },
 });

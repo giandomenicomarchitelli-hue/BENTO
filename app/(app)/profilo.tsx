@@ -1,24 +1,38 @@
+import { Feather } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BloccoDuro } from '@/components/BloccoDuro';
 import { useProfilo } from '@/hooks/useProfilo';
 import { attivaPushNotifiche, pushGiaAttiva, statoSupportoPush } from '@/lib/pushNotifiche';
 import { useAuthStore } from '@/store/authStore';
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 export default function Profilo() {
   const { profilo, isLoading } = useProfilo();
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
+  const insets = useSafeAreaInsets();
   const [copiato, setCopiato] = useState(false);
   const [pushAttiva, setPushAttiva] = useState(pushGiaAttiva());
   const [pushInCorso, setPushInCorso] = useState(false);
   const [errorePush, setErrorePush] = useState<string | null>(null);
   const statoPush = statoSupportoPush();
 
+  function tornaIndietro() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/');
+    }
+  }
+
   if (isLoading || profilo === null) {
     return (
-      <View style={styles.centrato}>
-        <ActivityIndicator />
+      <View style={[styles.schermo, styles.centrato]}>
+        <ActivityIndicator color={colori.scuro} />
       </View>
     );
   }
@@ -46,118 +60,168 @@ export default function Profilo() {
   };
 
   return (
-    <View style={styles.contenitore}>
-      <Text style={styles.etichetta}>Nome utente</Text>
-      <Text style={styles.nomeUtente}>{profilo.nome_utente}</Text>
-      <Text style={styles.suggerimento}>
-        Fisso: è il nome con cui ti vedono gli altri in ogni gruppo.
-      </Text>
+    <View style={styles.schermo}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.contenuto,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
+        ]}
+      >
+        <View style={styles.rigaTitolo}>
+          <Pressable onPress={tornaIndietro} hitSlop={8}>
+            <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
+              <Feather name="arrow-left" size={17} color={colori.scuro} />
+            </BloccoDuro>
+          </Pressable>
+          <Text style={styles.titolo}>Il mio profilo</Text>
+        </View>
 
-      <Text style={[styles.etichetta, styles.etichettaCodice]}>Codice utente</Text>
-      <Pressable style={styles.riquadroCodice} onPress={copiaCodice}>
-        <Text style={styles.codice}>{profilo.codice_utente}</Text>
-      </Pressable>
-      <Text style={styles.suggerimento}>
-        {copiato ? 'Copiato!' : 'Tocca il codice per copiarlo'}
-      </Text>
+        <Text style={styles.etichetta}>Nome utente</Text>
+        <Text style={styles.nomeUtente}>{profilo.nome_utente}</Text>
+        <Text style={styles.suggerimento}>
+          Fisso: è il nome con cui ti vedono gli altri in ogni gruppo.
+        </Text>
 
-      {Platform.OS === 'web' && (
-        <>
-          <Text style={[styles.etichetta, styles.etichettaCodice]}>Notifiche</Text>
+        <Text style={[styles.etichetta, styles.etichettaCodice]}>Codice utente</Text>
+        <Pressable onPress={copiaCodice}>
+          <BloccoDuro offset={3} colore={colori.scuro} raggio={14} contenutoStyle={styles.riquadroCodice}>
+            <Text style={styles.codice}>{profilo.codice_utente}</Text>
+          </BloccoDuro>
+        </Pressable>
+        <Text style={styles.suggerimento}>
+          {copiato ? 'Copiato!' : 'Tocca il codice per copiarlo'}
+        </Text>
 
-          {statoPush === 'supportata' &&
-            (pushAttiva ? (
-              <Text style={styles.suggerimento}>Notifiche push attive su questo dispositivo.</Text>
-            ) : (
-              <>
-                <Text style={styles.suggerimento}>
-                  Ricevi un avviso quando c&apos;è una nuova sfida o un invito in uno dei tuoi gruppi, anche ad
-                  app chiusa. Da ogni gruppo puoi poi silenziarle singolarmente.
-                </Text>
-                {errorePush !== null && <Text style={styles.testoErrore}>{errorePush}</Text>}
-                {pushInCorso ? (
-                  <ActivityIndicator style={styles.caricamentoPush} />
-                ) : (
-                  <Pressable style={styles.bottonePush} onPress={attivaPush}>
-                    <Text style={styles.testoBottonePush}>Attiva notifiche</Text>
-                  </Pressable>
-                )}
-              </>
-            ))}
+        {Platform.OS === 'web' && (
+          <>
+            <Text style={[styles.etichetta, styles.etichettaCodice]}>Notifiche</Text>
 
-          {statoPush === 'ios_va_aggiunto_a_home' && (
-            <Text style={styles.suggerimento}>
-              Su iPhone le notifiche funzionano solo se aggiungi Bento alla schermata Home: in Safari tocca
-              l&apos;icona Condividi, poi &quot;Aggiungi a Home&quot;. Riapri Bento da quell&apos;icona e torna
-              qui per attivarle.
-            </Text>
-          )}
+            {statoPush === 'supportata' &&
+              (pushAttiva ? (
+                <Text style={styles.suggerimento}>Notifiche push attive su questo dispositivo.</Text>
+              ) : (
+                <>
+                  <Text style={styles.suggerimento}>
+                    Ricevi un avviso quando c&apos;è una nuova sfida o un invito in uno dei tuoi gruppi, anche ad
+                    app chiusa. Da ogni gruppo puoi poi silenziarle singolarmente.
+                  </Text>
+                  {errorePush !== null && <Text style={styles.testoErrore}>{errorePush}</Text>}
+                  {pushInCorso ? (
+                    <ActivityIndicator color={colori.scuro} style={styles.caricamentoPush} />
+                  ) : (
+                    <BloccoDuro
+                      offset={2.5}
+                      colore={colori.menta}
+                      raggio={12}
+                      contenutoStyle={styles.bottonePieno}
+                      onPress={attivaPush}
+                    >
+                      <Text style={styles.testoBottonePieno}>Attiva notifiche</Text>
+                    </BloccoDuro>
+                  )}
+                </>
+              ))}
 
-          {statoPush === 'non_supportata' && (
-            <Text style={styles.suggerimento}>Le notifiche push non sono supportate su questo browser.</Text>
-          )}
-        </>
-      )}
+            {statoPush === 'ios_va_aggiunto_a_home' && (
+              <Text style={styles.suggerimento}>
+                Su iPhone le notifiche funzionano solo se aggiungi Bento alla schermata Home: in Safari tocca
+                l&apos;icona Condividi, poi &quot;Aggiungi a Home&quot;. Riapri Bento da quell&apos;icona e torna
+                qui per attivarle.
+              </Text>
+            )}
+
+            {statoPush === 'non_supportata' && (
+              <Text style={styles.suggerimento}>Le notifiche push non sono supportate su questo browser.</Text>
+            )}
+          </>
+        )}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  centrato: {
+  schermo: {
     flex: 1,
+    backgroundColor: colori.crema,
+  },
+  centrato: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  contenitore: {
-    flex: 1,
-    padding: 24,
+  contenuto: {
+    paddingHorizontal: 16,
+  },
+  rigaTitolo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    marginBottom: 18,
+  },
+  quadrato: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titolo: {
+    ...pesi.extraBold,
+    fontSize: 18,
+    letterSpacing: -0.3,
+    color: colori.scuro,
   },
   etichetta: {
-    fontSize: 14,
-    color: '#555',
+    ...pesi.extraBold,
+    fontSize: 12.5,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colori.soft,
     marginBottom: 8,
   },
   etichettaCodice: {
-    marginTop: 32,
+    marginTop: 28,
   },
   nomeUtente: {
+    ...pesi.extraBold,
     fontSize: 24,
-    fontWeight: '700',
+    letterSpacing: -0.4,
+    color: colori.scuro,
   },
   riquadroCodice: {
-    borderWidth: 1,
-    borderColor: '#2d6cdf',
-    borderRadius: 8,
-    paddingVertical: 16,
+    paddingVertical: 18,
     alignItems: 'center',
+    backgroundColor: colori.panna,
   },
   codice: {
+    ...pesi.extraBold,
     fontSize: 24,
-    fontWeight: '700',
     letterSpacing: 2,
-    color: '#2d6cdf',
+    color: colori.scuro,
   },
   suggerimento: {
-    fontSize: 13,
-    color: '#888',
+    ...pesi.bold,
+    fontSize: 12.5,
+    color: colori.soft,
     marginTop: 8,
   },
   testoErrore: {
-    fontSize: 13,
-    color: '#c0392b',
+    ...pesi.bold,
+    fontSize: 12.5,
+    color: colori.corallo,
     marginTop: 8,
   },
-  bottonePush: {
-    backgroundColor: '#2d6cdf',
-    borderRadius: 8,
-    paddingVertical: 14,
+  bottonePieno: {
+    paddingVertical: 13,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 12,
   },
-  testoBottonePush: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
+  testoBottonePieno: {
+    ...pesi.extraBold,
+    fontSize: 12,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: colori.scuro,
   },
   caricamentoPush: {
     marginTop: 12,

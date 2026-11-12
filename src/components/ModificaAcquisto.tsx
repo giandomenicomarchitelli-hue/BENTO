@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { BloccoDuro } from '@/components/BloccoDuro';
 import { confermaAzione } from '@/lib/conferma';
 import { euroInCentesimi, formattaEuro } from '@/lib/formato';
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 type Props = {
   nome: string;
@@ -68,6 +70,7 @@ export function ModificaAcquisto({
           <TextInput
             style={styles.input}
             placeholder="Es. 12,50"
+            placeholderTextColor={colori.soft}
             keyboardType="decimal-pad"
             value={bozzaPrezzo}
             onChangeText={setBozzaPrezzo}
@@ -88,6 +91,7 @@ export function ModificaAcquisto({
           <TextInput
             style={styles.input}
             placeholder="Es. la marca"
+            placeholderTextColor={colori.soft}
             value={bozzaNote}
             onChangeText={setBozzaNote}
           />
@@ -98,20 +102,27 @@ export function ModificaAcquisto({
 
       {modificando ? (
         <>
-          <Pressable style={styles.bottone} onPress={salvaModifiche} disabled={salvando}>
+          <BloccoDuro
+            style={salvando && styles.bottoneDisabilitato}
+            offset={2.5}
+            colore={colori.menta}
+            raggio={12}
+            contenutoStyle={styles.bottonePieno}
+            onPress={salvando ? undefined : salvaModifiche}
+          >
             {salvando ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colori.scuro} />
             ) : (
-              <Text style={styles.testoBottone}>Salva modifiche</Text>
+              <Text style={styles.testoBottonePieno}>Salva modifiche</Text>
             )}
-          </Pressable>
+          </BloccoDuro>
           <Pressable
             style={styles.bottoneAnnullaAcquisto}
             onPress={annullaAcquisto}
             disabled={annullando}
           >
             {annullando ? (
-              <ActivityIndicator color="#c0392b" />
+              <ActivityIndicator color={colori.corallo} />
             ) : (
               <Text style={styles.testoAnnullaAcquisto}>Annulla acquisto</Text>
             )}
@@ -132,63 +143,80 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   nome: {
+    ...pesi.extraBold,
     fontSize: 22,
-    fontWeight: '700',
+    letterSpacing: -0.4,
     textAlign: 'center',
+    color: colori.scuro,
     marginBottom: 8,
   },
   campo: {
     gap: 4,
   },
   etichetta: {
-    fontSize: 13,
-    color: '#888',
+    ...pesi.extraBold,
+    fontSize: 12.5,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colori.soft,
   },
   valore: {
-    fontSize: 17,
+    ...pesi.bold,
+    fontSize: 16,
+    color: colori.scuro,
   },
   notaPrezzo: {
+    ...pesi.semiBold,
     fontSize: 12,
-    color: '#888',
+    color: colori.soft,
     marginTop: 2,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 14,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 11,
+    backgroundColor: colori.panna,
+    paddingHorizontal: 13,
     paddingVertical: 10,
-    fontSize: 16,
+    ...pesi.semiBold,
+    fontSize: 15,
+    color: colori.scuro,
   },
-  bottone: {
-    backgroundColor: '#2d6cdf',
-    borderRadius: 8,
-    paddingVertical: 14,
+  bottoneDisabilitato: {
+    opacity: 0.5,
+  },
+  bottonePieno: {
+    paddingVertical: 13,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 8,
   },
-  testoBottone: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  testoBottonePieno: {
+    ...pesi.extraBold,
+    fontSize: 12,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: colori.scuro,
   },
   bottoneAnnullaAcquisto: {
-    borderWidth: 1,
-    borderColor: '#c0392b',
-    borderRadius: 8,
-    paddingVertical: 12,
+    borderWidth: 2,
+    borderColor: colori.corallo,
+    borderRadius: 10,
+    paddingVertical: 11,
     alignItems: 'center',
   },
   testoAnnullaAcquisto: {
-    color: '#c0392b',
-    fontSize: 15,
-    fontWeight: '600',
+    ...pesi.extraBold,
+    fontSize: 13,
+    color: colori.corallo,
   },
   linkModifica: {
     textAlign: 'center',
-    color: '#2d6cdf',
-    fontSize: 15,
-    fontWeight: '600',
+    ...pesi.extraBold,
+    fontSize: 12.5,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colori.soft,
     marginTop: 8,
   },
 });

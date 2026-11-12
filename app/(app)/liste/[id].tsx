@@ -1,10 +1,10 @@
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BentoScreen } from '@/components/BentoScreen';
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { PARETE } from '@/components/Vassoio';
 import { VoceSpuntabile } from '@/components/VoceSpuntabile';
@@ -22,11 +22,20 @@ export default function DettaglioLista() {
   const { membri } = useGruppoAttivo();
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const { voci, isLoading, aggiungi, aggiorna, elimina } = useVociLista(id ?? null);
+  const insets = useSafeAreaInsets();
   const [nuovaVoce, setNuovaVoce] = useState('');
   const [nuovaNota, setNuovaNota] = useState('');
 
   const laListaHaPrezzi = conPrezzi === '1';
   const ilMioMembroId = membri.find((m) => m.utente_id === utenteId)?.id ?? null;
+
+  function tornaIndietro() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/liste');
+    }
+  }
 
   function aggiungiVoceAllaLista() {
     const testo = nuovaVoce.trim();
@@ -47,10 +56,24 @@ export default function DettaglioLista() {
   const elencoOrdinato = [...daFare, ...fatte];
 
   return (
-    <View style={styles.contenitore}>
-      {nome !== undefined && <Stack.Screen options={{ title: nome }} />}
+    <View style={styles.schermo}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.contenuto,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
+        ]}
+      >
+        <View style={styles.rigaTitolo}>
+          <Pressable onPress={tornaIndietro} hitSlop={8}>
+            <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
+              <Feather name="arrow-left" size={17} color={colori.scuro} />
+            </BloccoDuro>
+          </Pressable>
+          <Text style={styles.titolo} numberOfLines={1}>
+            {nome ?? 'Lista'}
+          </Text>
+        </View>
 
-      <BentoScreen>
         <View style={styles.formAggiungi}>
           <View style={styles.rigaInput}>
             <TextInput
@@ -152,14 +175,37 @@ export default function DettaglioLista() {
             </View>
           </BloccoDuro>
         )}
-      </BentoScreen>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  contenitore: {
+  schermo: {
     flex: 1,
+    backgroundColor: colori.crema,
+  },
+  contenuto: {
+    paddingHorizontal: 16,
+    gap: 16,
+  },
+  rigaTitolo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
+  quadrato: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titolo: {
+    ...pesi.extraBold,
+    fontSize: 18,
+    letterSpacing: -0.3,
+    color: colori.scuro,
+    flexShrink: 1,
   },
   formAggiungi: {
     gap: 8,
