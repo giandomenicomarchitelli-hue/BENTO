@@ -1,5 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
+import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -36,6 +37,12 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const { gruppo, membri } = useGruppoAttivo();
   const { transazioni, isLoading: saldiInCaricamento } = useSaldi(gruppoAttivoId);
   const { spese, isLoading: speseInCaricamento } = useSpese(gruppoAttivoId);
+
+  // Il saldo ha bisogno di TUTTA la cronologia per tornare esatto (vedi
+  // useSaldi/calcolaSaldi), ma mostrarla tutta qui no: `spese` cresce senza
+  // fine per un gruppo vissuto a lungo. Qui si taglia solo cosa si disegna
+  // (le 30 più recenti, in ordine decrescente), non cosa si scarica.
+  const speseRecenti = useMemo(() => spese.slice(-30).reverse(), [spese]);
 
   const nomeMembro = (membroId: string) =>
     membri.find((m) => m.id === membroId)?.nome ?? 'Qualcuno';
@@ -160,7 +167,7 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           ) : (
             <BloccoDuro offset={3.5} colore={colori.scuro} raggio={17} contenutoStyle={styles.elenco}>
               <View style={styles.righe}>
-                {spese.map((spesa) => (
+                {speseRecenti.map((spesa) => (
                   <RigaSpesa key={spesa.id} spesa={spesa} />
                 ))}
               </View>

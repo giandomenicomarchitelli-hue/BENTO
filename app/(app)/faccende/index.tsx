@@ -3,7 +3,18 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Redirect, router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Frequenza, OrigineDelPunteggio } from '@/api/faccende';
@@ -19,6 +30,7 @@ import { useImpostazioniFaccende } from '@/hooks/useImpostazioniFaccende';
 import { useOccorrenzeFaccende } from '@/hooks/useOccorrenzeFaccende';
 import { useStoricoFaccende } from '@/hooks/useStoricoFaccende';
 import { confermaAzione } from '@/lib/conferma';
+import { messaggioErrore } from '@/lib/messaggioErrore';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { coloreCiclico, coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
@@ -36,14 +48,6 @@ const SFORZI: Sforzo[] = ['basso', 'medio', 'alto'];
 const FREQUENZE: Frequenza[] = ['giornaliera', 'settimanale', 'mensile', 'personalizzata', 'una_tantum'];
 
 type Filtro = 'oggi' | 'settimana' | 'mese' | 'da_fare' | 'completate';
-
-/** Messaggio leggibile da un errore di rete/Supabase, senza assumere una forma precisa. */
-function messaggioErrore(errore: unknown): string {
-  if (errore instanceof Error && errore.message.trim() !== '') {
-    return errore.message;
-  }
-  return 'Qualcosa è andato storto. Riprova.';
-}
 
 function Cerchietto({ nome, dimensione = 24 }: { nome: string; dimensione?: number }) {
   return (
@@ -402,7 +406,7 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   }
 
   return (
-    <View style={styles.schermo}>
+    <KeyboardAvoidingView style={styles.schermo} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={[
           styles.contenuto,
@@ -891,7 +895,7 @@ function FaccendeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           </Pressable>
         </Pressable>
       </Modal>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

@@ -3,7 +3,18 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { EventoPersonale } from '@/api/eventiPersonali';
@@ -12,18 +23,11 @@ import { BloccoDuro } from '@/components/BloccoDuro';
 import { CalendarioGriglia } from '@/components/CalendarioGriglia';
 import { useEventiPersonali } from '@/hooks/useEventiPersonali';
 import { confermaAzione } from '@/lib/conferma';
+import { messaggioErrore } from '@/lib/messaggioErrore';
 import { useAuthStore } from '@/store/authStore';
 import { coloreCiclico, coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 const DATA_VALIDA = /^\d{4}-\d{2}-\d{2}$/;
-
-/** Messaggio leggibile da un errore di rete/Supabase (stesso helper di calendario/index.tsx, nessuna dipendenza di gruppo). */
-function messaggioErrore(errore: unknown): string {
-  if (errore instanceof Error && errore.message.trim() !== '') {
-    return errore.message;
-  }
-  return 'Qualcosa è andato storto. Riprova.';
-}
 
 type ValoriEvento = {
   titolo: string;
@@ -135,7 +139,7 @@ export default function CalendarioPersonale() {
   const erroreForm = crea.isError || aggiorna.isError ? messaggioErrore(crea.error ?? aggiorna.error) : null;
 
   return (
-    <View style={styles.schermo}>
+    <KeyboardAvoidingView style={styles.schermo} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={[
           styles.contenuto,
@@ -264,7 +268,7 @@ export default function CalendarioPersonale() {
         </View>
       )}
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

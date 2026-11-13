@@ -2,7 +2,17 @@ import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { OpzioneSfida, TurnoSfida } from '@/api/sfide';
@@ -11,16 +21,9 @@ import { BloccoDuro } from '@/components/BloccoDuro';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useSfidaDettaglio } from '@/hooks/useSfidaDettaglio';
 import { useSfide } from '@/hooks/useSfide';
+import { messaggioErrore } from '@/lib/messaggioErrore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
-
-/** Messaggio leggibile da un errore di rete/Supabase, senza assumere una forma precisa. */
-function messaggioErrore(errore: unknown): string {
-  if (errore instanceof Error && errore.message.trim() !== '') {
-    return errore.message;
-  }
-  return 'Qualcosa è andato storto. Riprova.';
-}
 
 /**
  * Sempre nel fuso fisso Europe/Rome, non in quello del dispositivo
@@ -282,7 +285,7 @@ export default function DettaglioSfida() {
   const turnoCorrente: TurnoSfida | undefined = turni[turni.length - 1];
 
   return (
-    <View style={styles.schermo}>
+    <KeyboardAvoidingView style={styles.schermo} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={[
           styles.contenuto,
@@ -442,7 +445,7 @@ export default function DettaglioSfida() {
             </>
           ))}
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

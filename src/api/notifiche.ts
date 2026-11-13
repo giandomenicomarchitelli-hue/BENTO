@@ -15,11 +15,17 @@ export type Notifica = Database['public']['Tables']['notifiche']['Row'] & {
  * qualunque essi siano. Include il nome del gruppo per distinguerle in
  * un elenco che ora le mescola tutte insieme.
  */
+// Un centro notifiche non ha bisogno di scorrere all'indietro per sempre:
+// le più vecchie di queste 50 restano nel database ma non vengono più
+// scaricate - stesso principio di listaStorico in occorrenzeFaccende.ts.
+const NOTIFICHE_MASSIME = 50;
+
 export async function listaNotificheUtente(): Promise<Notifica[]> {
   const { data, error } = await supabase
     .from('notifiche')
     .select('*, gruppi(nome)')
-    .order('creata_il', { ascending: false });
+    .order('creata_il', { ascending: false })
+    .limit(NOTIFICHE_MASSIME);
 
   if (error) {
     throw error;

@@ -1,7 +1,17 @@
 import { Feather } from '@expo/vector-icons';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { campoNumericoSicuro as due, dataSicura } from '@/calcolo/campiData';
@@ -13,6 +23,7 @@ import { BloccoDuro } from '@/components/BloccoDuro';
 import { useListe } from '@/hooks/useListe';
 import { useSfide } from '@/hooks/useSfide';
 import { useVociLista } from '@/hooks/useVociLista';
+import { messaggioErrore } from '@/lib/messaggioErrore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
@@ -146,13 +157,6 @@ function oraLocale(data: Date, fusoOrario: string): { ore: string; minuti: strin
   };
 }
 
-/** Messaggio leggibile da un errore di rete/Supabase, senza assumere una forma precisa. */
-function messaggioErrore(errore: unknown): string {
-  if (errore instanceof Error && errore.message.trim() !== '') {
-    return errore.message;
-  }
-  return 'Qualcosa è andato storto. Riprova.';
-}
 
 export default function NuovaSfida() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
@@ -343,7 +347,7 @@ function NuovaSfidaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   }
 
   return (
-    <View style={styles.schermo}>
+    <KeyboardAvoidingView style={styles.schermo} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={[
           styles.contenuto,
@@ -517,7 +521,7 @@ function NuovaSfidaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           {crea.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.testoBottonePieno}>Invia sfida</Text>}
         </BloccoDuro>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

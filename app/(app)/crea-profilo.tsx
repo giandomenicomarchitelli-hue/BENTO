@@ -1,6 +1,6 @@
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
@@ -52,7 +52,10 @@ export default function CreaProfilo() {
   }
 
   return (
-    <View style={[styles.schermo, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <KeyboardAvoidingView
+      style={[styles.schermo, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <View style={styles.contenuto}>
         <Text style={styles.titolo}>Scegli il tuo nome utente</Text>
         <Text style={styles.sottotitolo}>
@@ -87,7 +90,7 @@ export default function CreaProfilo() {
           )}
         </BloccoDuro>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

@@ -1,7 +1,16 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
@@ -62,7 +71,10 @@ export default function CreaGruppo() {
   }
 
   return (
-    <View style={[styles.schermo, { paddingTop: insets.top + 16, paddingBottom: insets.bottom }]}>
+    <KeyboardAvoidingView
+      style={[styles.schermo, { paddingTop: insets.top + 16, paddingBottom: insets.bottom }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <View style={styles.rigaTitolo}>
         <Pressable onPress={tornaIndietro} hitSlop={8}>
           <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
@@ -110,7 +122,7 @@ export default function CreaGruppo() {
           )}
         </BloccoDuro>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

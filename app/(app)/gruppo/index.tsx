@@ -4,6 +4,8 @@ import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   Share,
@@ -165,7 +167,7 @@ export default function Gruppo() {
   }
 
   return (
-    <View style={styles.schermo}>
+    <KeyboardAvoidingView style={styles.schermo} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={[
           styles.contenuto,
@@ -277,7 +279,7 @@ export default function Gruppo() {
           )}
         </Pressable>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

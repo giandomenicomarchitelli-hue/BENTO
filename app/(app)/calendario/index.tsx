@@ -14,17 +14,10 @@ import { ModificaImpegno, type ValoriImpegno } from '@/components/ModificaImpegn
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useImpegni } from '@/hooks/useImpegni';
 import { confermaAzione } from '@/lib/conferma';
+import { messaggioErrore } from '@/lib/messaggioErrore';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { coloreCiclico, coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
-
-/** Messaggio leggibile da un errore di rete/Supabase, senza assumere una forma precisa (stesso helper di faccende/index.tsx). */
-function messaggioErrore(errore: unknown): string {
-  if (errore instanceof Error && errore.message.trim() !== '') {
-    return errore.message;
-  }
-  return 'Qualcosa è andato storto. Riprova.';
-}
 
 export default function Calendario() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);

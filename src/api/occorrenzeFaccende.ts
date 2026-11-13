@@ -19,12 +19,19 @@ export async function listaOccorrenze(gruppoId: string): Promise<OccorrenzaFacce
   return data;
 }
 
+// Solo un registro di consultazione (nessun calcolo lo rilegge): limitato
+// agli eventi più recenti, stesso taglio già applicato lato client in
+// faccende/index.tsx - qui diventa anche risparmio di banda, non solo di
+// righe disegnate.
+const STORICO_MASSIMO = 30;
+
 export async function listaStorico(gruppoId: string): Promise<StoricoFaccenda[]> {
   const { data, error } = await supabase
     .from('storico_faccende')
     .select()
     .eq('gruppo_id', gruppoId)
-    .order('creato_il', { ascending: false });
+    .order('creato_il', { ascending: false })
+    .limit(STORICO_MASSIMO);
 
   if (error) {
     throw error;

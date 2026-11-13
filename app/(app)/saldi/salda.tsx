@@ -1,7 +1,17 @@
 import { Feather } from '@expo/vector-icons';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
@@ -127,7 +137,7 @@ function SaldaDebitoDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     importoCentesimiRiepilogo !== null ? formattaEuro(importoCentesimiRiepilogo) : '—';
 
   return (
-    <View style={styles.schermo}>
+    <KeyboardAvoidingView style={styles.schermo} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={[
           styles.contenuto,
@@ -232,7 +242,7 @@ function SaldaDebitoDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           )}
         </BloccoDuro>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

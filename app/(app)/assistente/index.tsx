@@ -1,22 +1,26 @@
 import { Feather } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { ConfermaAzioni } from '@/components/ConfermaAzioni';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useInterpretazione } from '@/hooks/useInterpretazione';
+import { messaggioErrore } from '@/lib/messaggioErrore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
-
-function messaggioErrore(errore: unknown): string {
-  if (errore instanceof Error && errore.message.trim() !== '') {
-    return errore.message;
-  }
-  return 'Qualcosa è andato storto. Riprova.';
-}
 
 export default function Assistente() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
@@ -52,7 +56,7 @@ function AssistenteDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const inviaRispostaDisabilitato = interpreta.isPending || risposta.trim() === '';
 
   return (
-    <View style={styles.schermo}>
+    <KeyboardAvoidingView style={styles.schermo} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={[
           styles.contenuto,
@@ -153,7 +157,7 @@ function AssistenteDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           <Text style={styles.testoErrore}>{messaggioErrore(conferma.error)}</Text>
         )}
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

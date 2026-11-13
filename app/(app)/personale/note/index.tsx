@@ -5,6 +5,8 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -57,7 +59,7 @@ export default function NotePersonali() {
   }
 
   return (
-    <View style={styles.schermo}>
+    <KeyboardAvoidingView style={styles.schermo} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={[styles.contenuto, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }]}
       >
@@ -114,7 +116,7 @@ export default function NotePersonali() {
           )}
         </BloccoDuro>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

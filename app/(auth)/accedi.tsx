@@ -1,6 +1,6 @@
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
@@ -47,7 +47,10 @@ export default function Accedi() {
   }
 
   return (
-    <View style={[styles.schermo, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <KeyboardAvoidingView
+      style={[styles.schermo, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <View style={styles.contenuto}>
         <View style={styles.marchioRiga}>
           <MarchioBento />
@@ -99,7 +102,7 @@ export default function Accedi() {
           Non hai un account? Registrati
         </Link>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
