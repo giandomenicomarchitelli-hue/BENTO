@@ -75,13 +75,13 @@ export default function CreaProfilo() {
         <BloccoDuro
           style={crea.isPending && styles.bottoneDisabilitato}
           offset={2.5}
-          colore={colori.menta}
+          colore={colori.corallo}
           raggio={12}
           contenutoStyle={styles.bottonePieno}
           onPress={crea.isPending ? undefined : inviaForm}
         >
           {crea.isPending ? (
-            <ActivityIndicator color={colori.scuro} />
+            <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.testoBottonePieno}>Continua</Text>
           )}
@@ -151,6 +151,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 0.9,
     textTransform: 'uppercase',
-    color: colori.scuro,
+    color: '#fff',
   },
 });

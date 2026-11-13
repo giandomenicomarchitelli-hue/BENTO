@@ -152,13 +152,21 @@ export default function Dashboard() {
             </Pressable>
             {membriAttivi.length > 0 && (
               <Pressable onPress={apriImpostazioni} style={styles.membri} hitSlop={8}>
-                {membriAttivi.map((membro) => (
+                {/* Al massimo 4 cerchietti + un "+N": oltre non ci sta nella
+                    riga dell'header, e il gruppo può avere molti più di
+                    due membri (CLAUDE.md regola 4). */}
+                {membriAttivi.slice(0, 4).map((membro) => (
                   <View key={membro.id} style={styles.membro}>
                     <Text style={styles.inizialeMembro}>
                       {membro.nome.charAt(0).toUpperCase()}
                     </Text>
                   </View>
                 ))}
+                {membriAttivi.length > 4 && (
+                  <View style={[styles.membro, styles.membroExtra]}>
+                    <Text style={styles.inizialeMembroExtra}>+{membriAttivi.length - 4}</Text>
+                  </View>
+                )}
               </Pressable>
             )}
           </View>
@@ -416,6 +424,14 @@ const styles = StyleSheet.create({
     ...pesi.extraBold,
     fontSize: 12,
     color: colori.scuro,
+  },
+  membroExtra: {
+    backgroundColor: colori.scuro,
+  },
+  inizialeMembroExtra: {
+    ...pesi.extraBold,
+    fontSize: 10.5,
+    color: colori.crema,
   },
   mosaico: {
     gap: PARETE,

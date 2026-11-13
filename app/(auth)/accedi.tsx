@@ -1,16 +1,13 @@
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
 import { accedi } from '@/api/auth';
+import { BloccoDuro } from '@/components/BloccoDuro';
+import { MarchioBento } from '@/components/MarchioBento';
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 const schema = z.object({
   email: z.string().trim().email('Email non valida'),
@@ -25,6 +22,7 @@ function messaggioErrore(errore: unknown): string {
 }
 
 export default function Accedi() {
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errore, setErrore] = useState<string | null>(null);
@@ -49,84 +47,135 @@ export default function Accedi() {
   }
 
   return (
-    <View style={styles.contenitore}>
-      <Text style={styles.titolo}>Bentornato</Text>
+    <View style={[styles.schermo, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <View style={styles.contenuto}>
+        <View style={styles.marchioRiga}>
+          <MarchioBento />
+          <Text style={styles.marchio}>
+            BENTO<Text style={styles.puntoMarchio}>.</Text>
+          </Text>
+        </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        textContentType="emailAddress"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        textContentType="password"
-        value={password}
-        onChangeText={setPassword}
-      />
+        <Text style={styles.titolo}>Bentornato</Text>
 
-      {errore !== null && <Text style={styles.errore}>{errore}</Text>}
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor={colori.soft}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          textContentType="emailAddress"
+          value={email}
+          onChangeText={setEmail}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          placeholderTextColor={colori.soft}
+          secureTextEntry
+          textContentType="password"
+          value={password}
+          onChangeText={setPassword}
+        />
 
-      <Pressable style={styles.bottone} onPress={inviaForm} disabled={inviando}>
-        {inviando ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.testoBottone}>Accedi</Text>
-        )}
-      </Pressable>
+        {errore !== null && <Text style={styles.testoErrore}>{errore}</Text>}
 
-      <Link href="/(auth)/registrati" style={styles.link}>
-        Non hai un account? Registrati
-      </Link>
+        <BloccoDuro
+          style={inviando && styles.bottoneDisabilitato}
+          offset={2.5}
+          colore={colori.corallo}
+          raggio={12}
+          contenutoStyle={styles.bottonePieno}
+          onPress={inviando ? undefined : inviaForm}
+        >
+          {inviando ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.testoBottonePieno}>Accedi</Text>
+          )}
+        </BloccoDuro>
+
+        <Link href="/(auth)/registrati" style={styles.link}>
+          Non hai un account? Registrati
+        </Link>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  contenitore: {
+  schermo: {
+    flex: 1,
+    backgroundColor: colori.crema,
+  },
+  contenuto: {
     flex: 1,
     justifyContent: 'center',
-    padding: 24,
+    paddingHorizontal: 24,
     gap: 12,
   },
+  marchioRiga: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 20,
+  },
+  marchio: {
+    ...pesi.extraBold,
+    fontSize: 25,
+    letterSpacing: -0.5,
+    color: colori.scuro,
+  },
+  puntoMarchio: {
+    color: colori.corallo,
+  },
   titolo: {
-    fontSize: 24,
-    fontWeight: '600',
-    marginBottom: 12,
+    ...pesi.extraBold,
+    fontSize: 22,
+    letterSpacing: -0.4,
     textAlign: 'center',
+    color: colori.scuro,
+    marginBottom: 8,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 14,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 11,
+    backgroundColor: colori.panna,
+    paddingHorizontal: 13,
     paddingVertical: 12,
-    fontSize: 16,
+    ...pesi.semiBold,
+    fontSize: 15,
+    color: colori.scuro,
   },
-  errore: {
-    color: '#c0392b',
+  testoErrore: {
+    ...pesi.bold,
+    fontSize: 12.5,
+    color: colori.corallo,
     textAlign: 'center',
   },
-  bottone: {
-    backgroundColor: '#2d6cdf',
-    borderRadius: 8,
-    paddingVertical: 14,
+  bottoneDisabilitato: {
+    opacity: 0.5,
+  },
+  bottonePieno: {
+    paddingVertical: 13,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 8,
   },
-  testoBottone: {
+  testoBottonePieno: {
+    ...pesi.extraBold,
+    fontSize: 12,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   link: {
     textAlign: 'center',
     marginTop: 12,
-    color: '#2d6cdf',
+    ...pesi.bold,
+    fontSize: 13,
+    color: colori.viola,
   },
 });

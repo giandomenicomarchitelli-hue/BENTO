@@ -25,6 +25,12 @@ export default function SaldoConPersona() {
   const [saldando, setSaldando] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
   const [timbrato, setTimbrato] = useState(false);
+  // Gruppi già saldati con successo in questo tentativo: se un gruppo
+  // successivo fallisce a metà ciclo, un nuovo tocco su "Salda tutto" non
+  // deve ripagare quelli già registrati (persona.gruppi resta quello di
+  // prima finché invalidaSaldiAggregati() non gira, cosa che succede solo
+  // a fine ciclo completo).
+  const [gruppiSaldati, setGruppiSaldati] = useState<Set<string>>(new Set());
 
   const persona = persone.find((p) => p.utenteId === utenteId);
 
@@ -40,9 +46,21 @@ export default function SaldoConPersona() {
     if (persona === undefined) {
       return;
     }
+    const daFare = persona.gruppi.filter(
+      (riga) => riga.importoCentesimi !== 0 && !gruppiSaldati.has(riga.gruppoId)
+    );
+    if (daFare.length === 0) {
+      setTimbrato(true);
+      return;
+    }
+
     const conferma = await confermaAzione(
       `Saldare tutto con ${persona.nome}?`,
-      `Registra un pagamento in ciascuno dei ${persona.gruppi.length} gruppi in comune, così da azzerare il saldo in tutti - il totale che cambia mano è ${formattaEuro(Math.abs(persona.nettoCentesimi))}.`,
+      `Registra un pagamento in ciascuno dei ${daFare.length} gruppi ${
+        gruppiSaldati.size > 0 ? 'rimanenti' : 'in comune'
+      }, così da azzerare il saldo - il totale che cambia mano è ${formattaEuro(
+        daFare.reduce((somma, riga) => somma + Math.abs(riga.importoCentesimi), 0)
+      )}.`,
       'Salda tutto'
     );
     if (!conferma) {
@@ -52,10 +70,7 @@ export default function SaldoConPersona() {
     setErrore(null);
     setSaldando(true);
     try {
-      for (const riga of persona.gruppi) {
-        if (riga.importoCentesimi === 0) {
-          continue;
-        }
+      for (const riga of daFare) {
         const ioSonoCreditore = riga.importoCentesimi > 0;
         await creaSpesa({
           gruppoId: riga.gruppoId,
@@ -69,17 +84,23 @@ export default function SaldoConPersona() {
             },
           ],
         });
+        // Segnato subito dopo ogni spesa riuscita, non solo a fine ciclo: se
+        // un gruppo successivo fallisce, un nuovo tocco su "Salda tutto" non
+        // deve ripagare questo, già registrato.
+        setGruppiSaldati((prev) => new Set(prev).add(riga.gruppoId));
       }
       await Promise.all([
         invalidaSaldiAggregati(),
         invalidaMieiGruppi(),
-        ...persona.gruppi.map((riga) =>
+        ...daFare.map((riga) =>
           queryClient.invalidateQueries({ queryKey: ['spese', riga.gruppoId], refetchType: 'all' })
         ),
       ]);
       setTimbrato(true);
     } catch {
-      setErrore('Qualcosa è andato storto. Riprova.');
+      setErrore(
+        'Qualcosa è andato storto. I gruppi già saldati restano tali: tocca di nuovo "Salda tutto" per i rimanenti.'
+      );
       setSaldando(false);
     }
   }

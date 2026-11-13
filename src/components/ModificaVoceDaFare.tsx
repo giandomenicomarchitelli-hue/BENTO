@@ -50,7 +50,7 @@ export function ModificaVoceDaFare({ testo, note, salvando, onSalva }: Props) {
       <BloccoDuro
         style={(invariato || bozzaTesto.trim() === '' || salvando) && styles.bottoneDisabilitato}
         offset={2.5}
-        colore={colori.menta}
+        colore={colori.corallo}
         raggio={12}
         contenutoStyle={styles.bottonePieno}
         onPress={
@@ -60,7 +60,7 @@ export function ModificaVoceDaFare({ testo, note, salvando, onSalva }: Props) {
         }
       >
         {salvando ? (
-          <ActivityIndicator color={colori.scuro} />
+          <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.testoBottonePieno}>Salva modifiche</Text>
         )}
@@ -117,6 +117,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 0.9,
     textTransform: 'uppercase',
-    color: colori.scuro,
+    color: '#fff',
   },
 });

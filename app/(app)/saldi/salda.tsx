@@ -146,15 +146,21 @@ function SaldaDebitoDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
         <View>
           <Text style={styles.etichettaCampo}>Chi paga</Text>
           <View style={styles.rigaChip}>
-            {membriAttivi.map((membro) => (
-              <Pressable
-                key={membro.id}
-                style={[styles.chip, chiPaga === membro.id && styles.chipAttivo]}
-                onPress={() => selezionaChiPaga(membro.id)}
-              >
-                <Text style={styles.testoChip}>{membro.nome}</Text>
-              </Pressable>
-            ))}
+            {membriAttivi
+              // Filtrata anche questa lista, non solo "A chi": senza,
+              // scegliendo prima "A chi" si poteva poi scegliere la stessa
+              // persona come "Chi paga", bloccato solo al submit con un
+              // errore invece che reso impossibile da selezionare.
+              .filter((m) => m.id !== aChi)
+              .map((membro) => (
+                <Pressable
+                  key={membro.id}
+                  style={[styles.chip, chiPaga === membro.id && styles.chipAttivo]}
+                  onPress={() => selezionaChiPaga(membro.id)}
+                >
+                  <Text style={styles.testoChip}>{membro.nome}</Text>
+                </Pressable>
+              ))}
           </View>
         </View>
 

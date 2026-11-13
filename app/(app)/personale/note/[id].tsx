@@ -40,6 +40,13 @@ export default function DettaglioNotaPersonale() {
 
   useEffect(() => {
     if (!inizializzato.current && nota !== undefined) {
+      // `titolo` partiva solo dal parametro di navigazione (una copia
+      // potenzialmente non aggiornata) e non veniva mai riallineato a
+      // `nota.titolo` una volta arrivati i dati veri: salvare poteva
+      // sovrascrivere in silenzio un titolo cambiato altrove con quello
+      // vecchio. Stesso momento di inizializzazione già usato per
+      // `contenuto`, che il parametro di navigazione non porta affatto.
+      setTitolo(nota.titolo);
       setContenuto(nota.contenuto);
       inizializzato.current = true;
     }

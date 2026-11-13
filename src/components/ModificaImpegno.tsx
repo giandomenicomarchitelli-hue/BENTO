@@ -144,7 +144,12 @@ export function ModificaImpegno({
 
       <View style={styles.rigaSwitch}>
         <Text style={styles.etichetta}>Tutto il giorno</Text>
-        <Switch value={tuttoIlGiorno} onValueChange={setTuttoIlGiorno} />
+        <Switch
+          value={tuttoIlGiorno}
+          onValueChange={setTuttoIlGiorno}
+          trackColor={{ false: coloriNB.panna, true: coloriNB.menta }}
+          thumbColor={coloriNB.crema}
+        />
       </View>
 
       {!tuttoIlGiorno && (
@@ -236,7 +241,12 @@ export function ModificaImpegno({
 
       <View style={styles.rigaSwitch}>
         <Text style={styles.etichetta}>Modificabile da chiunque nel gruppo</Text>
-        <Switch value={modificabileDaTutti} onValueChange={setModificabileDaTutti} />
+        <Switch
+          value={modificabileDaTutti}
+          onValueChange={setModificabileDaTutti}
+          trackColor={{ false: coloriNB.panna, true: coloriNB.menta }}
+          thumbColor={coloriNB.crema}
+        />
       </View>
 
       <View style={styles.barraSalva}>

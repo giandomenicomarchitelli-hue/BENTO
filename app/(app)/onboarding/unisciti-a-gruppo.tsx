@@ -83,13 +83,13 @@ export default function UniscitiAGruppo() {
         <BloccoDuro
           style={inviando && styles.bottoneDisabilitato}
           offset={2.5}
-          colore={colori.menta}
+          colore={colori.corallo}
           raggio={12}
           contenutoStyle={styles.bottonePieno}
           onPress={inviando ? undefined : inviaForm}
         >
           {inviando ? (
-            <ActivityIndicator color={colori.scuro} />
+            <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.testoBottonePieno}>Unisciti</Text>
           )}
@@ -159,6 +159,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 0.9,
     textTransform: 'uppercase',
-    color: colori.scuro,
+    color: '#fff',
   },
 });

@@ -1,16 +1,13 @@
-import { Link } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
+import { Link, router } from 'expo-router';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
 import { registrati } from '@/api/auth';
+import { BloccoDuro } from '@/components/BloccoDuro';
+import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 const schema = z
   .object({
@@ -30,7 +27,16 @@ function messaggioErrore(errore: unknown): string {
   return 'Qualcosa è andato storto. Riprova.';
 }
 
+function tornaIndietro() {
+  if (router.canGoBack()) {
+    router.back();
+  } else {
+    router.replace('/accedi');
+  }
+}
+
 export default function Registrati() {
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confermaPassword, setConfermaPassword] = useState('');
@@ -61,111 +67,161 @@ export default function Registrati() {
 
   if (richiedeConferma) {
     return (
-      <View style={styles.contenitore}>
-        <Text style={styles.titolo}>Controlla la tua email</Text>
-        <Text style={styles.sottotitolo}>
-          Ti abbiamo inviato un link di conferma a {email}. Confermalo per poter accedere.
-        </Text>
-        <Link href="/(auth)/accedi" style={styles.link}>
-          Torna al login
-        </Link>
+      <View style={[styles.schermo, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <View style={styles.contenuto}>
+          <Text style={styles.titolo}>Controlla la tua email</Text>
+          <Text style={styles.sottotitolo}>
+            Ti abbiamo inviato un link di conferma a {email}. Confermalo per poter accedere.
+          </Text>
+          <Link href="/(auth)/accedi" style={styles.link}>
+            Torna al login
+          </Link>
+        </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.contenitore}>
-      <Text style={styles.titolo}>Crea un account</Text>
+    <View style={[styles.schermo, { paddingTop: insets.top + 16, paddingBottom: insets.bottom }]}>
+      <View style={styles.rigaTitolo}>
+        <Pressable onPress={tornaIndietro} hitSlop={8}>
+          <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
+            <Feather name="arrow-left" size={17} color={colori.scuro} />
+          </BloccoDuro>
+        </Pressable>
+      </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        textContentType="emailAddress"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        textContentType="newPassword"
-        value={password}
-        onChangeText={setPassword}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Conferma password"
-        secureTextEntry
-        textContentType="newPassword"
-        value={confermaPassword}
-        onChangeText={setConfermaPassword}
-      />
+      <View style={styles.contenuto}>
+        <Text style={styles.titolo}>Crea un account</Text>
 
-      {errore !== null && <Text style={styles.errore}>{errore}</Text>}
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor={colori.soft}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          textContentType="emailAddress"
+          value={email}
+          onChangeText={setEmail}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          placeholderTextColor={colori.soft}
+          secureTextEntry
+          textContentType="newPassword"
+          value={password}
+          onChangeText={setPassword}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Conferma password"
+          placeholderTextColor={colori.soft}
+          secureTextEntry
+          textContentType="newPassword"
+          value={confermaPassword}
+          onChangeText={setConfermaPassword}
+        />
 
-      <Pressable style={styles.bottone} onPress={inviaForm} disabled={inviando}>
-        {inviando ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.testoBottone}>Crea account</Text>
-        )}
-      </Pressable>
+        {errore !== null && <Text style={styles.testoErrore}>{errore}</Text>}
 
-      <Link href="/(auth)/accedi" style={styles.link}>
-        Hai già un account? Accedi
-      </Link>
+        <BloccoDuro
+          style={inviando && styles.bottoneDisabilitato}
+          offset={2.5}
+          colore={colori.corallo}
+          raggio={12}
+          contenutoStyle={styles.bottonePieno}
+          onPress={inviando ? undefined : inviaForm}
+        >
+          {inviando ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.testoBottonePieno}>Crea account</Text>
+          )}
+        </BloccoDuro>
+
+        <Link href="/(auth)/accedi" style={styles.link}>
+          Hai già un account? Accedi
+        </Link>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  contenitore: {
+  schermo: {
+    flex: 1,
+    backgroundColor: colori.crema,
+  },
+  rigaTitolo: {
+    alignItems: 'flex-start',
+    paddingHorizontal: 16,
+  },
+  quadrato: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  contenuto: {
     flex: 1,
     justifyContent: 'center',
-    padding: 24,
+    paddingHorizontal: 24,
     gap: 12,
   },
   titolo: {
-    fontSize: 24,
-    fontWeight: '600',
-    marginBottom: 12,
+    ...pesi.extraBold,
+    fontSize: 22,
+    letterSpacing: -0.4,
     textAlign: 'center',
+    color: colori.scuro,
+    marginBottom: 8,
   },
   sottotitolo: {
-    fontSize: 15,
+    ...pesi.semiBold,
+    fontSize: 14,
+    color: colori.soft,
     textAlign: 'center',
-    color: '#555',
     marginBottom: 12,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 14,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 11,
+    backgroundColor: colori.panna,
+    paddingHorizontal: 13,
     paddingVertical: 12,
-    fontSize: 16,
+    ...pesi.semiBold,
+    fontSize: 15,
+    color: colori.scuro,
   },
-  errore: {
-    color: '#c0392b',
+  testoErrore: {
+    ...pesi.bold,
+    fontSize: 12.5,
+    color: colori.corallo,
     textAlign: 'center',
   },
-  bottone: {
-    backgroundColor: '#2d6cdf',
-    borderRadius: 8,
-    paddingVertical: 14,
+  bottoneDisabilitato: {
+    opacity: 0.5,
+  },
+  bottonePieno: {
+    paddingVertical: 13,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 8,
   },
-  testoBottone: {
+  testoBottonePieno: {
+    ...pesi.extraBold,
+    fontSize: 12,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   link: {
     textAlign: 'center',
     marginTop: 12,
-    color: '#2d6cdf',
+    ...pesi.bold,
+    fontSize: 13,
+    color: colori.viola,
   },
 });

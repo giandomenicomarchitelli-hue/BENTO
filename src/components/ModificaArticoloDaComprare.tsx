@@ -49,7 +49,7 @@ export function ModificaArticoloDaComprare({ nome, note, salvando, onSalva }: Pr
       <BloccoDuro
         style={(invariato || bozzaNome.trim() === '' || salvando) && styles.bottoneDisabilitato}
         offset={2.5}
-        colore={colori.menta}
+        colore={colori.corallo}
         raggio={12}
         contenutoStyle={styles.bottonePieno}
         onPress={
@@ -59,7 +59,7 @@ export function ModificaArticoloDaComprare({ nome, note, salvando, onSalva }: Pr
         }
       >
         {salvando ? (
-          <ActivityIndicator color={colori.scuro} />
+          <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.testoBottonePieno}>Salva modifiche</Text>
         )}
@@ -116,6 +116,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 0.9,
     textTransform: 'uppercase',
-    color: colori.scuro,
+    color: '#fff',
   },
 });

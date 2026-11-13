@@ -117,13 +117,13 @@ export function ConfermaAzioni({ azioni, membri, confermando, onConferma }: Prop
       <BloccoDuro
         style={(confermando || nonRisolto || tentativoEseguito) && styles.bottoneDisabilitato}
         offset={2.5}
-        colore={colori.menta}
+        colore={colori.corallo}
         raggio={12}
         contenutoStyle={styles.bottonePieno}
         onPress={confermando || nonRisolto || tentativoEseguito ? undefined : conferma}
       >
         {confermando ? (
-          <ActivityIndicator color={colori.scuro} />
+          <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.testoBottonePieno}>Conferma</Text>
         )}
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     backgroundColor: colori.crema,
   },
   chipSelezionato: {
-    backgroundColor: colori.menta,
+    backgroundColor: colori.viola,
   },
   testoChip: {
     ...pesi.extraBold,
@@ -332,6 +332,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 0.9,
     textTransform: 'uppercase',
-    color: colori.scuro,
+    color: '#fff',
   },
 });

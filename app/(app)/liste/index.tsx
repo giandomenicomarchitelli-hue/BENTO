@@ -149,7 +149,7 @@ function ListeDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
                     )}
                   </Pressable>
                   <Pressable onPress={() => confermaEliminaLista(lista)} hitSlop={10} style={styles.bottoneMenu}>
-                    <Feather name="more-vertical" size={15} color={colori.soft} />
+                    <Feather name="trash-2" size={15} color={colori.corallo} />
                   </Pressable>
                 </View>
               ))}

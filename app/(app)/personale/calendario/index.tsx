@@ -335,7 +335,12 @@ function FormEvento({ valoriIniziali, modifica, salvando, onSalva, onAnnulla }: 
 
       <View style={styles.rigaSwitch}>
         <Text style={styles.etichetta}>Tutto il giorno</Text>
-        <Switch value={tuttoIlGiorno} onValueChange={setTuttoIlGiorno} />
+        <Switch
+          value={tuttoIlGiorno}
+          onValueChange={setTuttoIlGiorno}
+          trackColor={{ false: colori.panna, true: colori.menta }}
+          thumbColor={colori.crema}
+        />
       </View>
 
       {!tuttoIlGiorno && (

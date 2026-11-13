@@ -3,6 +3,7 @@ import { Redirect, useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { dataLocaleISO } from '@/calcolo/ricorrenzaFaccende';
 import { altezzaBarraConSafeArea, BarraInferiore } from '@/components/BarraInferiore';
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { MarchioBento } from '@/components/MarchioBento';
@@ -15,11 +16,6 @@ import { useNotePersonali } from '@/hooks/useNotePersonali';
 import { useProfilo } from '@/hooks/useProfilo';
 import { useAuthStore } from '@/store/authStore';
 import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
-
-function dataLocaleISO(data: Date): string {
-  const fusoOrario = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  return new Intl.DateTimeFormat('en-CA', { timeZone: fusoOrario }).format(data);
-}
 
 export default function PersonaleHome() {
   const router = useRouter();
@@ -43,7 +39,7 @@ export default function PersonaleHome() {
   }
 
   const inizialeNome = profilo.nome_utente.charAt(0).toUpperCase();
-  const oggiISO = dataLocaleISO(new Date());
+  const oggiISO = dataLocaleISO(new Date(), Intl.DateTimeFormat().resolvedOptions().timeZone);
   const eventiOggi = eventi.filter((evento) => evento.data === oggiISO);
   const sommarioCalendario =
     eventiOggi.length === 0 ? 'Nessun impegno oggi' : eventiOggi.map((e) => e.titolo).join(' • ');
