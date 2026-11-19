@@ -3,6 +3,7 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Redirect, useRouter } from 'expo-router';
 import type { ComponentProps } from 'react';
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,6 +12,7 @@ import { altezzaBarraConSafeArea, BarraInferiore } from '@/components/BarraInfer
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { MarchioBento } from '@/components/MarchioBento';
 import { CifraScomparto, Scomparto } from '@/components/Scomparto';
+import { SelettoreColoreCasella } from '@/components/SelettoreColoreCasella';
 import { PARETE, Vassoio } from '@/components/Vassoio';
 import { useFontBento } from '@/hooks/useFontBento';
 import { useListePersonali } from '@/hooks/useListePersonali';
@@ -19,6 +21,7 @@ import { useNotePersonali } from '@/hooks/useNotePersonali';
 import { useNotifiche } from '@/hooks/useNotifiche';
 import { useProfilo } from '@/hooks/useProfilo';
 import { useAuthStore } from '@/store/authStore';
+import { useColoreCasella } from '@/store/coloriCaselleStore';
 import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 /**
@@ -57,6 +60,10 @@ export default function Homepage() {
   const { liste, isLoading: listeInCaricamento } = useListePersonali(utenteId);
   const { note, isLoading: noteInCaricamento } = useNotePersonali(utenteId);
   const { notifiche, isLoading: notificheInCaricamento } = useNotifiche();
+  const colorePersonale = useColoreCasella('home.personale', colori.panna);
+  const coloreGruppi = useColoreCasella('home.gruppi', colori.menta);
+  const coloreScrivi = useColoreCasella('home.scrivi', colori.oro);
+  const [casellaInModifica, setCasellaInModifica] = useState<string | null>(null);
 
   // Serve un nome utente fisso prima di poter fare qualunque cosa, e il
   // font neo-brutalista pronto prima di disegnare qualunque testo di
@@ -121,9 +128,10 @@ export default function Homepage() {
               style={styles.colonnaLarga}
               nome="Personale"
               icona="user"
-              colore={colori.panna}
+              colore={colorePersonale}
               azione={personaleVuoto ? 'Crea la prima' : 'Entra'}
               onPress={() => router.push('/personale')}
+              onLongPress={() => setCasellaInModifica('home.personale')}
             >
               {personaleInCaricamento ? (
                 <ActivityIndicator color={colori.scuro} />
@@ -142,9 +150,10 @@ export default function Homepage() {
               <Scomparto
                 nome="Gruppi"
                 icona="users"
-                colore={colori.menta}
+                colore={coloreGruppi}
                 azione="Apri"
                 onPress={() => router.push('/gruppi')}
+                onLongPress={() => setCasellaInModifica('home.gruppi')}
               >
                 {gruppiInCaricamento ? (
                   <ActivityIndicator color={colori.scuro} />
@@ -161,9 +170,10 @@ export default function Homepage() {
               </Scomparto>
 
               <Scomparto
-                colore={colori.oro}
+                colore={coloreScrivi}
                 azione="Scrivi"
                 onPress={() => router.push('/assistente')}
+                onLongPress={() => setCasellaInModifica('home.scrivi')}
               >
                 <View style={styles.rigaScrivi}>
                   <View style={styles.badgeScrivi}>
@@ -226,6 +236,7 @@ export default function Homepage() {
 
       <BarraInferiore attiva="home" />
 
+      <SelettoreColoreCasella chiave={casellaInModifica} onChiudi={() => setCasellaInModifica(null)} />
     </View>
   );
 }

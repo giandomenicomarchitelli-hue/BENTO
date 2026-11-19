@@ -45,6 +45,12 @@ export interface DefinizioneCasella {
  * cambia solo qui.
  */
 export const CASELLE_PERSONALIZZABILI: DefinizioneCasella[] = [
+  { chiave: 'home.personale', etichetta: 'Personale', sezione: 'Home', coloreDefault: coloriNB.panna },
+  { chiave: 'home.gruppi', etichetta: 'Gruppi', sezione: 'Home', coloreDefault: coloriNB.menta },
+  { chiave: 'home.scrivi', etichetta: 'Scrivi', sezione: 'Home', coloreDefault: coloriNB.oro },
+  { chiave: 'gruppi.crea', etichetta: 'Crea', sezione: 'Elenco gruppi', coloreDefault: coloriNB.menta },
+  { chiave: 'gruppi.unisciti', etichetta: 'Unisciti', sezione: 'Elenco gruppi', coloreDefault: coloriNB.viola },
+  { chiave: 'gruppi.saldi', etichetta: 'I miei saldi', sezione: 'Elenco gruppi', coloreDefault: coloriNB.panna },
   { chiave: 'dashboard.saldo', etichetta: 'Il tuo saldo', sezione: 'Dashboard gruppo', coloreDefault: coloriNB.panna },
   { chiave: 'dashboard.spesa', etichetta: 'Spesa', sezione: 'Dashboard gruppo', coloreDefault: coloriNB.menta },
   { chiave: 'dashboard.scrivi', etichetta: 'Scrivi', sezione: 'Dashboard gruppo', coloreDefault: coloriNB.oro },

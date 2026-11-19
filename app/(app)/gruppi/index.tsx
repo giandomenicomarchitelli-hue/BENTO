@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Redirect, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,10 +13,12 @@ import { BloccoDuro } from '@/components/BloccoDuro';
 import { iconaPerTipoGruppo } from '@/components/GroupPreviewCard';
 import { MarchioBento } from '@/components/MarchioBento';
 import { CifraScomparto, Scomparto, stileValoreScomparto } from '@/components/Scomparto';
+import { SelettoreColoreCasella } from '@/components/SelettoreColoreCasella';
 import { PARETE, Vassoio } from '@/components/Vassoio';
 import { useFontBento } from '@/hooks/useFontBento';
 import { useMieiGruppi } from '@/hooks/useMieiGruppi';
 import { useProfilo } from '@/hooks/useProfilo';
+import { useColoreCasella } from '@/store/coloriCaselleStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
@@ -34,6 +37,10 @@ export default function GruppiHome() {
   const { profilo, isLoading: profiloInCaricamento } = useProfilo();
   const { gruppi, isLoading: gruppiInCaricamento, error: erroreGruppi } = useMieiGruppi();
   const impostaGruppoAttivo = useGruppoAttivoStore((stato) => stato.impostaGruppoAttivo);
+  const coloreCrea = useColoreCasella('gruppi.crea', colori.menta);
+  const coloreUnisciti = useColoreCasella('gruppi.unisciti', colori.viola);
+  const coloreSaldi = useColoreCasella('gruppi.saldi', colori.panna);
+  const [casellaInModifica, setCasellaInModifica] = useState<string | null>(null);
 
   if (profiloInCaricamento || !fontPronti) {
     return (
@@ -155,9 +162,10 @@ export default function GruppiHome() {
                 style={styles.cella}
                 nome="Crea"
                 icona="plus-circle"
-                colore={colori.menta}
+                colore={coloreCrea}
                 azione="Crea"
                 onPress={() => router.push('/onboarding/crea-gruppo')}
+                onLongPress={() => setCasellaInModifica('gruppi.crea')}
               >
                 <CifraScomparto unita="Un gruppo nuovo" />
               </Scomparto>
@@ -165,18 +173,20 @@ export default function GruppiHome() {
                 style={styles.cella}
                 nome="Unisciti"
                 icona="user-plus"
-                colore={colori.viola}
+                colore={coloreUnisciti}
                 azione="Entra"
                 onPress={() => router.push('/onboarding/unisciti-a-gruppo')}
+                onLongPress={() => setCasellaInModifica('gruppi.unisciti')}
               >
                 <CifraScomparto unita="Con un codice" />
               </Scomparto>
             </View>
             <Scomparto
-              colore={colori.panna}
+              colore={coloreSaldi}
               azione="Vedi"
               orizzontale
               onPress={() => router.push('/saldi-personali')}
+              onLongPress={() => setCasellaInModifica('gruppi.saldi')}
             >
               <View style={styles.rigaFascia}>
                 <View style={styles.badgeFascia}>
@@ -193,6 +203,8 @@ export default function GruppiHome() {
       </ScrollView>
 
       <BarraInferiore attiva="gruppi" />
+
+      <SelettoreColoreCasella chiave={casellaInModifica} onChiudi={() => setCasellaInModifica(null)} />
     </View>
   );
 }
