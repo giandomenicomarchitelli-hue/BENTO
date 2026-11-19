@@ -2,7 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { altezzaBarraConSafeArea, BarraInferiore } from '@/components/BarraInferiore';
 import { BloccoDuro } from '@/components/BloccoDuro';
@@ -84,9 +84,9 @@ export default function Dashboard() {
 
   if (isLoading || gruppo === null || !fontPronti) {
     return (
-      <View style={[styles.schermo, styles.centrato]}>
+      <SafeAreaView style={[styles.schermo, styles.centrato]} edges={['top']}>
         <ActivityIndicator color={colori.scuro} />
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -130,12 +130,17 @@ export default function Dashboard() {
   }
 
   return (
-    <View style={styles.schermo}>
+    // SafeAreaView (non il padding calcolato a mano con insets.top) per il
+    // bordo superiore: su Android con edge-to-edge insets.top può valere 0
+    // al primo render prima che la misura nativa arrivi, lasciando
+    // l'intestazione sovrapposta alla status bar - vedi lo screenshot del
+    // problema. SafeAreaView riserva lo spazio a livello nativo, non JS.
+    <SafeAreaView style={styles.schermo} edges={['top']}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[
           styles.contenuto,
-          { paddingTop: insets.top + 16, paddingBottom: altezzaBarraConSafeArea(insets.bottom) },
+          { paddingTop: 16, paddingBottom: altezzaBarraConSafeArea(insets.bottom) },
         ]}
       >
         <View style={styles.header}>
@@ -399,7 +404,7 @@ export default function Dashboard() {
       <BarraInferiore attiva="gruppi" />
 
       <SelettoreColoreCasella apertura={casellaInModifica} onChiudi={() => setCasellaInModifica(null)} />
-    </View>
+    </SafeAreaView>
   );
 }
 

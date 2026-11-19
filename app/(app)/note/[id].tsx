@@ -41,6 +41,7 @@ export default function DettaglioNotaGruppo() {
   const [modalitaAnteprima, setModalitaAnteprima] = useState(false);
   const [fotoAperta, setFotoAperta] = useState<FotoNotaGruppo | null>(null);
   const inizializzato = useRef(false);
+  const ultimoSalvato = useRef<{ titolo: string; contenuto: string } | null>(null);
 
   useEffect(() => {
     if (!inizializzato.current && nota !== undefined) {
@@ -49,9 +50,26 @@ export default function DettaglioNotaGruppo() {
       // titolo cambiato altrove (qui, da un altro membro del gruppo).
       setTitolo(nota.titolo);
       setContenuto(nota.contenuto);
+      ultimoSalvato.current = { titolo: nota.titolo, contenuto: nota.contenuto };
       inizializzato.current = true;
     }
   }, [nota]);
+
+  // Autosalvataggio: vedi lo stesso punto in app/(app)/personale/note/[id].tsx.
+  useEffect(() => {
+    if (!inizializzato.current || titolo.trim() === '') {
+      return;
+    }
+    if (ultimoSalvato.current?.titolo === titolo && ultimoSalvato.current?.contenuto === contenuto) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      aggiorna.mutate({ id, titolo, contenuto });
+      ultimoSalvato.current = { titolo, contenuto };
+    }, 800);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [titolo, contenuto, id]);
 
   function tornaIndietro() {
     if (router.canGoBack()) {
@@ -207,20 +225,9 @@ export default function DettaglioNotaGruppo() {
           <Text style={styles.errore}>{aggiungi.error.message}</Text>
         )}
 
-        <BloccoDuro
-          style={[titoloVuoto || aggiorna.isPending ? styles.salvaDisabilitato : null]}
-          offset={2.5}
-          colore={colori.corallo}
-          raggio={12}
-          contenutoStyle={styles.bottoneSalva}
-          onPress={titoloVuoto || aggiorna.isPending ? undefined : () => aggiorna.mutate({ id, titolo, contenuto })}
-        >
-          {aggiorna.isPending ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.testoSalva}>Salva</Text>
-          )}
-        </BloccoDuro>
+        <Text style={styles.statoSalvataggio}>
+          {titoloVuoto ? 'Serve un titolo per salvare' : aggiorna.isPending ? 'Salvataggio…' : 'Salvato'}
+        </Text>
 
         <Pressable onPress={confermaEliminaNota} hitSlop={8} style={styles.eliminaNota}>
           <Text style={styles.eliminaNotaTesto}>Elimina nota</Text>
@@ -370,20 +377,11 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: colori.scuro,
   },
-  bottoneSalva: {
-    paddingVertical: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  salvaDisabilitato: {
-    opacity: 0.4,
-  },
-  testoSalva: {
-    ...pesi.extraBold,
-    fontSize: 13,
-    letterSpacing: 0.9,
-    textTransform: 'uppercase',
-    color: '#fff',
+  statoSalvataggio: {
+    ...pesi.bold,
+    fontSize: 11.5,
+    color: colori.soft,
+    textAlign: 'center',
   },
   eliminaNota: {
     alignSelf: 'center',

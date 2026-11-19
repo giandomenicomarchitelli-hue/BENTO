@@ -36,6 +36,8 @@ export default function AppLayout() {
       <Stack.Screen name="personale/note/[id]" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="personale/calendario/index" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="gruppo/index" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="note/index" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="note/[id]" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="calendario/index" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="faccende/index" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="sfide/index" options={{ headerShown: false, ...FADE }} />

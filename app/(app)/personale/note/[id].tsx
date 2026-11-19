@@ -41,6 +41,7 @@ export default function DettaglioNotaPersonale() {
   const [modalitaAnteprima, setModalitaAnteprima] = useState(false);
   const [fotoAperta, setFotoAperta] = useState<FotoNotaPersonale | null>(null);
   const inizializzato = useRef(false);
+  const ultimoSalvato = useRef<{ titolo: string; contenuto: string } | null>(null);
 
   useEffect(() => {
     if (!inizializzato.current && nota !== undefined) {
@@ -52,9 +53,31 @@ export default function DettaglioNotaPersonale() {
       // `contenuto`, che il parametro di navigazione non porta affatto.
       setTitolo(nota.titolo);
       setContenuto(nota.contenuto);
+      ultimoSalvato.current = { titolo: nota.titolo, contenuto: nota.contenuto };
       inizializzato.current = true;
     }
   }, [nota]);
+
+  // Autosalvataggio: niente più bottone "Salva". Aspetta una pausa nella
+  // digitazione (non un salvataggio ad ogni tasto), salta il giro finché
+  // titolo/contenuto non sono stati caricati dalla nota vera (altrimenti il
+  // primo render dopo l'inizializzazione si "autosalverebbe" da solo) e
+  // salta anche se non è cambiato nulla da ultimoSalvato - evita scritture
+  // ripetute identiche quando l'utente smette di scrivere.
+  useEffect(() => {
+    if (!inizializzato.current || titolo.trim() === '') {
+      return;
+    }
+    if (ultimoSalvato.current?.titolo === titolo && ultimoSalvato.current?.contenuto === contenuto) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      aggiorna.mutate({ id, titolo, contenuto });
+      ultimoSalvato.current = { titolo, contenuto };
+    }, 800);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [titolo, contenuto, id]);
 
   function tornaIndietro() {
     if (router.canGoBack()) {
@@ -206,20 +229,9 @@ export default function DettaglioNotaPersonale() {
           <Text style={styles.errore}>{aggiungi.error.message}</Text>
         )}
 
-        <BloccoDuro
-          style={[titoloVuoto || aggiorna.isPending ? styles.salvaDisabilitato : null]}
-          offset={2.5}
-          colore={colori.corallo}
-          raggio={12}
-          contenutoStyle={styles.bottoneSalva}
-          onPress={titoloVuoto || aggiorna.isPending ? undefined : () => aggiorna.mutate({ id, titolo, contenuto })}
-        >
-          {aggiorna.isPending ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.testoSalva}>Salva</Text>
-          )}
-        </BloccoDuro>
+        <Text style={styles.statoSalvataggio}>
+          {titoloVuoto ? 'Serve un titolo per salvare' : aggiorna.isPending ? 'Salvataggio…' : 'Salvato'}
+        </Text>
 
         <Pressable onPress={confermaEliminaNota} hitSlop={8} style={styles.eliminaNota}>
           <Text style={styles.eliminaNotaTesto}>Elimina nota</Text>
@@ -369,20 +381,11 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: colori.scuro,
   },
-  bottoneSalva: {
-    paddingVertical: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  salvaDisabilitato: {
-    opacity: 0.4,
-  },
-  testoSalva: {
-    ...pesi.extraBold,
-    fontSize: 13,
-    letterSpacing: 0.9,
-    textTransform: 'uppercase',
-    color: '#fff',
+  statoSalvataggio: {
+    ...pesi.bold,
+    fontSize: 11.5,
+    color: colori.soft,
+    textAlign: 'center',
   },
   eliminaNota: {
     alignSelf: 'center',
