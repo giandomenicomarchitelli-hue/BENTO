@@ -21,6 +21,11 @@
  * state scritte/aggiornate a mano per corrispondere esattamente alle
  * migration 00000000000015-00000000000025, verificate con `supabase gen
  * types` dopo ogni applicazione al progetto Supabase collegato.
+ *
+ * `offerte_prodotti` (migration 00000000000039) aggiunta a mano per lo
+ * stesso motivo: il CLI attuale (v3.2.0) rigenerando degrada anche le
+ * union letterali esistenti (es. `frequenza`) a `string`, quindi va
+ * evitato finché il CLI non torna a inferire le union dai CHECK constraint.
  */
 
 export type Json =
@@ -738,6 +743,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      offerte_prodotti: {
+        Row: {
+          catena: string
+          categoria: string | null
+          creato_il: string
+          fonte_url: string
+          gruppo: string
+          id: string
+          marca: string | null
+          nome: string
+          prezzo_centesimi: number
+          prezzo_riferimento: string | null
+          sconto_tipo: string | null
+          valido_al: string
+          valido_dal: string
+        }
+        Insert: {
+          catena: string
+          categoria?: string | null
+          creato_il?: string
+          fonte_url: string
+          gruppo: string
+          id?: string
+          marca?: string | null
+          nome: string
+          prezzo_centesimi: number
+          prezzo_riferimento?: string | null
+          sconto_tipo?: string | null
+          valido_al: string
+          valido_dal: string
+        }
+        Update: {
+          catena?: string
+          categoria?: string | null
+          creato_il?: string
+          fonte_url?: string
+          gruppo?: string
+          id?: string
+          marca?: string | null
+          nome?: string
+          prezzo_centesimi?: number
+          prezzo_riferimento?: string | null
+          sconto_tipo?: string | null
+          valido_al?: string
+          valido_dal?: string
+        }
+        Relationships: []
       }
       profili: {
         Row: {

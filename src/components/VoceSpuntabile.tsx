@@ -8,6 +8,9 @@ type Props = {
   testo: string;
   fatto: boolean;
   nota?: string | null;
+  /** Solo lista-spesa, voce non ancora comprata: offerta più conveniente
+   *  trovata nei volantini per questo articolo. */
+  offerta?: { catena: string; marca: string | null; prezzoCentesimi: number } | null;
   /** Solo lista-spesa: chi e quanto, quando comprato. */
   acquirente?: { nome: string | null; prezzoCentesimi: number | null } | null;
   /** Voce "con prezzi" già fatta (solo liste del gruppo): tocco diretto
@@ -24,7 +27,16 @@ type Props = {
  * dello stesso corpo. Vive sempre dentro un BloccoDuro scuro con gap:2 -
  * è una parete, mai da sola (vedi lista-spesa.tsx/liste/[id].tsx).
  */
-export function VoceSpuntabile({ testo, fatto, nota, acquirente, bloccata, onTocca, onApriModifica }: Props) {
+export function VoceSpuntabile({
+  testo,
+  fatto,
+  nota,
+  offerta,
+  acquirente,
+  bloccata,
+  onTocca,
+  onApriModifica,
+}: Props) {
   const corpo = (
     <>
       <View style={[styles.casella, fatto && styles.casellaFatta]}>
@@ -38,6 +50,15 @@ export function VoceSpuntabile({ testo, fatto, nota, acquirente, bloccata, onToc
           <Text style={styles.nota} numberOfLines={1}>
             {nota}
           </Text>
+        )}
+        {!fatto && offerta !== null && offerta !== undefined && (
+          <View style={styles.rigaOfferta}>
+            <Feather name="tag" size={10} color={coloriNB.scuro} />
+            <Text style={styles.offertaTesto} numberOfLines={1}>
+              {offerta.marca !== null ? `${offerta.marca} · ` : ''}
+              {formattaEuro(offerta.prezzoCentesimi)} da {offerta.catena}
+            </Text>
+          </View>
         )}
         {fatto && acquirente !== null && acquirente !== undefined && (
           <View style={styles.rigaMeta}>
@@ -119,6 +140,17 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: coloriNB.soft,
     marginTop: 2,
+  },
+  rigaOfferta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  offertaTesto: {
+    ...pesiNB.semiBold,
+    fontSize: 11,
+    color: coloriNB.scuro,
   },
   rigaMeta: {
     flexDirection: 'row',

@@ -1,11 +1,20 @@
 import { Feather } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ArticoloSpesa } from '@/api/articoliSpesa';
+import { trovaOfferteCorrispondenti } from '@/calcolo/offerteProdotti';
 import { Baran } from '@/components/Baran';
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { ShoppingListAddForm } from '@/components/ShoppingListAddForm';
@@ -14,6 +23,7 @@ import { PARETE } from '@/components/Vassoio';
 import { VoceSpuntabile } from '@/components/VoceSpuntabile';
 import { useArticoliSpesa } from '@/hooks/useArticoliSpesa';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
+import { useOfferteProdotti } from '@/hooks/useOfferteProdotti';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
@@ -33,7 +43,15 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const { gruppo, membri } = useGruppoAttivo();
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const { articoli, isLoading, error, aggiungi, elimina } = useArticoliSpesa(gruppoAttivoId);
+  const { offerte } = useOfferteProdotti();
   const [compratiVisibili, setCompratiVisibili] = useState(false);
+
+  function offertaMigliore(nomeArticolo: string) {
+    const [migliore] = trovaOfferteCorrispondenti(nomeArticolo, offerte);
+    return migliore
+      ? { catena: migliore.catena, marca: migliore.marca, prezzoCentesimi: migliore.prezzoCentesimi }
+      : null;
+  }
 
   const ilMioMembroId = membri.find((m) => m.utente_id === utenteId)?.id ?? null;
 
@@ -71,7 +89,7 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const comprati = articoli.filter((a) => a.stato === 'comprato');
 
   return (
-    <View style={styles.schermo}>
+    <KeyboardAvoidingView style={styles.schermo} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={[
           styles.contenuto,
@@ -110,6 +128,7 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
                   testo={articolo.nome}
                   fatto={false}
                   nota={articolo.note}
+                  offerta={offertaMigliore(articolo.nome)}
                   onTocca={() => apriRegistraSpesa(articolo)}
                   onApriModifica={() => router.push({ pathname: '/articoli/[id]', params: { id: articolo.id } })}
                   onElimina={() => elimina.mutate(articolo.id)}
@@ -142,7 +161,7 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           </BloccoDuro>
         )}
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

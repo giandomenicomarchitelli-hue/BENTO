@@ -1,22 +1,35 @@
 import { Feather } from '@expo/vector-icons';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ArticoloSpesa } from '@/api/articoliSpesa';
+import { trovaOfferteCorrispondenti } from '@/calcolo/offerteProdotti';
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { ModificaAcquisto } from '@/components/ModificaAcquisto';
 import { ModificaArticoloDaComprare } from '@/components/ModificaArticoloDaComprare';
 import { useArticoliSpesa } from '@/hooks/useArticoliSpesa';
+import { useOfferteProdotti } from '@/hooks/useOfferteProdotti';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { confermaAzione } from '@/lib/conferma';
+import { formattaEuro } from '@/lib/formato';
 import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 export default function ModificaArticolo() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
   const { articoli, isLoading, aggiorna, elimina } = useArticoliSpesa(gruppoAttivoId);
+  const { offerte } = useOfferteProdotti();
   const insets = useSafeAreaInsets();
   const [annullando, setAnnullando] = useState(false);
 
@@ -42,6 +55,9 @@ export default function ModificaArticolo() {
     );
   }
 
+  const offerteTrovate =
+    articolo.stato === 'da_comprare' ? trovaOfferteCorrispondenti(articolo.nome, offerte) : [];
+
   async function confermaEliminaArticolo(articoloCorrente: ArticoloSpesa) {
     const conferma = await confermaAzione(
       `Eliminare "${articoloCorrente.nome}"?`,
@@ -54,7 +70,7 @@ export default function ModificaArticolo() {
   }
 
   return (
-    <View style={styles.schermo}>
+    <KeyboardAvoidingView style={styles.schermo} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={[
           styles.contenuto,
@@ -115,11 +131,33 @@ export default function ModificaArticolo() {
           )}
         </BloccoDuro>
 
+        {offerteTrovate.length > 0 && (
+          <BloccoDuro offset={3} colore={colori.panna} raggio={16} contenutoStyle={styles.offerte}>
+            <Text style={styles.offerteTitolo}>
+              Offerte trovate · {offerteTrovate.length}
+            </Text>
+            {offerteTrovate.map((offerta) => (
+              <View key={offerta.id} style={styles.offertaRiga}>
+                <View style={styles.offertaTesti}>
+                  <Text style={styles.offertaNome} numberOfLines={2}>
+                    {offerta.nome}
+                  </Text>
+                  <Text style={styles.offertaMeta} numberOfLines={1}>
+                    {offerta.marca !== null ? `${offerta.marca} · ` : ''}
+                    {offerta.catena}
+                  </Text>
+                </View>
+                <Text style={styles.offertaPrezzo}>{formattaEuro(offerta.prezzoCentesimi)}</Text>
+              </View>
+            ))}
+          </BloccoDuro>
+        )}
+
         <Pressable onPress={() => confermaEliminaArticolo(articolo)} hitSlop={8} style={styles.eliminaContenitore}>
           <Text style={styles.elimina}>Elimina articolo</Text>
         </Pressable>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -153,6 +191,40 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     color: colori.scuro,
     flexShrink: 1,
+  },
+  offerte: {
+    gap: 10,
+  },
+  offerteTitolo: {
+    ...pesi.extraBold,
+    fontSize: 11,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colori.soft,
+  },
+  offertaRiga: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  offertaTesti: {
+    flex: 1,
+    minWidth: 0,
+    gap: 1,
+  },
+  offertaNome: {
+    ...pesi.semiBold,
+    fontSize: 13,
+    color: colori.scuro,
+  },
+  offertaMeta: {
+    fontSize: 11,
+    color: colori.soft,
+  },
+  offertaPrezzo: {
+    ...pesi.extraBold,
+    fontSize: 14,
+    color: colori.scuro,
   },
   eliminaContenitore: {
     alignItems: 'center',

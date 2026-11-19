@@ -15,3 +15,11 @@ export interface Transazione {
   a: string;
   importoCentesimi: number;
 }
+
+export interface OffertaProdotto {
+  id: string;
+  nome: string;
+  marca: string | null;
+  prezzoCentesimi: number;
+  catena: string;
+}
