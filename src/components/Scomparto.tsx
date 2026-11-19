@@ -42,6 +42,7 @@ export function Scomparto({
   azione,
   colore,
   onPress,
+  onLongPress,
   style,
   orizzontale = false,
   children,
@@ -52,6 +53,8 @@ export function Scomparto({
   colore: string;
   /** Senza onPress lo scomparto non e' premibile (es. un messaggio d'errore). */
   onPress?: () => void;
+  /** Tocco lungo, es. per aprire il selettore colore della casella. */
+  onLongPress?: () => void;
   style?: StyleProp<ViewStyle>;
   /** Scomparto a fascia (es. Calendario): contenuto e azione sulla stessa riga. */
   orizzontale?: boolean;
@@ -81,6 +84,14 @@ export function Scomparto({
             : () => {
                 void Haptics.selectionAsync();
                 onPress();
+              }
+        }
+        onLongPress={
+          onLongPress === undefined
+            ? undefined
+            : () => {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onLongPress();
               }
         }
         onPressIn={() => setPremuto(true)}
@@ -130,12 +141,13 @@ export function Scomparto({
  *  vuoto si annuncerebbe come bottone a VoiceOver senza fare niente. */
 function Involucro({
   onPress,
+  onLongPress,
   ...resto
-}: React.ComponentProps<typeof Pressable> & { onPress?: () => void }) {
-  if (onPress === undefined) {
+}: React.ComponentProps<typeof Pressable> & { onPress?: () => void; onLongPress?: () => void }) {
+  if (onPress === undefined && onLongPress === undefined) {
     return <View style={resto.style as StyleProp<ViewStyle>}>{resto.children as React.ReactNode}</View>;
   }
-  return <Pressable onPress={onPress} {...resto} />;
+  return <Pressable onPress={onPress} onLongPress={onLongPress} {...resto} />;
 }
 
 /** La cifra grande di uno scomparto, con la sua unità e un'eventuale riga di dettaglio. */

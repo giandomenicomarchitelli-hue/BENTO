@@ -1,11 +1,34 @@
 import { coloriNB } from '@/theme/neoBrutalista';
 
 /**
+ * Accenti aggiunti solo per la personalizzazione delle caselle, oltre ai
+ * quattro già usati altrove nell'app (panna/oro/menta/viola in
+ * neoBrutalista.ts). Stessa famiglia "pastello saturo" del resto del
+ * tema, scelti perché il testo/icone `coloriNB.scuro` sopra restano
+ * sempre leggibili: contrasto minimo verificato 8,19:1 (sotto a quello
+ * già più basso tra i quattro esistenti, menta a 5,89:1), ben oltre la
+ * soglia 4,5:1 già usata come riferimento per viola.
+ */
+const rosa = '#F28FB3';
+const azzurro = '#6FC3E8';
+const limone = '#D4E157';
+const pesca = '#F5A389';
+
+/**
  * Colori tra cui scegliere per personalizzare una casella. Il corallo resta
  * escluso di proposito: è riservato a marchio/soldi, mai al riempimento di
  * uno scomparto (vedi il commento in neoBrutalista.ts).
  */
-export const PALETTE_CASELLE = [coloriNB.panna, coloriNB.oro, coloriNB.menta, coloriNB.viola];
+export const PALETTE_CASELLE = [
+  coloriNB.panna,
+  coloriNB.oro,
+  coloriNB.menta,
+  coloriNB.viola,
+  rosa,
+  azzurro,
+  limone,
+  pesca,
+];
 
 export interface DefinizioneCasella {
   chiave: string;

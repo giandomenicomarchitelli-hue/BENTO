@@ -1,5 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,6 +9,7 @@ import { altezzaBarraConSafeArea, BarraInferiore } from '@/components/BarraInfer
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { MarchioBento } from '@/components/MarchioBento';
 import { CifraScomparto, Scomparto } from '@/components/Scomparto';
+import { SelettoreColoreCasella } from '@/components/SelettoreColoreCasella';
 import { PARETE, Vassoio } from '@/components/Vassoio';
 import { useEventiPersonali } from '@/hooks/useEventiPersonali';
 import { useFontBento } from '@/hooks/useFontBento';
@@ -31,6 +33,7 @@ export default function PersonaleHome() {
   const coloreListe = useColoreCasella('personale.liste', colori.oro);
   const coloreNote = useColoreCasella('personale.note', colori.viola);
   const coloreCalendario = useColoreCasella('personale.calendario', colori.panna);
+  const [casellaInModifica, setCasellaInModifica] = useState<string | null>(null);
 
   if (profiloInCaricamento || !fontPronti) {
     return (
@@ -92,6 +95,7 @@ export default function PersonaleHome() {
                 colore={coloreListe}
                 azione="Apri"
                 onPress={() => router.push('/personale/liste')}
+                onLongPress={() => setCasellaInModifica('personale.liste')}
               >
                 {listeInCaricamento ? (
                   <ActivityIndicator color={colori.scuro} />
@@ -110,6 +114,7 @@ export default function PersonaleHome() {
                 colore={coloreNote}
                 azione="Apri"
                 onPress={() => router.push('/personale/note')}
+                onLongPress={() => setCasellaInModifica('personale.note')}
               >
                 {noteInCaricamento ? (
                   <ActivityIndicator color={colori.scuro} />
@@ -127,6 +132,7 @@ export default function PersonaleHome() {
               azione="Apri"
               orizzontale
               onPress={() => router.push('/personale/calendario')}
+              onLongPress={() => setCasellaInModifica('personale.calendario')}
             >
               <View style={styles.rigaCalendario}>
                 <View style={styles.chipCalendario}>
@@ -150,6 +156,7 @@ export default function PersonaleHome() {
 
       <BarraInferiore attiva="personale" />
 
+      <SelettoreColoreCasella chiave={casellaInModifica} onChiudi={() => setCasellaInModifica(null)} />
     </View>
   );
 }
