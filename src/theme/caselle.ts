@@ -63,3 +63,25 @@ export const CASELLE_PERSONALIZZABILI: DefinizioneCasella[] = [
   { chiave: 'personale.note', etichetta: 'Note', sezione: 'Personale', coloreDefault: coloriNB.viola },
   { chiave: 'personale.calendario', etichetta: 'Calendario', sezione: 'Personale', coloreDefault: coloriNB.panna },
 ];
+
+/** Cosa serve al selettore per aprirsi su una casella: la chiave con cui
+ *  salvare la scelta, l'etichetta mostrata e il colore di partenza. */
+export interface AperturaSelettoreColore {
+  chiave: string;
+  etichetta: string;
+  coloreDefault: string;
+}
+
+/**
+ * Apre il selettore su una delle caselle fisse dell'elenco qui sopra -
+ * per le caselle dinamiche (es. il tassello di ogni gruppo nell'elenco
+ * Gruppi, una per gruppo_id) il chiamante costruisce l'oggetto a mano,
+ * perché etichetta e colore di partenza non stanno in un elenco statico.
+ */
+export function apriSelettore(chiave: string): AperturaSelettoreColore {
+  const casella = CASELLE_PERSONALIZZABILI.find((c) => c.chiave === chiave);
+  if (casella === undefined) {
+    throw new Error(`Casella non registrata in CASELLE_PERSONALIZZABILI: ${chiave}`);
+  }
+  return casella;
+}

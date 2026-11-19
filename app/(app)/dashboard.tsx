@@ -22,6 +22,7 @@ import { formattaEuro } from '@/lib/formato';
 import { useAuthStore } from '@/store/authStore';
 import { useColoreCasella } from '@/store/coloriCaselleStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
+import { apriSelettore, type AperturaSelettoreColore } from '@/theme/caselle';
 import { coloriNB as colori, pesiNB as pesi, soldiNB } from '@/theme/neoBrutalista';
 
 export default function Dashboard() {
@@ -51,7 +52,7 @@ export default function Dashboard() {
   const coloreSfide = useColoreCasella('dashboard.sfide', colori.oro);
   const coloreCalendario = useColoreCasella('dashboard.calendario', colori.menta);
   const coloreNote = useColoreCasella('dashboard.note', colori.viola);
-  const [casellaInModifica, setCasellaInModifica] = useState<string | null>(null);
+  const [casellaInModifica, setCasellaInModifica] = useState<AperturaSelettoreColore | null>(null);
 
   // Posizione netta dell'utente in QUESTO gruppo - vedi
   // calcolaPosizionePersonale in GroupBalanceCard.tsx (testata a parte in
@@ -194,7 +195,7 @@ export default function Dashboard() {
               azione="Vedi"
               orizzontale
               onPress={() => router.push('/saldi')}
-              onLongPress={() => setCasellaInModifica('dashboard.saldo')}
+              onLongPress={() => setCasellaInModifica(apriSelettore('dashboard.saldo'))}
             >
               <View style={styles.testiSaldo}>
                 <Text style={styles.nomeScomparto}>Il tuo saldo</Text>
@@ -238,7 +239,7 @@ export default function Dashboard() {
                 colore={coloreSpesa}
                 azione="Apri"
                 onPress={() => router.push('/lista-spesa')}
-                onLongPress={() => setCasellaInModifica('dashboard.spesa')}
+                onLongPress={() => setCasellaInModifica(apriSelettore('dashboard.spesa'))}
               >
                 {articoliInCaricamento ? (
                   <ActivityIndicator color={colori.scuro} />
@@ -256,7 +257,7 @@ export default function Dashboard() {
                 colore={coloreScrivi}
                 azione="Scrivi"
                 onPress={() => router.push('/assistente')}
-                onLongPress={() => setCasellaInModifica('dashboard.scrivi')}
+                onLongPress={() => setCasellaInModifica(apriSelettore('dashboard.scrivi'))}
               >
                 <View style={styles.rigaScrivi}>
                   <View style={styles.badgeScrivi}>
@@ -281,7 +282,7 @@ export default function Dashboard() {
                 colore={coloreFaccende}
                 azione="Apri"
                 onPress={() => router.push('/faccende')}
-                onLongPress={() => setCasellaInModifica('dashboard.faccende')}
+                onLongPress={() => setCasellaInModifica(apriSelettore('dashboard.faccende'))}
               >
                 {/* Nessuna cifra: la dashboard non carica i punti delle faccende,
                     e un numero inventato sarebbe peggio di nessun numero. */}
@@ -295,7 +296,7 @@ export default function Dashboard() {
                 colore={coloreListe}
                 azione="Apri"
                 onPress={() => router.push('/liste')}
-                onLongPress={() => setCasellaInModifica('dashboard.liste')}
+                onLongPress={() => setCasellaInModifica(apriSelettore('dashboard.liste'))}
               >
                 {listeInCaricamento ? (
                   <ActivityIndicator color={colori.scuro} />
@@ -316,7 +317,7 @@ export default function Dashboard() {
                 colore={coloreSfide}
                 azione="Apri"
                 onPress={() => router.push('/sfide')}
-                onLongPress={() => setCasellaInModifica('dashboard.sfide')}
+                onLongPress={() => setCasellaInModifica(apriSelettore('dashboard.sfide'))}
               >
                 {sfideInCaricamento ? (
                   <ActivityIndicator color={colori.scuro} />
@@ -337,7 +338,7 @@ export default function Dashboard() {
                 colore={coloreCalendario}
                 azione="Apri"
                 onPress={() => router.push('/calendario')}
-                onLongPress={() => setCasellaInModifica('dashboard.calendario')}
+                onLongPress={() => setCasellaInModifica(apriSelettore('dashboard.calendario'))}
               >
                 <CifraScomparto unita="Prossimo" dettaglio={titoloProssimoImpegno} />
               </Scomparto>
@@ -353,7 +354,7 @@ export default function Dashboard() {
             azione="Apri"
             orizzontale
             onPress={() => router.push('/note')}
-            onLongPress={() => setCasellaInModifica('dashboard.note')}
+            onLongPress={() => setCasellaInModifica(apriSelettore('dashboard.note'))}
           >
             {noteInCaricamento ? (
               <ActivityIndicator color={colori.scuro} />
@@ -397,7 +398,7 @@ export default function Dashboard() {
 
       <BarraInferiore attiva="gruppi" />
 
-      <SelettoreColoreCasella chiave={casellaInModifica} onChiudi={() => setCasellaInModifica(null)} />
+      <SelettoreColoreCasella apertura={casellaInModifica} onChiudi={() => setCasellaInModifica(null)} />
     </View>
   );
 }

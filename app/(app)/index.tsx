@@ -22,6 +22,7 @@ import { useNotifiche } from '@/hooks/useNotifiche';
 import { useProfilo } from '@/hooks/useProfilo';
 import { useAuthStore } from '@/store/authStore';
 import { useColoreCasella } from '@/store/coloriCaselleStore';
+import { apriSelettore, type AperturaSelettoreColore } from '@/theme/caselle';
 import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 /**
@@ -63,7 +64,7 @@ export default function Homepage() {
   const colorePersonale = useColoreCasella('home.personale', colori.panna);
   const coloreGruppi = useColoreCasella('home.gruppi', colori.menta);
   const coloreScrivi = useColoreCasella('home.scrivi', colori.oro);
-  const [casellaInModifica, setCasellaInModifica] = useState<string | null>(null);
+  const [casellaInModifica, setCasellaInModifica] = useState<AperturaSelettoreColore | null>(null);
 
   // Serve un nome utente fisso prima di poter fare qualunque cosa, e il
   // font neo-brutalista pronto prima di disegnare qualunque testo di
@@ -131,7 +132,7 @@ export default function Homepage() {
               colore={colorePersonale}
               azione={personaleVuoto ? 'Crea la prima' : 'Entra'}
               onPress={() => router.push('/personale')}
-              onLongPress={() => setCasellaInModifica('home.personale')}
+              onLongPress={() => setCasellaInModifica(apriSelettore('home.personale'))}
             >
               {personaleInCaricamento ? (
                 <ActivityIndicator color={colori.scuro} />
@@ -153,7 +154,7 @@ export default function Homepage() {
                 colore={coloreGruppi}
                 azione="Apri"
                 onPress={() => router.push('/gruppi')}
-                onLongPress={() => setCasellaInModifica('home.gruppi')}
+                onLongPress={() => setCasellaInModifica(apriSelettore('home.gruppi'))}
               >
                 {gruppiInCaricamento ? (
                   <ActivityIndicator color={colori.scuro} />
@@ -173,7 +174,7 @@ export default function Homepage() {
                 colore={coloreScrivi}
                 azione="Scrivi"
                 onPress={() => router.push('/assistente')}
-                onLongPress={() => setCasellaInModifica('home.scrivi')}
+                onLongPress={() => setCasellaInModifica(apriSelettore('home.scrivi'))}
               >
                 <View style={styles.rigaScrivi}>
                   <View style={styles.badgeScrivi}>
@@ -236,7 +237,7 @@ export default function Homepage() {
 
       <BarraInferiore attiva="home" />
 
-      <SelettoreColoreCasella chiave={casellaInModifica} onChiudi={() => setCasellaInModifica(null)} />
+      <SelettoreColoreCasella apertura={casellaInModifica} onChiudi={() => setCasellaInModifica(null)} />
     </View>
   );
 }

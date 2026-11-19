@@ -3,36 +3,45 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { useColoriCaselleStore } from '@/store/coloriCaselleStore';
-import { CASELLE_PERSONALIZZABILI, PALETTE_CASELLE } from '@/theme/caselle';
+import { PALETTE_CASELLE, type AperturaSelettoreColore } from '@/theme/caselle';
 import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 /**
  * Selettore colore aperto con un tocco lungo sulla casella stessa (vedi
  * Scomparto.onLongPress) invece di una schermata di impostazioni a parte:
- * un tocco su un colore sceglie e chiude, non serve altro.
+ * un tocco su un colore sceglie e chiude, non serve altro. `apertura` porta
+ * tutto il necessario (chiave, etichetta, colore di partenza) invece di
+ * cercare solo nell'elenco statico CASELLE_PERSONALIZZABILI, perché alcune
+ * caselle sono dinamiche (es. una per ogni gruppo nell'elenco Gruppi).
  */
-export function SelettoreColoreCasella({ chiave, onChiudi }: { chiave: string | null; onChiudi: () => void }) {
+export function SelettoreColoreCasella({
+  apertura,
+  onChiudi,
+}: {
+  apertura: AperturaSelettoreColore | null;
+  onChiudi: () => void;
+}) {
   const coloriCaselle = useColoriCaselleStore((stato) => stato.coloriCaselle);
   const impostaColoreCasella = useColoriCaselleStore((stato) => stato.impostaColoreCasella);
   const resetColoreCasella = useColoriCaselleStore((stato) => stato.resetColoreCasella);
 
-  const casella = CASELLE_PERSONALIZZABILI.find((c) => c.chiave === chiave);
-  const coloreAttuale = casella === undefined ? null : (coloriCaselle[casella.chiave] ?? casella.coloreDefault);
-  const personalizzata = casella !== undefined && coloriCaselle[casella.chiave] !== undefined;
+  const coloreAttuale =
+    apertura === null ? null : (coloriCaselle[apertura.chiave] ?? apertura.coloreDefault);
+  const personalizzata = apertura !== null && coloriCaselle[apertura.chiave] !== undefined;
 
   return (
-    <Modal visible={casella !== undefined} transparent animationType="fade" onRequestClose={onChiudi}>
+    <Modal visible={apertura !== null} transparent animationType="fade" onRequestClose={onChiudi}>
       <Pressable style={styles.sfondo} onPress={onChiudi}>
         <Pressable onPress={(e) => e.stopPropagation()}>
           <BloccoDuro offset={3} colore={colori.panna} raggio={18} contenutoStyle={styles.pannello}>
-            <Text style={styles.titolo}>{casella?.etichetta}</Text>
+            <Text style={styles.titolo}>{apertura?.etichetta}</Text>
             <View style={styles.griglia}>
               {PALETTE_CASELLE.map((coloreOpzione) => (
                 <Pressable
                   key={coloreOpzione}
                   onPress={() => {
-                    if (casella !== undefined) {
-                      impostaColoreCasella(casella.chiave, coloreOpzione);
+                    if (apertura !== null) {
+                      impostaColoreCasella(apertura.chiave, coloreOpzione);
                     }
                     onChiudi();
                   }}
@@ -50,8 +59,8 @@ export function SelettoreColoreCasella({ chiave, onChiudi }: { chiave: string | 
             {personalizzata && (
               <Pressable
                 onPress={() => {
-                  if (casella !== undefined) {
-                    resetColoreCasella(casella.chiave);
+                  if (apertura !== null) {
+                    resetColoreCasella(apertura.chiave);
                   }
                   onChiudi();
                 }}

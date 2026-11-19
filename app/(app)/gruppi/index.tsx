@@ -18,8 +18,9 @@ import { PARETE, Vassoio } from '@/components/Vassoio';
 import { useFontBento } from '@/hooks/useFontBento';
 import { useMieiGruppi } from '@/hooks/useMieiGruppi';
 import { useProfilo } from '@/hooks/useProfilo';
-import { useColoreCasella } from '@/store/coloriCaselleStore';
+import { useColoreCasella, useColoriCaselleStore } from '@/store/coloriCaselleStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
+import { apriSelettore, type AperturaSelettoreColore } from '@/theme/caselle';
 import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 /** Il tipo del gruppo e' l'etichetta in alto allo scomparto, e decide il colore. */
@@ -40,7 +41,11 @@ export default function GruppiHome() {
   const coloreCrea = useColoreCasella('gruppi.crea', colori.menta);
   const coloreUnisciti = useColoreCasella('gruppi.unisciti', colori.viola);
   const coloreSaldi = useColoreCasella('gruppi.saldi', colori.panna);
-  const [casellaInModifica, setCasellaInModifica] = useState<string | null>(null);
+  // Una tonalità per gruppo (gruppo.id), non un elenco statico come le
+  // altre caselle: un solo abbonamento allo store qui, poi lettura diretta
+  // nella mappa sotto - non si può chiamare un hook dentro un .map().
+  const coloriCaselle = useColoriCaselleStore((stato) => stato.coloriCaselle);
+  const [casellaInModifica, setCasellaInModifica] = useState<AperturaSelettoreColore | null>(null);
 
   if (profiloInCaricamento || !fontPronti) {
     return (
@@ -130,15 +135,24 @@ export default function GruppiHome() {
                 <View key={riga[0].id} style={styles.riga}>
                   {riga.map((gruppo) => {
                     const tipo = perTipo[gruppo.tipo];
+                    const chiaveCasella = `gruppi.tile.${gruppo.id}`;
+                    const colore = coloriCaselle[chiaveCasella] ?? tipo.colore;
                     return (
                       <Scomparto
                         key={gruppo.id}
                         style={styles.cella}
                         nome={tipo.nome}
                         icona={iconaPerTipoGruppo(gruppo.tipo).icona}
-                        colore={tipo.colore}
+                        colore={colore}
                         azione="Entra"
                         onPress={() => apriGruppo(gruppo)}
+                        onLongPress={() =>
+                          setCasellaInModifica({
+                            chiave: chiaveCasella,
+                            etichetta: gruppo.nome,
+                            coloreDefault: tipo.colore,
+                          })
+                        }
                       >
                         <Text style={styles.nomeGruppo} numberOfLines={2}>
                           {gruppo.nome}
@@ -165,7 +179,7 @@ export default function GruppiHome() {
                 colore={coloreCrea}
                 azione="Crea"
                 onPress={() => router.push('/onboarding/crea-gruppo')}
-                onLongPress={() => setCasellaInModifica('gruppi.crea')}
+                onLongPress={() => setCasellaInModifica(apriSelettore('gruppi.crea'))}
               >
                 <CifraScomparto unita="Un gruppo nuovo" />
               </Scomparto>
@@ -176,7 +190,7 @@ export default function GruppiHome() {
                 colore={coloreUnisciti}
                 azione="Entra"
                 onPress={() => router.push('/onboarding/unisciti-a-gruppo')}
-                onLongPress={() => setCasellaInModifica('gruppi.unisciti')}
+                onLongPress={() => setCasellaInModifica(apriSelettore('gruppi.unisciti'))}
               >
                 <CifraScomparto unita="Con un codice" />
               </Scomparto>
@@ -186,7 +200,7 @@ export default function GruppiHome() {
               azione="Vedi"
               orizzontale
               onPress={() => router.push('/saldi-personali')}
-              onLongPress={() => setCasellaInModifica('gruppi.saldi')}
+              onLongPress={() => setCasellaInModifica(apriSelettore('gruppi.saldi'))}
             >
               <View style={styles.rigaFascia}>
                 <View style={styles.badgeFascia}>
@@ -204,7 +218,7 @@ export default function GruppiHome() {
 
       <BarraInferiore attiva="gruppi" />
 
-      <SelettoreColoreCasella chiave={casellaInModifica} onChiudi={() => setCasellaInModifica(null)} />
+      <SelettoreColoreCasella apertura={casellaInModifica} onChiudi={() => setCasellaInModifica(null)} />
     </View>
   );
 }
