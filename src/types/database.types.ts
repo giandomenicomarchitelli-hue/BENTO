@@ -26,6 +26,10 @@
  * stesso motivo: il CLI attuale (v3.2.0) rigenerando degrada anche le
  * union letterali esistenti (es. `frequenza`) a `string`, quindi va
  * evitato finché il CLI non torna a inferire le union dai CHECK constraint.
+ *
+ * `note_gruppo`/`foto_note_gruppo` (migration 00000000000041) aggiunte a
+ * mano per lo stesso motivo, scritte a specchio di `note_personali`/
+ * `foto_note_personali`.
  */
 
 export type Json =
@@ -238,6 +242,35 @@ export type Database = {
           utente_id?: string
         }
         Relationships: []
+      }
+      foto_note_gruppo: {
+        Row: {
+          creato_il: string
+          id: string
+          nota_id: string
+          percorso: string
+        }
+        Insert: {
+          creato_il?: string
+          id?: string
+          nota_id: string
+          percorso: string
+        }
+        Update: {
+          creato_il?: string
+          id?: string
+          nota_id?: string
+          percorso?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_note_gruppo_nota_id_fkey"
+            columns: ["nota_id"]
+            isOneToOne: false
+            referencedRelation: "note_gruppo"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       foto_note_personali: {
         Row: {
@@ -610,6 +643,51 @@ export type Database = {
             columns: ["sfida_id"]
             isOneToOne: false
             referencedRelation: "sfide_scelta"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      note_gruppo: {
+        Row: {
+          aggiornato_il: string
+          contenuto: string
+          creato_da: string | null
+          creato_il: string
+          gruppo_id: string
+          id: string
+          titolo: string
+        }
+        Insert: {
+          aggiornato_il?: string
+          contenuto?: string
+          creato_da?: string | null
+          creato_il?: string
+          gruppo_id: string
+          id?: string
+          titolo: string
+        }
+        Update: {
+          aggiornato_il?: string
+          contenuto?: string
+          creato_da?: string | null
+          creato_il?: string
+          gruppo_id?: string
+          id?: string
+          titolo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_gruppo_creato_da_fkey"
+            columns: ["creato_da"]
+            isOneToOne: false
+            referencedRelation: "membri"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_gruppo_gruppo_id_fkey"
+            columns: ["gruppo_id"]
+            isOneToOne: false
+            referencedRelation: "gruppi"
             referencedColumns: ["id"]
           },
         ]

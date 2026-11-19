@@ -14,6 +14,7 @@ import { useFontBento } from '@/hooks/useFontBento';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useImpegni } from '@/hooks/useImpegni';
 import { useListe } from '@/hooks/useListe';
+import { useNoteGruppo } from '@/hooks/useNoteGruppo';
 import { useSaldi } from '@/hooks/useSaldi';
 import { useSfide } from '@/hooks/useSfide';
 import { formattaEuro } from '@/lib/formato';
@@ -29,6 +30,7 @@ export default function Dashboard() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
   const { gruppo, membriAttivi, isLoading } = useGruppoAttivo();
   const { liste, isLoading: listeInCaricamento } = useListe(gruppoAttivoId);
+  const { note, isLoading: noteInCaricamento } = useNoteGruppo(gruppoAttivoId, null);
   const {
     articoli,
     isLoading: articoliInCaricamento,
@@ -322,6 +324,26 @@ export default function Dashboard() {
               </Scomparto>
             </View>
           </View>
+        </Vassoio>
+
+        <Vassoio>
+          <Scomparto
+            nome="Note"
+            icona="edit-3"
+            colore={colori.viola}
+            azione="Apri"
+            orizzontale
+            onPress={() => router.push('/note')}
+          >
+            {noteInCaricamento ? (
+              <ActivityIndicator color={colori.scuro} />
+            ) : (
+              <CifraScomparto
+                cifra={note.length}
+                unita={note.length === 1 ? 'nota salvata' : 'note salvate'}
+              />
+            )}
+          </Scomparto>
         </Vassoio>
 
         {listeInHome.length > 0 && (
