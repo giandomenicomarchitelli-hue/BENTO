@@ -82,6 +82,14 @@ export default function Profilo() {
           Fisso: è il nome con cui ti vedono gli altri in ogni gruppo.
         </Text>
 
+        <Text style={[styles.etichetta, styles.etichettaCodice]}>Aspetto</Text>
+        <Pressable onPress={() => router.push('/personalizza-colori')}>
+          <BloccoDuro offset={2.5} colore={colori.panna} raggio={12} contenutoStyle={styles.rigaLink}>
+            <Text style={styles.testoRigaLink}>Personalizza i colori</Text>
+            <Feather name="chevron-right" size={16} color={colori.scuro} />
+          </BloccoDuro>
+        </Pressable>
+
         <Text style={[styles.etichetta, styles.etichettaCodice]}>Codice utente</Text>
         <Pressable onPress={copiaCodice}>
           <BloccoDuro offset={3} colore={colori.scuro} raggio={14} contenutoStyle={styles.riquadroCodice}>
@@ -225,5 +233,17 @@ const styles = StyleSheet.create({
   },
   caricamentoPush: {
     marginTop: 12,
+  },
+  rigaLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+  },
+  testoRigaLink: {
+    ...pesi.bold,
+    fontSize: 14,
+    color: colori.scuro,
   },
 });

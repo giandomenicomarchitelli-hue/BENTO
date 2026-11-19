@@ -19,6 +19,7 @@ import { useSaldi } from '@/hooks/useSaldi';
 import { useSfide } from '@/hooks/useSfide';
 import { formattaEuro } from '@/lib/formato';
 import { useAuthStore } from '@/store/authStore';
+import { useColoreCasella } from '@/store/coloriCaselleStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { coloriNB as colori, pesiNB as pesi, soldiNB } from '@/theme/neoBrutalista';
 
@@ -40,6 +41,15 @@ export default function Dashboard() {
     useSaldi(gruppoAttivoId);
   const { sfide, isLoading: sfideInCaricamento } = useSfide(gruppoAttivoId);
   const { impegni, occorrenze, isLoading: impegniInCaricamento } = useImpegni(gruppoAttivoId);
+
+  const coloreSaldo = useColoreCasella('dashboard.saldo', colori.panna);
+  const coloreSpesa = useColoreCasella('dashboard.spesa', colori.menta);
+  const coloreScrivi = useColoreCasella('dashboard.scrivi', colori.oro);
+  const coloreFaccende = useColoreCasella('dashboard.faccende', colori.viola);
+  const coloreListe = useColoreCasella('dashboard.liste', colori.panna);
+  const coloreSfide = useColoreCasella('dashboard.sfide', colori.oro);
+  const coloreCalendario = useColoreCasella('dashboard.calendario', colori.menta);
+  const coloreNote = useColoreCasella('dashboard.note', colori.viola);
 
   // Posizione netta dell'utente in QUESTO gruppo - vedi
   // calcolaPosizionePersonale in GroupBalanceCard.tsx (testata a parte in
@@ -178,7 +188,7 @@ export default function Dashboard() {
         <Vassoio>
           <View style={styles.mosaico}>
             <Scomparto
-              colore={colori.panna}
+              colore={coloreSaldo}
               azione="Vedi"
               orizzontale
               onPress={() => router.push('/saldi')}
@@ -222,7 +232,7 @@ export default function Dashboard() {
                 style={styles.cella}
                 nome="Spesa"
                 icona="shopping-cart"
-                colore={colori.menta}
+                colore={coloreSpesa}
                 azione="Apri"
                 onPress={() => router.push('/lista-spesa')}
               >
@@ -239,7 +249,7 @@ export default function Dashboard() {
 
               <Scomparto
                 style={styles.cella}
-                colore={colori.oro}
+                colore={coloreScrivi}
                 azione="Scrivi"
                 onPress={() => router.push('/assistente')}
               >
@@ -263,7 +273,7 @@ export default function Dashboard() {
                 style={styles.cella}
                 nome="Faccende"
                 icona="check-square"
-                colore={colori.viola}
+                colore={coloreFaccende}
                 azione="Apri"
                 onPress={() => router.push('/faccende')}
               >
@@ -276,7 +286,7 @@ export default function Dashboard() {
                 style={styles.cella}
                 nome="Liste"
                 icona="list"
-                colore={colori.panna}
+                colore={coloreListe}
                 azione="Apri"
                 onPress={() => router.push('/liste')}
               >
@@ -296,7 +306,7 @@ export default function Dashboard() {
                 style={styles.cella}
                 nome="Sfide"
                 icona="award"
-                colore={colori.oro}
+                colore={coloreSfide}
                 azione="Apri"
                 onPress={() => router.push('/sfide')}
               >
@@ -316,7 +326,7 @@ export default function Dashboard() {
                 style={styles.cella}
                 nome="Calendario"
                 icona="calendar"
-                colore={colori.menta}
+                colore={coloreCalendario}
                 azione="Apri"
                 onPress={() => router.push('/calendario')}
               >
@@ -330,7 +340,7 @@ export default function Dashboard() {
           <Scomparto
             nome="Note"
             icona="edit-3"
-            colore={colori.viola}
+            colore={coloreNote}
             azione="Apri"
             orizzontale
             onPress={() => router.push('/note')}

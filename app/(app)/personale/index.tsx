@@ -15,6 +15,7 @@ import { useListePersonali } from '@/hooks/useListePersonali';
 import { useNotePersonali } from '@/hooks/useNotePersonali';
 import { useProfilo } from '@/hooks/useProfilo';
 import { useAuthStore } from '@/store/authStore';
+import { useColoreCasella } from '@/store/coloriCaselleStore';
 import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 export default function PersonaleHome() {
@@ -26,6 +27,10 @@ export default function PersonaleHome() {
   const { liste, isLoading: listeInCaricamento } = useListePersonali(utenteId);
   const { note, isLoading: noteInCaricamento } = useNotePersonali(utenteId);
   const { eventi, isLoading: eventiInCaricamento } = useEventiPersonali(utenteId);
+
+  const coloreListe = useColoreCasella('personale.liste', colori.oro);
+  const coloreNote = useColoreCasella('personale.note', colori.viola);
+  const coloreCalendario = useColoreCasella('personale.calendario', colori.panna);
 
   if (profiloInCaricamento || !fontPronti) {
     return (
@@ -84,7 +89,7 @@ export default function PersonaleHome() {
                 style={styles.colonnaLarga}
                 nome="Liste"
                 icona="list"
-                colore={colori.oro}
+                colore={coloreListe}
                 azione="Apri"
                 onPress={() => router.push('/personale/liste')}
               >
@@ -102,7 +107,7 @@ export default function PersonaleHome() {
                 style={styles.colonnaStretta}
                 nome="Note"
                 icona="edit-3"
-                colore={colori.viola}
+                colore={coloreNote}
                 azione="Apri"
                 onPress={() => router.push('/personale/note')}
               >
@@ -118,7 +123,7 @@ export default function PersonaleHome() {
             </View>
 
             <Scomparto
-              colore={colori.panna}
+              colore={coloreCalendario}
               azione="Apri"
               orizzontale
               onPress={() => router.push('/personale/calendario')}
