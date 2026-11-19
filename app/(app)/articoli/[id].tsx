@@ -23,7 +23,7 @@ import { useOfferteProdotti } from '@/hooks/useOfferteProdotti';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { confermaAzione } from '@/lib/conferma';
 import { formattaEuro } from '@/lib/formato';
-import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
+import { coloriNB as colori, pesiNB as pesi, soldiNB } from '@/theme/neoBrutalista';
 
 export default function ModificaArticolo() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -136,8 +136,11 @@ export default function ModificaArticolo() {
             <Text style={styles.offerteTitolo}>
               Offerte trovate · {offerteTrovate.length}
             </Text>
-            {offerteTrovate.map((offerta) => (
-              <View key={offerta.id} style={styles.offertaRiga}>
+            {offerteTrovate.map((offerta, indice) => (
+              <View
+                key={offerta.id}
+                style={[styles.offertaRiga, indice > 0 && styles.offertaRigaDivisa]}
+              >
                 <View style={styles.offertaTesti}>
                   <Text style={styles.offertaNome} numberOfLines={2}>
                     {offerta.nome}
@@ -193,7 +196,8 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   offerte: {
-    gap: 10,
+    padding: 24,
+    gap: 2,
   },
   offerteTitolo: {
     ...pesi.extraBold,
@@ -201,11 +205,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     textTransform: 'uppercase',
     color: colori.soft,
+    marginBottom: 8,
   },
   offertaRiga: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    paddingVertical: 8,
+  },
+  offertaRigaDivisa: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(22,20,18,0.12)',
   },
   offertaTesti: {
     flex: 1,
@@ -224,7 +234,8 @@ const styles = StyleSheet.create({
   offertaPrezzo: {
     ...pesi.extraBold,
     fontSize: 14,
-    color: colori.scuro,
+    color: soldiNB.credito,
+    fontVariant: ['tabular-nums'],
   },
   eliminaContenitore: {
     alignItems: 'center',

@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -38,6 +39,7 @@ export default function DettaglioNotaPersonale() {
   const [titolo, setTitolo] = useState(titoloIniziale ?? '');
   const [contenuto, setContenuto] = useState('');
   const [modalitaAnteprima, setModalitaAnteprima] = useState(false);
+  const [fotoAperta, setFotoAperta] = useState<FotoNotaPersonale | null>(null);
   const inizializzato = useRef(false);
 
   useEffect(() => {
@@ -178,7 +180,9 @@ export default function DettaglioNotaPersonale() {
           <View style={styles.rigaFoto}>
             {foto.map((f) => (
               <View key={f.id} style={styles.fotoContenitore}>
-                <Image source={{ uri: f.url }} style={styles.miniatura} />
+                <Pressable onPress={() => setFotoAperta(f)}>
+                  <Image source={{ uri: f.url }} style={styles.miniatura} />
+                </Pressable>
                 <Pressable onPress={() => confermaEliminaFoto(f)} hitSlop={8}>
                   <Text style={styles.eliminaFoto}>Elimina</Text>
                 </Pressable>
@@ -221,6 +225,21 @@ export default function DettaglioNotaPersonale() {
           <Text style={styles.eliminaNotaTesto}>Elimina nota</Text>
         </Pressable>
       </ScrollView>
+
+      <Modal visible={fotoAperta !== null} transparent animationType="fade" onRequestClose={() => setFotoAperta(null)}>
+        <Pressable style={styles.sfondoFoto} onPress={() => setFotoAperta(null)}>
+          {fotoAperta !== null && (
+            <Image source={{ uri: fotoAperta.url }} style={styles.fotoIntera} resizeMode="contain" />
+          )}
+          <Pressable
+            onPress={() => setFotoAperta(null)}
+            hitSlop={12}
+            style={[styles.chiudiFoto, { top: insets.top + 16 }]}
+          >
+            <Feather name="x" size={20} color="#fff" />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -372,5 +391,25 @@ const styles = StyleSheet.create({
     ...pesi.bold,
     color: colori.corallo,
     fontSize: 14,
+  },
+  sfondoFoto: {
+    flex: 1,
+    backgroundColor: 'rgba(22,20,18,0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fotoIntera: {
+    width: '92%',
+    height: '80%',
+  },
+  chiudiFoto: {
+    position: 'absolute',
+    right: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

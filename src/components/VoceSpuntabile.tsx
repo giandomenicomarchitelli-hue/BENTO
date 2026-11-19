@@ -2,7 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { formattaEuro } from '@/lib/formato';
-import { coloreCiclico, coloriNB, pesiNB } from '@/theme/neoBrutalista';
+import { coloreCiclico, coloriNB, pesiNB, soldiNB } from '@/theme/neoBrutalista';
 
 type Props = {
   testo: string;
@@ -53,10 +53,11 @@ export function VoceSpuntabile({
         )}
         {!fatto && offerta !== null && offerta !== undefined && (
           <View style={styles.rigaOfferta}>
-            <Feather name="tag" size={10} color={coloriNB.scuro} />
+            <Feather name="tag" size={11} color={soldiNB.credito} />
             <Text style={styles.offertaTesto} numberOfLines={1}>
               {offerta.marca !== null ? `${offerta.marca} · ` : ''}
-              {formattaEuro(offerta.prezzoCentesimi)} da {offerta.catena}
+              <Text style={styles.offertaPrezzo}>{formattaEuro(offerta.prezzoCentesimi)}</Text>
+              {` da ${offerta.catena}`}
             </Text>
           </View>
         )}
@@ -150,7 +151,12 @@ const styles = StyleSheet.create({
   offertaTesto: {
     ...pesiNB.semiBold,
     fontSize: 11,
-    color: coloriNB.scuro,
+    color: coloriNB.soft,
+  },
+  offertaPrezzo: {
+    ...pesiNB.extraBold,
+    color: soldiNB.credito,
+    fontVariant: ['tabular-nums'],
   },
   rigaMeta: {
     flexDirection: 'row',
