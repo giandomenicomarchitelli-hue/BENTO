@@ -53,10 +53,45 @@ export const AzioneCreaImpegno = z.object({
   assegnatoA: z.string().min(1).nullable(),
 });
 
+export const AzioneAggiungiVoceListaPersonale = z.object({
+  tipo: z.literal('aggiungi_voce_lista_personale'),
+  nomeLista: z.string().min(1),
+  voci: z.array(z.string().min(1)).min(1),
+});
+
+/**
+ * Non un .refine() su "almeno una tra nuovaData/nuovaOra non nulla": un
+ * discriminatedUnion richiede ZodObject puri per leggere il discriminante,
+ * un .refine() lo avvolgerebbe in un ZodEffects e romperebbe l'unione. Il
+ * controllo "almeno una delle due" vive in eseguiAzioniConfermate.
+ */
+export const AzioneSpostaImpegno = z.object({
+  tipo: z.literal('sposta_impegno'),
+  // Titolo esatto come appare tra gli impegni esistenti forniti nel prompt
+  // (stesso meccanismo di nomeLista in aggiungi_voce_lista): il codice
+  // risolve questo testo all'impegno vero, mai l'LLM a un id.
+  titoloEsistente: z.string().min(1),
+  nuovaData: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  nuovaOra: z
+    .string()
+    .nullable()
+    .transform(normalizzaOra)
+    .pipe(z.string().regex(/^\d{2}:\d{2}$/).nullable()),
+});
+
 // COPIA GEMELLA in supabase/functions/interpreta-azione/index.ts (Task 2):
 // se cambi questo schema, cambia anche quello.
 export const SchemaRisposta = z.object({
-  azioni: z.array(z.discriminatedUnion('tipo', [AzioneAggiungiArticolo, AzioneAcquisto, AzioneAggiungiVoceLista, AzioneCreaImpegno])),
+  azioni: z.array(
+    z.discriminatedUnion('tipo', [
+      AzioneAggiungiArticolo,
+      AzioneAcquisto,
+      AzioneAggiungiVoceLista,
+      AzioneCreaImpegno,
+      AzioneAggiungiVoceListaPersonale,
+      AzioneSpostaImpegno,
+    ])
+  ),
   ambiguo: z.boolean(),
   domanda_chiarimento: z.string().nullable(),
 });

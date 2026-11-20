@@ -4,15 +4,27 @@ import { aggiornaArticolo, aggiungiArticolo, listaArticoli } from '@/api/articol
 import { creaSpesa } from '@/api/spese';
 import { creaLista, listaListe } from '@/api/liste';
 import { aggiungiVoce } from '@/api/vociLista';
-import { creaImpegno, leggiFusoOrarioGruppo, sincronizzaOccorrenzeImpegni } from '@/api/impegni';
+import {
+  creaImpegno,
+  eliminaOccorrenzeFuture,
+  leggiFusoOrarioGruppo,
+  listaImpegni,
+  modificaImpegno,
+  sincronizzaOccorrenzeImpegni,
+} from '@/api/impegni';
+import { creaListaPersonale, listaListePersonali } from '@/api/listePersonali';
+import { aggiungiVocePersonale } from '@/api/vociListaPersonali';
 import { calcolaQuoteAcquisto, ordinaSecondoMembriAttivi } from '@/calcolo/risoluzioneAzioni';
 import { normalizzaTesto } from '@/calcolo/normalizzazioneTesto';
 import { dataSicura } from '@/calcolo/campiData';
 
 export async function interpretaAzione(params: {
   gruppoId: string;
+  nomeGruppo: string;
   membriNomi: string[];
   listeNomi: string[];
+  listePersonaliNomi: string[];
+  impegniEsistenti: { titolo: string; data: string }[];
   nomeMittente: string;
   testo: string;
 }): Promise<RispostaInterpretazione> {
@@ -65,6 +77,7 @@ export type AzioneRisolta = {
 export async function eseguiAzioniConfermate(
   gruppoId: string,
   creatoDaMembroId: string,
+  utenteId: string,
   ordineCanonicoMembriIds: string[],
   azioni: AzioneRisolta[]
 ): Promise<void> {
@@ -193,6 +206,66 @@ export async function eseguiAzioniConfermate(
       } catch {
         // sincronizzare le occorrenze è best-effort: l'impegno è già creato,
         // e useImpegni le rigenera comunque ad ogni apertura del Calendario
+      }
+      continue;
+    }
+
+    if (azione.tipo === 'aggiungi_voce_lista_personale') {
+      const liste = await listaListePersonali(utenteId);
+      const nomeNormalizzato = normalizzaTesto(azione.nomeLista);
+      const trovata = liste.find((l) => normalizzaTesto(l.nome) === nomeNormalizzato);
+      const lista =
+        trovata ??
+        (await creaListaPersonale({ utenteId, nome: azione.nomeLista.trim() }).catch(async (erroreCreazione) => {
+          // Stessa corsa concorrente di aggiungi_voce_lista sopra.
+          const listeAggiornate = await listaListePersonali(utenteId);
+          const trovataOra = listeAggiornate.find((l) => normalizzaTesto(l.nome) === nomeNormalizzato);
+          if (trovataOra) {
+            return trovataOra;
+          }
+          throw erroreCreazione;
+        }));
+
+      for (const voce of azione.voci) {
+        await aggiungiVocePersonale(lista.id, voce);
+      }
+      continue;
+    }
+
+    if (azione.tipo === 'sposta_impegno') {
+      if (azione.nuovaData === null && azione.nuovaOra === null) {
+        throw new Error('Nessuna nuova data o ora specificata per spostare l\'impegno.');
+      }
+      if (azione.nuovaData !== null && dataSicura(`${azione.nuovaData}T00:00:00`) === null) {
+        throw new Error(`"${azione.nuovaData}" non è una data valida.`);
+      }
+
+      const impegni = await listaImpegni(gruppoId);
+      const titoloNormalizzato = normalizzaTesto(azione.titoloEsistente);
+      const impegno = impegni.find((i) => normalizzaTesto(i.titolo) === titoloNormalizzato);
+      if (!impegno) {
+        throw new Error(`Impossibile trovare l'impegno "${azione.titoloEsistente}" nel gruppo.`);
+      }
+
+      await modificaImpegno(impegno.id, {
+        titolo: impegno.titolo,
+        descrizione: impegno.descrizione,
+        dataInizio: azione.nuovaData ?? impegno.data_inizio,
+        ora: azione.nuovaOra ?? impegno.ora,
+        frequenza: impegno.frequenza,
+        intervalloRicorrenza: impegno.intervallo_ricorrenza,
+        promemoriaMinutiPrima: impegno.promemoria_minuti_prima,
+        modificabileDaTutti: impegno.modificabile_da_tutti,
+        assegnatoA: impegno.assegnato_a,
+      });
+      // Stessa sequenza di useImpegni().modifica: le occorrenze future vanno
+      // rigenerate con la nuova data/ora, quelle passate restano intatte.
+      await eliminaOccorrenzeFuture(impegno.id);
+      try {
+        const fusoOrario = await leggiFusoOrarioGruppo(gruppoId);
+        await sincronizzaOccorrenzeImpegni(gruppoId, fusoOrario);
+      } catch {
+        // best-effort, stesso motivo di crea_impegno sopra
       }
       continue;
     }

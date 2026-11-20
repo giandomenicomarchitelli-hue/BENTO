@@ -74,6 +74,25 @@ const AzioneCreaImpegno = z.object({
   assegnatoA: z.string().min(1).nullable(),
 });
 
+const AzioneAggiungiVoceListaPersonale = z.object({
+  tipo: z.literal('aggiungi_voce_lista_personale'),
+  nomeLista: z.string().min(1),
+  voci: z.array(z.string().min(1)).min(1),
+});
+
+// Vedi lo stesso punto in src/calcolo/schemaAzioni.ts: niente .refine() qui,
+// romperebbe il discriminatedUnion.
+const AzioneSpostaImpegno = z.object({
+  tipo: z.literal('sposta_impegno'),
+  titoloEsistente: z.string().min(1),
+  nuovaData: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  nuovaOra: z
+    .string()
+    .nullable()
+    .transform(normalizzaOra)
+    .pipe(z.string().regex(/^\d{2}:\d{2}$/).nullable()),
+});
+
 const SchemaRisposta = z.object({
   azioni: z.array(
     z.discriminatedUnion('tipo', [
@@ -81,6 +100,8 @@ const SchemaRisposta = z.object({
       AzioneAcquisto,
       AzioneAggiungiVoceLista,
       AzioneCreaImpegno,
+      AzioneAggiungiVoceListaPersonale,
+      AzioneSpostaImpegno,
     ])
   ),
   ambiguo: z.boolean(),
@@ -132,10 +153,18 @@ function rispostaJson(corpo: unknown, status = 200): Response {
   });
 }
 
+interface ImpegnoEsistente {
+  titolo: string;
+  data: string;
+}
+
 interface Richiesta {
   gruppoId: string;
+  nomeGruppo: string;
   membriNomi: string[];
   listeNomi: string[];
+  listePersonaliNomi: string[];
+  impegniEsistenti: ImpegnoEsistente[];
   nomeMittente: string;
   testo: string;
 }
@@ -154,14 +183,29 @@ Deno.serve(async (req) => {
 
   // Validazione al confine di fiducia: questi valori finiscono nel system
   // prompt e nella query, arrivano dal client e non sono ancora verificati.
-  const { gruppoId, membriNomi, listeNomi, nomeMittente, testo } = corpo;
+  const { gruppoId, nomeGruppo, membriNomi, listeNomi, listePersonaliNomi, impegniEsistenti, nomeMittente, testo } =
+    corpo;
   if (
     typeof gruppoId !== 'string' ||
     gruppoId === '' ||
+    typeof nomeGruppo !== 'string' ||
+    nomeGruppo === '' ||
     !Array.isArray(membriNomi) ||
     membriNomi.some((n) => typeof n !== 'string' || n.length > 200) ||
     !Array.isArray(listeNomi) ||
     listeNomi.some((n) => typeof n !== 'string' || n.length > 200) ||
+    !Array.isArray(listePersonaliNomi) ||
+    listePersonaliNomi.some((n) => typeof n !== 'string' || n.length > 200) ||
+    !Array.isArray(impegniEsistenti) ||
+    impegniEsistenti.some(
+      (i) =>
+        typeof i !== 'object' ||
+        i === null ||
+        typeof i.titolo !== 'string' ||
+        i.titolo.length > 200 ||
+        typeof i.data !== 'string' ||
+        i.data.length > 20
+    ) ||
     typeof nomeMittente !== 'string' ||
     nomeMittente === '' ||
     typeof testo !== 'string' ||
@@ -183,6 +227,13 @@ Deno.serve(async (req) => {
   // Stesso limite di sicurezza, per lo stesso motivo, sulle liste.
   if (listeNomi.length > 50) {
     return new Response('troppe liste', { status: 400, headers: corsHeaders });
+  }
+  if (listePersonaliNomi.length > 50) {
+    return new Response('troppe liste personali', { status: 400, headers: corsHeaders });
+  }
+  // Un calendario di casa ha poche decine di impegni futuri, non migliaia.
+  if (impegniEsistenti.length > 100) {
+    return new Response('troppi impegni', { status: 400, headers: corsHeaders });
   }
 
   const supabaseUtente = createClient(
@@ -274,6 +325,53 @@ esplicito di chi è l'impegno (stessa regola di pagato_da). Se invece la
 frase non dice per chi è ("cena fuori sabato", "viene il tecnico
 martedì"), assegnatoA è null: è un impegno di tutto il gruppo. Non
 assumere mai che sia di chi scrive solo perché è lui a scrivere.
+
+Usa aggiungi_voce_lista_personale quando la frase chiede di aggiungere
+qualcosa a una lista PERSONALE, cioè una lista di chi scrive, non del
+gruppo: "nella mia lista fumetti aggiungi Batman", "metti 'Dune' nei
+libri da leggere (personale)", o quando il nome della lista corrisponde a
+una delle liste personali elencate sotto e la frase non nomina
+esplicitamente il gruppo "${nomeGruppo}" o un altro gruppo.
+${
+  listePersonaliNomi.length > 0
+    ? `Le liste personali già esistenti di chi scrive sono: ${listePersonaliNomi.join(', ')}. Stessa regola di nomeLista sopra: se la frase si riferisce chiaramente a una di queste, scrivi il nome ESATTO esistente; altrimenti scrivi il nome come lo dice la frase.`
+    : 'Chi scrive non ha ancora nessuna lista personale: scrivi in nomeLista il nome esattamente come lo nomina la frase.'
+}
+Se la frase nomina esplicitamente il gruppo "${nomeGruppo}" (es. "nella
+lista ristoranti di questo gruppo", "in ${nomeGruppo} aggiungi..."), o non
+specifica se è personale o di gruppo ma il nome corrisponde a una lista
+del gruppo elencata sopra, usa aggiungi_voce_lista (di gruppo), non
+aggiungi_voce_lista_personale.
+
+Usa sposta_impegno quando la frase chiede di spostare, rimandare, o
+cambiare data/ora di un impegno che esiste già ("sposta l'appuntamento
+con il dentista al 28 novembre", "l'appuntamento con xyz è alle 15 invece
+che alle 13", "rimanda la cena di sabato a domenica"). titoloEsistente è
+il titolo ESATTO di uno di questi impegni già esistenti nel gruppo:
+${
+  impegniEsistenti.length > 0
+    ? impegniEsistenti.map((i) => `"${i.titolo}" (${i.data})`).join(', ')
+    : '(nessuno)'
+}
+- stessa regola di risoluzione delle liste: scrivi il titolo esatto
+esistente, mai una tua variazione, scegliendo quello a cui la frase si
+riferisce più chiaramente (anche per data, se più impegni hanno titoli
+simili). Se non c'è nessun impegno esistente a cui la frase possa
+riferirsi chiaramente, non generare questa azione: tratta la frase come
+ambigua. nuovaData è la nuova data assoluta YYYY-MM-DD se la frase la
+specifica, altrimenti null; nuovaOra è il nuovo orario HH:MM se la frase
+lo specifica, altrimenti null (stesso formato a due cifre di crea_impegno).
+Se la frase non specifica né una nuova data né un nuovo orario, tratta la
+frase come ambigua invece di generare sposta_impegno.
+
+Questo assistente opera solo sul gruppo "${nomeGruppo}": se la frase
+nomina esplicitamente un gruppo diverso (un nome di gruppo diverso da
+"${nomeGruppo}", es. "nella lista ristoranti di Casa Morini" quando il
+gruppo attivo è un altro), imposta ambiguo a true, azioni a un array
+vuoto, e scrivi in domanda_chiarimento che per agire su un altro gruppo
+bisogna prima entrare in quel gruppo. Le liste e gli impegni PERSONALI
+invece non appartengono a nessun gruppo e valgono sempre, a prescindere
+dal gruppo attivo.
 
 Se la frase è ambigua, incompleta, o non descrive nessuna di queste
 azioni, imposta ambiguo a true e scrivi una domanda_chiarimento breve e

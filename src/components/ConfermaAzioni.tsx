@@ -99,6 +99,12 @@ export function ConfermaAzioni({ azioni, membri, confermando, onConferma }: Prop
               </Text>
             ) : azione.tipo === 'crea_impegno' ? (
               <RigaImpegno azione={azione} membri={membri} risolvi={risolvi} scegli={scegli} scelteManuali={scelteManuali} />
+            ) : azione.tipo === 'aggiungi_voce_lista_personale' ? (
+              <Text style={[styles.testo, styles.rigaTesto2]}>
+                Aggiungi alla tua lista personale «{azione.nomeLista}»: {azione.voci.join(', ')}
+              </Text>
+            ) : azione.tipo === 'sposta_impegno' ? (
+              <RigaSpostaImpegno azione={azione} />
             ) : (
               // Nessun tipo rimanente oggi (azione: never): se un futuro tipo di azione
               // arriva qui senza un ramo dedicato, fallire rumorosamente invece di
@@ -206,6 +212,22 @@ function RigaImpegno({
         <SelettoreMembro key={nome} nome={nome} membri={membri} scelte={scelteManuali} onScegli={scegli} />
       ))}
     </View>
+  );
+}
+
+function RigaSpostaImpegno({ azione }: { azione: Azione & { tipo: 'sposta_impegno' } }) {
+  const dataValida = azione.nuovaData !== null ? dataSicura(`${azione.nuovaData}T00:00:00`) : null;
+  const dataFormattata =
+    dataValida !== null
+      ? format(dataValida, 'EEEE d MMMM yyyy', { locale: it })
+      : azione.nuovaData; // fallback: mostra la stringa grezza invece di far crashare lo schermo
+
+  return (
+    <Text style={[styles.testo, styles.rigaTesto2]}>
+      Sposta «{azione.titoloEsistente}»
+      {dataFormattata !== null ? ` al ${dataFormattata}` : ''}
+      {azione.nuovaOra !== null ? ` alle ${azione.nuovaOra}` : ''}
+    </Text>
   );
 }
 
