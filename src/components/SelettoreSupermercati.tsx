@@ -53,26 +53,34 @@ export function SelettoreSupermercati({ visibile, catene, selezionate, onSalva, 
       <Pressable style={styles.sfondo} onPress={onChiudi}>
         <Pressable onPress={(e) => e.stopPropagation()}>
           <BloccoDuro offset={3} colore={colori.panna} raggio={18} contenutoStyle={styles.pannello}>
-            <Text style={styles.titolo}>Supermercati da mostrare</Text>
+            <View style={styles.intestazione}>
+              <Text style={styles.titolo}>Supermercati da mostrare</Text>
+              <Text style={styles.conteggio}>
+                {scelta.size} di {catene.length} selezionati
+              </Text>
+            </View>
 
             <View style={styles.rigaAzioniRapide}>
-              <Pressable onPress={() => setScelta(new Set(catene))} hitSlop={6}>
-                <Text style={styles.azioneRapida}>Tutti</Text>
+              <Pressable onPress={() => setScelta(new Set(catene))} hitSlop={4} style={styles.azioneRapida}>
+                <Text style={styles.testoAzioneRapida}>Tutti</Text>
               </Pressable>
-              <Pressable onPress={() => setScelta(new Set())} hitSlop={6}>
-                <Text style={styles.azioneRapida}>Nessuno</Text>
+              <Pressable onPress={() => setScelta(new Set())} hitSlop={4} style={styles.azioneRapida}>
+                <Text style={styles.testoAzioneRapida}>Nessuno</Text>
               </Pressable>
             </View>
 
-            <ScrollView style={styles.elenco} contentContainerStyle={styles.elencoContenuto}>
+            <ScrollView style={styles.elenco} contentContainerStyle={styles.griglia}>
               {catene.map((catena) => {
                 const selezionata = scelta.has(catena);
                 return (
-                  <Pressable key={catena} onPress={() => alterna(catena)} style={styles.riga} hitSlop={4}>
-                    <View style={[styles.casella, selezionata && styles.casellaSelezionata]}>
-                      {selezionata && <Feather name="check" size={14} color={colori.crema} />}
-                    </View>
-                    <Text style={styles.nomeCatena}>{catena}</Text>
+                  <Pressable
+                    key={catena}
+                    onPress={() => alterna(catena)}
+                    style={[styles.chip, selezionata && styles.chipSelezionato]}
+                    hitSlop={2}
+                  >
+                    {selezionata && <Feather name="check" size={13} color={colori.panna} />}
+                    <Text style={[styles.testoChip, selezionata && styles.testoChipSelezionato]}>{catena}</Text>
                   </Pressable>
                 );
               })}
@@ -99,9 +107,12 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   pannello: {
-    width: 300,
-    maxHeight: '75%',
+    width: 320,
+    maxHeight: '78%',
     gap: 14,
+  },
+  intestazione: {
+    gap: 3,
   },
   titolo: {
     ...pesi.extraBold,
@@ -111,45 +122,62 @@ const styles = StyleSheet.create({
     color: colori.soft,
     textAlign: 'center',
   },
-  rigaAzioniRapide: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 20,
-  },
-  azioneRapida: {
+  conteggio: {
     ...pesi.bold,
     fontSize: 12.5,
     color: colori.scuro,
-    textDecorationLine: 'underline',
+    textAlign: 'center',
+  },
+  rigaAzioniRapide: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  azioneRapida: {
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  testoAzioneRapida: {
+    ...pesi.extraBold,
+    fontSize: 11.5,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: colori.scuro,
   },
   elenco: {
     flexGrow: 0,
   },
-  elencoContenuto: {
-    gap: 2,
+  griglia: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingVertical: 2,
   },
-  riga: {
+  chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 8,
-  },
-  casella: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
+    gap: 6,
     borderWidth: 2,
     borderColor: colori.scuro,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    backgroundColor: colori.crema,
   },
-  casellaSelezionata: {
-    backgroundColor: colori.scuro,
+  chipSelezionato: {
+    backgroundColor: colori.viola,
   },
-  nomeCatena: {
-    ...pesi.semiBold,
-    fontSize: 14.5,
+  testoChip: {
+    ...pesi.bold,
+    fontSize: 13,
     color: colori.scuro,
+  },
+  testoChipSelezionato: {
+    ...pesi.extraBold,
+    color: colori.panna,
   },
   bottoneSalva: {
     paddingVertical: 12,
