@@ -1,4 +1,4 @@
-import { trovaOfferteCorrispondenti } from './offerteProdotti';
+import { cateneDisponibili, filtraPerCatenePreferite, trovaOfferteCorrispondenti } from './offerteProdotti';
 import type { OffertaProdotto } from './tipi';
 
 function offerta(parziale: Partial<OffertaProdotto> & Pick<OffertaProdotto, 'nome'>): OffertaProdotto {
@@ -41,5 +41,34 @@ describe('trovaOfferteCorrispondenti', () => {
     const cara = offerta({ nome: 'Pasta Barilla 500g', prezzoCentesimi: 150 });
     const economica = offerta({ nome: 'Pasta Divella 500g', prezzoCentesimi: 89 });
     expect(trovaOfferteCorrispondenti('pasta', [cara, economica])).toEqual([economica, cara]);
+  });
+});
+
+describe('filtraPerCatenePreferite', () => {
+  it('senza filtro (null) restituisce tutte le offerte', () => {
+    const offerte = [offerta({ nome: 'Latte', catena: 'MA' }), offerta({ nome: 'Pasta', catena: 'Top' })];
+    expect(filtraPerCatenePreferite(offerte, null)).toEqual(offerte);
+  });
+
+  it('con array vuoto restituisce tutte le offerte (stesso significato di null)', () => {
+    const offerte = [offerta({ nome: 'Latte', catena: 'MA' })];
+    expect(filtraPerCatenePreferite(offerte, [])).toEqual(offerte);
+  });
+
+  it('con una selezione, tiene solo le offerte delle catene scelte', () => {
+    const ma = offerta({ nome: 'Latte', catena: 'MA' });
+    const top = offerta({ nome: 'Pasta', catena: 'Top' });
+    expect(filtraPerCatenePreferite([ma, top], ['MA'])).toEqual([ma]);
+  });
+});
+
+describe('cateneDisponibili', () => {
+  it('restituisce le catene distinte in ordine alfabetico', () => {
+    const offerte = [
+      offerta({ nome: 'A', catena: 'Top' }),
+      offerta({ nome: 'B', catena: 'MA' }),
+      offerta({ nome: 'C', catena: 'Top' }),
+    ];
+    expect(cateneDisponibili(offerte)).toEqual(['MA', 'Top']);
   });
 });

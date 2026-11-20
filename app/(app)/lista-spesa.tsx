@@ -14,15 +14,17 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ArticoloSpesa } from '@/api/articoliSpesa';
-import { trovaOfferteCorrispondenti } from '@/calcolo/offerteProdotti';
+import { cateneDisponibili, filtraPerCatenePreferite, trovaOfferteCorrispondenti } from '@/calcolo/offerteProdotti';
 import { Baran } from '@/components/Baran';
 import { BloccoDuro } from '@/components/BloccoDuro';
+import { SelettoreSupermercati } from '@/components/SelettoreSupermercati';
 import { ShoppingListAddForm } from '@/components/ShoppingListAddForm';
 import { ShoppingListHeader } from '@/components/ShoppingListHeader';
 import { PARETE } from '@/components/Vassoio';
 import { VoceSpuntabile } from '@/components/VoceSpuntabile';
 import { useArticoliSpesa } from '@/hooks/useArticoliSpesa';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
+import { useImpostazioniSpesa } from '@/hooks/useImpostazioniSpesa';
 import { useOfferteProdotti } from '@/hooks/useOfferteProdotti';
 import { useAuthStore } from '@/store/authStore';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
@@ -44,10 +46,15 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const utenteId = useAuthStore((stato) => stato.session?.user.id);
   const { articoli, isLoading, error, aggiungi, elimina } = useArticoliSpesa(gruppoAttivoId);
   const { offerte } = useOfferteProdotti();
+  const { catenePreferite, salva: salvaCatenePreferite } = useImpostazioniSpesa(gruppoAttivoId);
   const [compratiVisibili, setCompratiVisibili] = useState(false);
+  const [selettoreSupermercatiAperto, setSelettoreSupermercatiAperto] = useState(false);
+
+  const offerteFiltrate = filtraPerCatenePreferite(offerte, catenePreferite);
+  const catene = cateneDisponibili(offerte);
 
   function offertaMigliore(nomeArticolo: string) {
-    const [migliore] = trovaOfferteCorrispondenti(nomeArticolo, offerte);
+    const [migliore] = trovaOfferteCorrispondenti(nomeArticolo, offerteFiltrate);
     return migliore
       ? { catena: migliore.catena, marca: migliore.marca, prezzoCentesimi: migliore.prezzoCentesimi }
       : null;
@@ -101,6 +108,7 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           totale={articoli.length}
           comprati={comprati.length}
           onIndietro={tornaIndietro}
+          onApriFiltroSupermercati={catene.length > 0 ? () => setSelettoreSupermercatiAperto(true) : undefined}
         />
         <ShoppingListAddForm onAggiungi={aggiungiArticoloAllaLista} />
 
@@ -161,6 +169,14 @@ function ListaSpesaDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           </BloccoDuro>
         )}
       </ScrollView>
+      <SelettoreSupermercati
+        key={String(selettoreSupermercatiAperto)}
+        visibile={selettoreSupermercatiAperto}
+        catene={catene}
+        selezionate={catenePreferite}
+        onSalva={(selezione) => salvaCatenePreferite.mutate(selezione)}
+        onChiudi={() => setSelettoreSupermercatiAperto(false)}
+      />
     </KeyboardAvoidingView>
   );
 }

@@ -14,11 +14,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ArticoloSpesa } from '@/api/articoliSpesa';
-import { trovaOfferteCorrispondenti } from '@/calcolo/offerteProdotti';
+import { filtraPerCatenePreferite, trovaOfferteCorrispondenti } from '@/calcolo/offerteProdotti';
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { ModificaAcquisto } from '@/components/ModificaAcquisto';
 import { ModificaArticoloDaComprare } from '@/components/ModificaArticoloDaComprare';
 import { useArticoliSpesa } from '@/hooks/useArticoliSpesa';
+import { useImpostazioniSpesa } from '@/hooks/useImpostazioniSpesa';
 import { useOfferteProdotti } from '@/hooks/useOfferteProdotti';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { confermaAzione } from '@/lib/conferma';
@@ -30,6 +31,7 @@ export default function ModificaArticolo() {
   const gruppoAttivoId = useGruppoAttivoStore((stato) => stato.gruppoAttivoId);
   const { articoli, isLoading, aggiorna, elimina } = useArticoliSpesa(gruppoAttivoId);
   const { offerte } = useOfferteProdotti();
+  const { catenePreferite } = useImpostazioniSpesa(gruppoAttivoId);
   const insets = useSafeAreaInsets();
   const [annullando, setAnnullando] = useState(false);
 
@@ -56,7 +58,9 @@ export default function ModificaArticolo() {
   }
 
   const offerteTrovate =
-    articolo.stato === 'da_comprare' ? trovaOfferteCorrispondenti(articolo.nome, offerte) : [];
+    articolo.stato === 'da_comprare'
+      ? trovaOfferteCorrispondenti(articolo.nome, filtraPerCatenePreferite(offerte, catenePreferite))
+      : [];
 
   async function confermaEliminaArticolo(articoloCorrente: ArticoloSpesa) {
     const conferma = await confermaAzione(

@@ -10,6 +10,8 @@ type Props = {
   totale: number;
   comprati: number;
   onIndietro: () => void;
+  /** Apre il selettore dei supermercati di cui mostrare i prezzi; assente = pulsante nascosto (es. nessuna offerta disponibile). */
+  onApriFiltroSupermercati?: () => void;
 };
 
 /**
@@ -17,7 +19,13 @@ type Props = {
  * già la safe area superiore - questo componente non deve applicare di
  * nuovo l'inset (stesso bug corretto altrove nella Fase 2.1).
  */
-export function ShoppingListHeader({ nomeGruppo, totale, comprati, onIndietro }: Props) {
+export function ShoppingListHeader({
+  nomeGruppo,
+  totale,
+  comprati,
+  onIndietro,
+  onApriFiltroSupermercati,
+}: Props) {
   const percentuale = totale > 0 ? comprati / totale : 0;
   const completata = totale > 0 && comprati === totale;
 
@@ -37,6 +45,13 @@ export function ShoppingListHeader({ nomeGruppo, totale, comprati, onIndietro }:
             </Text>
           )}
         </View>
+        {onApriFiltroSupermercati !== undefined && (
+          <Pressable onPress={onApriFiltroSupermercati} hitSlop={8}>
+            <BloccoDuro offset={2} colore={colori.panna} raggio={10} contenutoStyle={styles.quadrato}>
+              <Feather name="sliders" size={17} color={colori.scuro} />
+            </BloccoDuro>
+          </Pressable>
+        )}
       </View>
 
       {totale > 0 && (

@@ -430,6 +430,32 @@ export type Database = {
           },
         ]
       }
+      impostazioni_spesa: {
+        Row: {
+          catene_preferite: string[] | null
+          creato_il: string
+          gruppo_id: string
+        }
+        Insert: {
+          catene_preferite?: string[] | null
+          creato_il?: string
+          gruppo_id: string
+        }
+        Update: {
+          catene_preferite?: string[] | null
+          creato_il?: string
+          gruppo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impostazioni_spesa_gruppo_id_fkey"
+            columns: ["gruppo_id"]
+            isOneToOne: true
+            referencedRelation: "gruppi"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       liste: {
         Row: {
           con_prezzi: boolean
