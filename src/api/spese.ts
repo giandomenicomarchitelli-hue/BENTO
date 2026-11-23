@@ -1,3 +1,4 @@
+import { calcolaQuoteAcquisto } from '@/calcolo/risoluzioneAzioni';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database.types';
 
@@ -57,4 +58,29 @@ export async function annullaSpesa(spesaId: string): Promise<void> {
   if (error) {
     throw error;
   }
+}
+
+/**
+ * Corregge l'importo di una spesa già registrata, in modo che il saldo lo
+ * rifletta subito. quote_spesa è append-only per design (nessuna policy di
+ * update/delete, vedi migration RLS: storico immutabile), quindi non si
+ * aggiorna la riga esistente: si annulla la spesa originale e se ne crea
+ * una nuova identica (stesso pagato_da/descrizione/data/partecipanti) con
+ * il nuovo importo, ricalcolando le quote in parti uguali tra gli stessi
+ * partecipanti di prima.
+ */
+export async function modificaImportoSpesa(
+  spesa: SpesaConQuote,
+  nuovoImportoCentesimi: number
+): Promise<void> {
+  await annullaSpesa(spesa.id);
+  const idsPartecipanti = spesa.quote_spesa.map((q) => q.membro_id);
+  await creaSpesa({
+    gruppoId: spesa.gruppo_id,
+    pagatoDa: spesa.pagato_da,
+    importoCentesimi: nuovoImportoCentesimi,
+    descrizione: spesa.descrizione,
+    data: spesa.data,
+    quote: calcolaQuoteAcquisto(nuovoImportoCentesimi, idsPartecipanti),
+  });
 }

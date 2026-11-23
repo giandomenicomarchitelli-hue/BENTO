@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId } from 'react';
 
-import { annullaSpesa, creaSpesa, listaSpese } from '@/api/spese';
+import { annullaSpesa, creaSpesa, listaSpese, modificaImportoSpesa, type SpesaConQuote } from '@/api/spese';
 import { supabase } from '@/lib/supabase';
 
 export function useSpese(gruppoId: string | null) {
@@ -51,11 +51,18 @@ export function useSpese(gruppoId: string | null) {
     onSuccess: invalida,
   });
 
+  const modifica = useMutation({
+    mutationFn: (params: { spesa: SpesaConQuote; nuovoImportoCentesimi: number }) =>
+      modificaImportoSpesa(params.spesa, params.nuovoImportoCentesimi),
+    onSuccess: invalida,
+  });
+
   return {
     spese: query.data ?? [],
     isLoading: query.isLoading,
     error: query.error,
     crea,
     annulla,
+    modifica,
   };
 }

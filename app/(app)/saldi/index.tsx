@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
-import { useMemo } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SpesaConQuote } from '@/api/spese';
@@ -11,7 +11,7 @@ import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useSaldi } from '@/hooks/useSaldi';
 import { useSpese } from '@/hooks/useSpese';
 import { confermaAzione } from '@/lib/conferma';
-import { formattaEuro } from '@/lib/formato';
+import { euroInCentesimi, formattaEuro } from '@/lib/formato';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { coloreCiclico, coloriNB as colori, pesiNB as pesi, soldiNB } from '@/theme/neoBrutalista';
 
@@ -33,11 +33,105 @@ function Cerchietto({ nome }: { nome: string }) {
   );
 }
 
+/**
+ * Componente a livello di modulo (non annidato in SaldiDelGruppo) perché ha
+ * un proprio stato locale (bozza dell'importo in modifica): annidato
+ * verrebbe ricreato - e il suo stato perso - ad ogni render del genitore.
+ */
+function RigaSpesa({
+  spesa,
+  nome,
+  annullaInCorso,
+  modificaInCorso,
+  onAnnulla,
+  onModifica,
+}: {
+  spesa: SpesaConQuote;
+  nome: string;
+  annullaInCorso: boolean;
+  modificaInCorso: boolean;
+  onAnnulla: () => void;
+  onModifica: (nuovoImportoCentesimi: number) => void;
+}) {
+  const [modificando, setModificando] = useState(false);
+  const [bozzaImporto, setBozzaImporto] = useState(formattaImportoPerInput(spesa.importo_centesimi));
+
+  function apriModifica() {
+    setBozzaImporto(formattaImportoPerInput(spesa.importo_centesimi));
+    setModificando(true);
+  }
+
+  async function confermaSalvaModifica() {
+    const nuovoImporto = euroInCentesimi(bozzaImporto);
+    if (nuovoImporto === null || nuovoImporto <= 0) {
+      return;
+    }
+    if (nuovoImporto === spesa.importo_centesimi) {
+      setModificando(false);
+      return;
+    }
+    const conferma = await confermaAzione(
+      'Correggere l’importo?',
+      `"${spesa.descrizione !== '' ? spesa.descrizione : 'Spesa'}" passerà da ${formattaEuro(spesa.importo_centesimi)} a ${formattaEuro(nuovoImporto)}. Il saldo si aggiorna di conseguenza.`,
+      'Salva'
+    );
+    if (conferma) {
+      onModifica(nuovoImporto);
+      setModificando(false);
+    }
+  }
+
+  return (
+    <View style={styles.riga}>
+      <Cerchietto nome={nome} />
+      <View style={styles.testi}>
+        <Text style={styles.descrizione} numberOfLines={1}>
+          {spesa.descrizione !== '' ? spesa.descrizione : 'Spesa'}
+        </Text>
+        <Text style={styles.meta} numberOfLines={1}>
+          {nome} · {spesa.data}
+        </Text>
+      </View>
+      {modificando ? (
+        <TextInput
+          style={styles.inputImporto}
+          keyboardType="decimal-pad"
+          value={bozzaImporto}
+          onChangeText={setBozzaImporto}
+          autoFocus
+        />
+      ) : (
+        <Text style={styles.importoSpesa}>{formattaEuro(spesa.importo_centesimi)}</Text>
+      )}
+      <View style={styles.azioniSpesa}>
+        {modificando ? (
+          <Pressable onPress={confermaSalvaModifica} hitSlop={8} disabled={modificaInCorso}>
+            <Text style={styles.linkModificaSpesa}>Salva</Text>
+          </Pressable>
+        ) : (
+          <>
+            <Pressable onPress={apriModifica} hitSlop={8}>
+              <Text style={styles.linkModificaSpesa}>Modifica</Text>
+            </Pressable>
+            <Pressable onPress={onAnnulla} hitSlop={8} disabled={annullaInCorso}>
+              <Text style={styles.linkAnnullaSpesa}>Annulla</Text>
+            </Pressable>
+          </>
+        )}
+      </View>
+    </View>
+  );
+}
+
+function formattaImportoPerInput(centesimi: number): string {
+  return String(centesimi / 100).replace('.', ',');
+}
+
 function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const insets = useSafeAreaInsets();
   const { gruppo, membri } = useGruppoAttivo();
   const { transazioni, isLoading: saldiInCaricamento } = useSaldi(gruppoAttivoId);
-  const { spese, isLoading: speseInCaricamento, annulla } = useSpese(gruppoAttivoId);
+  const { spese, isLoading: speseInCaricamento, annulla, modifica } = useSpese(gruppoAttivoId);
 
   // Il saldo ha bisogno di TUTTA la cronologia per tornare esatto (vedi
   // useSaldi/calcolaSaldi), ma mostrarla tutta qui no: `spese` cresce senza
@@ -65,27 +159,6 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     if (conferma) {
       annulla.mutate(spesa.id);
     }
-  }
-
-  function RigaSpesa({ spesa }: { spesa: SpesaConQuote }) {
-    const nome = nomeMembro(spesa.pagato_da);
-    return (
-      <View style={styles.riga}>
-        <Cerchietto nome={nome} />
-        <View style={styles.testi}>
-          <Text style={styles.descrizione} numberOfLines={1}>
-            {spesa.descrizione !== '' ? spesa.descrizione : 'Spesa'}
-          </Text>
-          <Text style={styles.meta} numberOfLines={1}>
-            {nome} · {spesa.data}
-          </Text>
-        </View>
-        <Text style={styles.importoSpesa}>{formattaEuro(spesa.importo_centesimi)}</Text>
-        <Pressable onPress={() => confermaAnnullaSpesa(spesa)} hitSlop={8} disabled={annulla.isPending}>
-          <Text style={styles.linkAnnullaSpesa}>Annulla</Text>
-        </Pressable>
-      </View>
-    );
   }
 
   return (
@@ -183,7 +256,15 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
             <BloccoDuro offset={3.5} colore={colori.scuro} raggio={17} contenutoStyle={styles.elenco}>
               <View style={styles.righe}>
                 {speseRecenti.map((spesa) => (
-                  <RigaSpesa key={spesa.id} spesa={spesa} />
+                  <RigaSpesa
+                    key={spesa.id}
+                    spesa={spesa}
+                    nome={nomeMembro(spesa.pagato_da)}
+                    annullaInCorso={annulla.isPending}
+                    modificaInCorso={modifica.isPending}
+                    onAnnulla={() => confermaAnnullaSpesa(spesa)}
+                    onModifica={(nuovoImportoCentesimi) => modifica.mutate({ spesa, nuovoImportoCentesimi })}
+                  />
                 ))}
               </View>
             </BloccoDuro>
@@ -343,6 +424,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontVariant: ['tabular-nums'],
     color: colori.scuro,
+  },
+  inputImporto: {
+    ...pesi.extraBold,
+    fontSize: 14,
+    fontVariant: ['tabular-nums'],
+    color: colori.scuro,
+    borderWidth: 1.5,
+    borderColor: colori.scuro,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 56,
+    textAlign: 'right',
+  },
+  azioniSpesa: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  linkModificaSpesa: {
+    ...pesi.extraBold,
+    fontSize: 9,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: colori.scuro,
+    marginLeft: 8,
   },
   linkAnnullaSpesa: {
     ...pesi.extraBold,
