@@ -149,8 +149,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colori.panna,
   },
+  // Altezza propria e delimitata: con molte catene, senza questo limite
+  // la griglia cresce insieme al resto del pannello (titolo, azioni
+  // rapide, bottone Salva) finché l'intero modal sfora lo schermo,
+  // rendendo irraggiungibili sia la prima riga che il bottone finale.
   elenco: {
     flexGrow: 0,
+    maxHeight: 320,
   },
   griglia: {
     flexDirection: 'row',
