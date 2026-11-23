@@ -79,7 +79,10 @@ export function SelettoreSupermercati({ visibile, catene, selezionate, onSalva, 
                     style={[styles.chip, selezionata && styles.chipSelezionato]}
                     hitSlop={2}
                   >
-                    {selezionata && <Feather name="check" size={13} color={colori.panna} />}
+                    {/* Spunta sempre montata (solo opacity) - niente redistribuisce la
+                        griglia di chip ad ogni tocco, come accadrebbe se l'icona
+                        comparisse/sparisse montando/smontando. */}
+                    <Feather name="check" size={13} color={colori.scuro} style={{ opacity: selezionata ? 1 : 0 }} />
                     <Text style={[styles.testoChip, selezionata && styles.testoChipSelezionato]}>{catena}</Text>
                   </Pressable>
                 );
@@ -134,18 +137,17 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   azioneRapida: {
-    borderWidth: 2,
-    borderColor: colori.scuro,
-    borderRadius: 999,
+    backgroundColor: colori.scuro,
+    borderRadius: 8,
     paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingVertical: 7,
   },
   testoAzioneRapida: {
     ...pesi.extraBold,
     fontSize: 11.5,
     letterSpacing: 0.4,
     textTransform: 'uppercase',
-    color: colori.scuro,
+    color: colori.panna,
   },
   elenco: {
     flexGrow: 0,
@@ -177,7 +179,10 @@ const styles = StyleSheet.create({
   },
   testoChipSelezionato: {
     ...pesi.extraBold,
-    color: colori.panna,
+    // scuro, non panna: su viola il testo panna è a 2,99:1 di contrasto,
+    // sotto la soglia 4,5:1 - scuro arriva a 6,04:1 (vedi theme/
+    // neoBrutalista.ts, già verificato per questo stesso viola).
+    color: colori.scuro,
   },
   bottoneSalva: {
     paddingVertical: 12,
