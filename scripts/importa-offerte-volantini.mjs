@@ -30,6 +30,14 @@ if (!Array.isArray(offerte) || offerte.length === 0) {
   throw new Error(`Nessuna offerta trovata in ${percorsoJson}`);
 }
 
+// La piattaforma volantini a volte etichetta la catena con un prefisso
+// descrittivo ("Volantino Conad: Lazio e Campania") invece del solo nome
+// ("Conad: Lazio e Campania"): lo togliamo qui, non alla fonte, cosi'
+// restiamo puliti anche se un futuro export smette/ricomincia a metterlo.
+function pulisciCatena(catena) {
+  return catena.replace(/^Volantino\s+/i, '').trim();
+}
+
 const righe = offerte.map((o) => ({
   nome: o.nome,
   marca: o.marca ?? null,
@@ -37,7 +45,7 @@ const righe = offerte.map((o) => ({
   prezzo_centesimi: Math.round(o.prezzoEur * 100),
   prezzo_riferimento: o.prezzoRiferimento ?? null,
   sconto_tipo: o.scontoTipo ?? null,
-  catena: o.catena,
+  catena: pulisciCatena(o.catena),
   gruppo: o.gruppo,
   valido_dal: o.validoDal,
   valido_al: o.validoAl,
