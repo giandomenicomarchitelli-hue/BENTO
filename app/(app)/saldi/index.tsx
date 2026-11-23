@@ -10,6 +10,7 @@ import { PARETE } from '@/components/Vassoio';
 import { useGruppoAttivo } from '@/hooks/useGruppoAttivo';
 import { useSaldi } from '@/hooks/useSaldi';
 import { useSpese } from '@/hooks/useSpese';
+import { confermaAzione } from '@/lib/conferma';
 import { formattaEuro } from '@/lib/formato';
 import { useGruppoAttivoStore } from '@/store/gruppoAttivoStore';
 import { coloreCiclico, coloriNB as colori, pesiNB as pesi, soldiNB } from '@/theme/neoBrutalista';
@@ -36,7 +37,7 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
   const insets = useSafeAreaInsets();
   const { gruppo, membri } = useGruppoAttivo();
   const { transazioni, isLoading: saldiInCaricamento } = useSaldi(gruppoAttivoId);
-  const { spese, isLoading: speseInCaricamento } = useSpese(gruppoAttivoId);
+  const { spese, isLoading: speseInCaricamento, annulla } = useSpese(gruppoAttivoId);
 
   // Il saldo ha bisogno di TUTTA la cronologia per tornare esatto (vedi
   // useSaldi/calcolaSaldi), ma mostrarla tutta qui no: `spese` cresce senza
@@ -55,6 +56,17 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
     }
   }
 
+  async function confermaAnnullaSpesa(spesa: SpesaConQuote) {
+    const conferma = await confermaAzione(
+      'Annullare questa spesa?',
+      `"${spesa.descrizione !== '' ? spesa.descrizione : 'Spesa'}" (${formattaEuro(spesa.importo_centesimi)}) non conterà più nei saldi. Resterà comunque nello storico come annullata.`,
+      'Annulla spesa'
+    );
+    if (conferma) {
+      annulla.mutate(spesa.id);
+    }
+  }
+
   function RigaSpesa({ spesa }: { spesa: SpesaConQuote }) {
     const nome = nomeMembro(spesa.pagato_da);
     return (
@@ -69,6 +81,9 @@ function SaldiDelGruppo({ gruppoAttivoId }: { gruppoAttivoId: string }) {
           </Text>
         </View>
         <Text style={styles.importoSpesa}>{formattaEuro(spesa.importo_centesimi)}</Text>
+        <Pressable onPress={() => confermaAnnullaSpesa(spesa)} hitSlop={8} disabled={annulla.isPending}>
+          <Text style={styles.linkAnnullaSpesa}>Annulla</Text>
+        </Pressable>
       </View>
     );
   }
@@ -328,5 +343,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontVariant: ['tabular-nums'],
     color: colori.scuro,
+  },
+  linkAnnullaSpesa: {
+    ...pesi.extraBold,
+    fontSize: 9,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: colori.corallo,
+    marginLeft: 8,
   },
 });

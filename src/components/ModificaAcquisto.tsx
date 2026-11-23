@@ -81,7 +81,8 @@ export function ModificaAcquisto({
           </Text>
         )}
         <Text style={styles.notaPrezzo}>
-          Modificare questo importo non modifica le spese già registrate.
+          Modificare questo importo non modifica le spese già registrate: se hai sbagliato il
+          prezzo di una spesa, correggila da Saldi → Spese recenti.
         </Text>
       </View>
 
