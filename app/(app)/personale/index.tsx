@@ -11,6 +11,7 @@ import { MarchioBento } from '@/components/MarchioBento';
 import { CifraScomparto, Scomparto } from '@/components/Scomparto';
 import { SelettoreColoreCasella } from '@/components/SelettoreColoreCasella';
 import { PARETE, Vassoio } from '@/components/Vassoio';
+import { useAllenamenti } from '@/hooks/useAllenamenti';
 import { useEventiPersonali } from '@/hooks/useEventiPersonali';
 import { useFontBento } from '@/hooks/useFontBento';
 import { useListePersonali } from '@/hooks/useListePersonali';
@@ -30,10 +31,12 @@ export default function PersonaleHome() {
   const { liste, isLoading: listeInCaricamento } = useListePersonali(utenteId);
   const { note, isLoading: noteInCaricamento } = useNotePersonali(utenteId);
   const { eventi, isLoading: eventiInCaricamento } = useEventiPersonali(utenteId);
+  const { allenamenti, isLoading: allenamentiInCaricamento } = useAllenamenti(utenteId);
 
   const coloreListe = useColoreCasella('personale.liste', colori.oro);
   const coloreNote = useColoreCasella('personale.note', colori.viola);
   const coloreCalendario = useColoreCasella('personale.calendario', colori.panna);
+  const coloreAllenamenti = useColoreCasella('personale.allenamenti', colori.menta);
   const [casellaInModifica, setCasellaInModifica] = useState<AperturaSelettoreColore | null>(null);
 
   if (profiloInCaricamento || !fontPronti) {
@@ -146,6 +149,32 @@ export default function PersonaleHome() {
                   ) : (
                     <Text style={styles.metaCalendario} numberOfLines={1}>
                       {sommarioCalendario}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            </Scomparto>
+
+            <Scomparto
+              colore={coloreAllenamenti}
+              azione="Apri"
+              orizzontale
+              onPress={() => router.push('/personale/allenamenti')}
+              onLongPress={() => setCasellaInModifica(apriSelettore('personale.allenamenti'))}
+            >
+              <View style={styles.rigaCalendario}>
+                <View style={styles.chipCalendario}>
+                  <Feather name="activity" size={20} color={colori.scuro} />
+                </View>
+                <View style={styles.testiCalendario}>
+                  <Text style={styles.nomeCalendario}>Allenamenti</Text>
+                  {allenamentiInCaricamento ? (
+                    <ActivityIndicator color={colori.scuro} style={styles.caricamentoCalendario} />
+                  ) : (
+                    <Text style={styles.metaCalendario} numberOfLines={1}>
+                      {allenamenti.length === 0
+                        ? 'Nessuna scheda'
+                        : `${allenamenti.length} ${allenamenti.length === 1 ? 'scheda' : 'schede'}`}
                     </Text>
                   )}
                 </View>

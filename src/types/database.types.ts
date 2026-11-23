@@ -73,6 +73,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      allenamenti: {
+        Row: {
+          attiva: boolean
+          creato_il: string
+          giorni_settimana: number[]
+          id: string
+          titolo: string
+          utente_id: string
+        }
+        Insert: {
+          attiva?: boolean
+          creato_il?: string
+          giorni_settimana: number[]
+          id?: string
+          titolo: string
+          utente_id: string
+        }
+        Update: {
+          attiva?: boolean
+          creato_il?: string
+          giorni_settimana?: number[]
+          id?: string
+          titolo?: string
+          utente_id?: string
+        }
+        Relationships: []
+      }
       articoli_spesa: {
         Row: {
           aggiornato_il: string
@@ -242,6 +269,50 @@ export type Database = {
           utente_id?: string
         }
         Relationships: []
+      }
+      esercizi_allenamento: {
+        Row: {
+          creato_il: string
+          id: string
+          nome: string
+          occorrenza_id: string
+          ordine: number
+          peso_kg: number | null
+          ripetizioni: string | null
+          serie: number | null
+          utente_id: string
+        }
+        Insert: {
+          creato_il?: string
+          id?: string
+          nome: string
+          occorrenza_id: string
+          ordine?: number
+          peso_kg?: number | null
+          ripetizioni?: string | null
+          serie?: number | null
+          utente_id: string
+        }
+        Update: {
+          creato_il?: string
+          id?: string
+          nome?: string
+          occorrenza_id?: string
+          ordine?: number
+          peso_kg?: number | null
+          ripetizioni?: string | null
+          serie?: number | null
+          utente_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "esercizi_allenamento_occorrenza_id_fkey"
+            columns: ["occorrenza_id"]
+            isOneToOne: false
+            referencedRelation: "occorrenze_allenamento"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       foto_note_gruppo: {
         Row: {
@@ -744,6 +815,38 @@ export type Database = {
           utente_id?: string
         }
         Relationships: []
+      }
+      occorrenze_allenamento: {
+        Row: {
+          allenamento_id: string
+          creato_il: string
+          data: string
+          id: string
+          utente_id: string
+        }
+        Insert: {
+          allenamento_id: string
+          creato_il?: string
+          data: string
+          id?: string
+          utente_id: string
+        }
+        Update: {
+          allenamento_id?: string
+          creato_il?: string
+          data?: string
+          id?: string
+          utente_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "occorrenze_allenamento_allenamento_id_fkey"
+            columns: ["allenamento_id"]
+            isOneToOne: false
+            referencedRelation: "allenamenti"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       occorrenze_faccende: {
         Row: {

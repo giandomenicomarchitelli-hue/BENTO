@@ -62,6 +62,7 @@ export const CASELLE_PERSONALIZZABILI: DefinizioneCasella[] = [
   { chiave: 'personale.liste', etichetta: 'Liste', sezione: 'Personale', coloreDefault: coloriNB.oro },
   { chiave: 'personale.note', etichetta: 'Note', sezione: 'Personale', coloreDefault: coloriNB.viola },
   { chiave: 'personale.calendario', etichetta: 'Calendario', sezione: 'Personale', coloreDefault: coloriNB.panna },
+  { chiave: 'personale.allenamenti', etichetta: 'Allenamenti', sezione: 'Personale', coloreDefault: coloriNB.menta },
 ];
 
 /** Cosa serve al selettore per aprirsi su una casella: la chiave con cui

@@ -35,6 +35,8 @@ export default function AppLayout() {
       <Stack.Screen name="personale/note/index" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="personale/note/[id]" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="personale/calendario/index" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="personale/allenamenti/index" options={{ headerShown: false, ...FADE }} />
+      <Stack.Screen name="personale/allenamenti/sessione" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="gruppo/index" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="note/index" options={{ headerShown: false, ...FADE }} />
       <Stack.Screen name="note/[id]" options={{ headerShown: false, ...FADE }} />
