@@ -1420,6 +1420,7 @@ export type Database = {
           creato_da: string | null
           creato_il: string
           fatto: boolean
+          fatto_il: string | null
           id: string
           lista_id: string
           note: string | null
@@ -1431,6 +1432,7 @@ export type Database = {
           creato_da?: string | null
           creato_il?: string
           fatto?: boolean
+          fatto_il?: string | null
           id?: string
           lista_id: string
           note?: string | null
@@ -1442,6 +1444,7 @@ export type Database = {
           creato_da?: string | null
           creato_il?: string
           fatto?: boolean
+          fatto_il?: string | null
           id?: string
           lista_id?: string
           note?: string | null
@@ -1469,6 +1472,7 @@ export type Database = {
         Row: {
           creato_il: string
           fatto: boolean
+          fatto_il: string | null
           id: string
           lista_id: string
           testo: string
@@ -1476,6 +1480,7 @@ export type Database = {
         Insert: {
           creato_il?: string
           fatto?: boolean
+          fatto_il?: string | null
           id?: string
           lista_id: string
           testo: string
@@ -1483,6 +1488,7 @@ export type Database = {
         Update: {
           creato_il?: string
           fatto?: boolean
+          fatto_il?: string | null
           id?: string
           lista_id?: string
           testo?: string

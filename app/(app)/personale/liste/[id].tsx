@@ -137,6 +137,7 @@ export default function DettaglioListaPersonale() {
                     <VoceSpuntabile
                       testo={voce.testo}
                       fatto
+                      dataSpuntato={voce.fatto_il}
                       onTocca={() => aggiorna.mutate({ id: voce.id, fatto: false })}
                       onApriModifica={() => confermaEliminaVoce(voce)}
                       onElimina={() => elimina.mutate(voce.id)}

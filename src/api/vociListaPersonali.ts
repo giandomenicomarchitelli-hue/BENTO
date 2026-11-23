@@ -46,6 +46,9 @@ export async function aggiornaVocePersonale(
   }
   if (campi.fatto !== undefined) {
     payload.fatto = campi.fatto;
+    // Azzerata se si riapre la voce: se si rispunta più tardi, la data deve
+    // essere quella del nuovo spuntamento, non quella rimasta dalla prima volta.
+    payload.fatto_il = campi.fatto ? new Date().toISOString() : null;
   }
 
   const { error } = await supabase.from('voci_lista_personali').update(payload).eq('id', voceId);

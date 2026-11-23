@@ -13,8 +13,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import type { VoceLista } from '@/api/vociLista';
+import { Baran } from '@/components/Baran';
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { PARETE } from '@/components/Vassoio';
 import { VoceSpuntabile } from '@/components/VoceSpuntabile';
@@ -35,6 +38,7 @@ export default function DettaglioLista() {
   const insets = useSafeAreaInsets();
   const [nuovaVoce, setNuovaVoce] = useState('');
   const [nuovaNota, setNuovaNota] = useState('');
+  const [spuntatiVisibili, setSpuntatiVisibili] = useState(false);
 
   const laListaHaPrezzi = conPrezzi === '1';
   const ilMioMembroId = membri.find((m) => m.utente_id === utenteId)?.id ?? null;
@@ -63,7 +67,47 @@ export default function DettaglioLista() {
 
   const daFare = voci.filter((v) => !v.fatto);
   const fatte = voci.filter((v) => v.fatto);
-  const elencoOrdinato = [...daFare, ...fatte];
+
+  function RigaVoce({ voce }: { voce: VoceLista }) {
+    const bloccata = voce.fatto && laListaHaPrezzi;
+    return (
+      <VoceSpuntabile
+        testo={voce.testo}
+        fatto={voce.fatto}
+        nota={voce.note}
+        bloccata={bloccata}
+        acquirente={voce.fatto && laListaHaPrezzi ? { nome: null, prezzoCentesimi: voce.prezzo_centesimi } : null}
+        dataSpuntato={voce.fatto_il}
+        onTocca={() => {
+          if (!voce.fatto && laListaHaPrezzi) {
+            // Segnare fatta una voce di una lista "con prezzi" apre il
+            // form per registrare la spesa (o saltarlo).
+            router.push({
+              pathname: '/spese/nuova',
+              params: {
+                voceListaId: voce.id,
+                listaId: id,
+                nomeVoce: voce.testo,
+                notaEsistente: voce.note ?? undefined,
+              },
+            });
+          } else {
+            if (!voce.fatto) {
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
+            aggiorna.mutate({ id: voce.id, fatto: !voce.fatto });
+          }
+        }}
+        onApriModifica={() =>
+          router.push({
+            pathname: '/voci/[id]',
+            params: { id: voce.id, listaId: id as string },
+          })
+        }
+        onElimina={() => elimina.mutate(voce.id)}
+      />
+    );
+  }
 
   return (
     <KeyboardAvoidingView style={styles.schermo} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -133,55 +177,27 @@ export default function DettaglioLista() {
 
         {isLoading ? (
           <ActivityIndicator color={colori.scuro} style={styles.caricamento} />
-        ) : elencoOrdinato.length === 0 ? (
+        ) : voci.length === 0 ? (
           <Text style={styles.vuoto}>Nessuna voce in questa lista.</Text>
         ) : (
           <BloccoDuro offset={4} colore={colori.scuro} raggio={16} contenutoStyle={styles.elenco}>
             <View style={styles.righe}>
-              {elencoOrdinato.map((voce) => {
-                const bloccata = voce.fatto && laListaHaPrezzi;
-                return (
-                  <VoceSpuntabile
-                    key={voce.id}
-                    testo={voce.testo}
-                    fatto={voce.fatto}
-                    nota={voce.note}
-                    bloccata={bloccata}
-                    acquirente={
-                      voce.fatto && laListaHaPrezzi
-                        ? { nome: null, prezzoCentesimi: voce.prezzo_centesimi }
-                        : null
-                    }
-                    onTocca={() => {
-                      if (!voce.fatto && laListaHaPrezzi) {
-                        // Segnare fatta una voce di una lista "con prezzi" apre il
-                        // form per registrare la spesa (o saltarlo).
-                        router.push({
-                          pathname: '/spese/nuova',
-                          params: {
-                            voceListaId: voce.id,
-                            listaId: id,
-                            nomeVoce: voce.testo,
-                            notaEsistente: voce.note ?? undefined,
-                          },
-                        });
-                      } else {
-                        if (!voce.fatto) {
-                          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        }
-                        aggiorna.mutate({ id: voce.id, fatto: !voce.fatto });
-                      }
-                    }}
-                    onApriModifica={() =>
-                      router.push({
-                        pathname: '/voci/[id]',
-                        params: { id: voce.id, listaId: id as string },
-                      })
-                    }
-                    onElimina={() => elimina.mutate(voce.id)}
-                  />
-                );
-              })}
+              {daFare.map((voce) => (
+                <RigaVoce key={voce.id} voce={voce} />
+              ))}
+              {fatte.length > 0 && (
+                <Baran
+                  etichetta={`Spuntati · ${fatte.length}`}
+                  onPress={() => setSpuntatiVisibili((v) => !v)}
+                  aperto={spuntatiVisibili}
+                />
+              )}
+              {spuntatiVisibili &&
+                fatte.map((voce) => (
+                  <Animated.View key={voce.id} entering={FadeIn.duration(150)} exiting={FadeOut.duration(120)}>
+                    <RigaVoce voce={voce} />
+                  </Animated.View>
+                ))}
             </View>
           </BloccoDuro>
         )}

@@ -1,4 +1,6 @@
 import { Feather } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { formattaEuro } from '@/lib/formato';
@@ -13,6 +15,9 @@ type Props = {
   offerta?: { catena: string; marca: string | null; prezzoCentesimi: number } | null;
   /** Solo lista-spesa: chi e quanto, quando comprato. */
   acquirente?: { nome: string | null; prezzoCentesimi: number | null } | null;
+  /** Liste generiche/personali (non lista-spesa, che ha già `acquirente` con
+   *  il proprio contesto): quando la voce è stata spuntata. */
+  dataSpuntato?: string | null;
   /** Voce "con prezzi" già fatta (solo liste del gruppo): tocco diretto
    *  disabilitato, resta solo il menu per modificare/riaprire. */
   bloccata?: boolean;
@@ -33,6 +38,7 @@ export function VoceSpuntabile({
   nota,
   offerta,
   acquirente,
+  dataSpuntato,
   bloccata,
   onTocca,
   onApriModifica,
@@ -60,6 +66,11 @@ export function VoceSpuntabile({
               {` da ${offerta.catena}`}
             </Text>
           </View>
+        )}
+        {fatto && (acquirente === undefined || acquirente === null) && dataSpuntato !== null && dataSpuntato !== undefined && (
+          <Text style={styles.meta} numberOfLines={1}>
+            Spuntato il {format(new Date(dataSpuntato), 'd MMMM', { locale: it })}
+          </Text>
         )}
         {fatto && acquirente !== null && acquirente !== undefined && (
           <View style={styles.rigaMeta}>
