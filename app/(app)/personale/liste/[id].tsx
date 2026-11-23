@@ -13,9 +13,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoceListaPersonale } from '@/api/vociListaPersonali';
+import { Baran } from '@/components/Baran';
 import { BloccoDuro } from '@/components/BloccoDuro';
 import { PARETE } from '@/components/Vassoio';
 import { VoceSpuntabile } from '@/components/VoceSpuntabile';
@@ -28,6 +30,7 @@ export default function DettaglioListaPersonale() {
   const { voci, isLoading, aggiungi, aggiorna, elimina } = useVociListaPersonali(id ?? null);
   const insets = useSafeAreaInsets();
   const [nuovaVoce, setNuovaVoce] = useState('');
+  const [spuntatiVisibili, setSpuntatiVisibili] = useState(false);
 
   function aggiungiVoce() {
     const testo = nuovaVoce.trim();
@@ -56,6 +59,9 @@ export default function DettaglioListaPersonale() {
       router.replace('/personale/liste');
     }
   }
+
+  const daFare = voci.filter((v) => !v.fatto);
+  const spuntati = voci.filter((v) => v.fatto);
 
   return (
     <KeyboardAvoidingView style={styles.schermo} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -105,21 +111,38 @@ export default function DettaglioListaPersonale() {
         ) : (
           <BloccoDuro offset={4} colore={colori.scuro} raggio={16} contenutoStyle={styles.elenco}>
             <View style={styles.righe}>
-              {voci.map((voce) => (
+              {daFare.map((voce) => (
                 <VoceSpuntabile
                   key={voce.id}
                   testo={voce.testo}
-                  fatto={voce.fatto}
+                  fatto={false}
                   onTocca={() => {
-                    if (!voce.fatto) {
-                      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-                    aggiorna.mutate({ id: voce.id, fatto: !voce.fatto });
+                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    aggiorna.mutate({ id: voce.id, fatto: true });
                   }}
                   onApriModifica={() => confermaEliminaVoce(voce)}
                   onElimina={() => elimina.mutate(voce.id)}
                 />
               ))}
+              {spuntati.length > 0 && (
+                <Baran
+                  etichetta={`Spuntati · ${spuntati.length}`}
+                  onPress={() => setSpuntatiVisibili((v) => !v)}
+                  aperto={spuntatiVisibili}
+                />
+              )}
+              {spuntatiVisibili &&
+                spuntati.map((voce) => (
+                  <Animated.View key={voce.id} entering={FadeIn.duration(150)} exiting={FadeOut.duration(120)}>
+                    <VoceSpuntabile
+                      testo={voce.testo}
+                      fatto
+                      onTocca={() => aggiorna.mutate({ id: voce.id, fatto: false })}
+                      onApriModifica={() => confermaEliminaVoce(voce)}
+                      onElimina={() => elimina.mutate(voce.id)}
+                    />
+                  </Animated.View>
+                ))}
             </View>
           </BloccoDuro>
         )}
