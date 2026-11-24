@@ -76,6 +76,7 @@ export type Database = {
       allenamenti: {
         Row: {
           attiva: boolean
+          colore: string
           creato_il: string
           giorni_settimana: number[]
           id: string
@@ -84,6 +85,7 @@ export type Database = {
         }
         Insert: {
           attiva?: boolean
+          colore?: string
           creato_il?: string
           giorni_settimana: number[]
           id?: string
@@ -92,6 +94,7 @@ export type Database = {
         }
         Update: {
           attiva?: boolean
+          colore?: string
           creato_il?: string
           giorni_settimana?: number[]
           id?: string

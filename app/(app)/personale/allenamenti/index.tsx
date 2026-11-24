@@ -20,6 +20,7 @@ import { useAllenamenti } from '@/hooks/useAllenamenti';
 import { useOccorrenzeAllenamentoSettimana } from '@/hooks/useOccorrenzeAllenamentoSettimana';
 import { confermaAzione } from '@/lib/conferma';
 import { useAuthStore } from '@/store/authStore';
+import { PALETTE_CASELLE } from '@/theme/caselle';
 import { coloriNB as colori, pesiNB as pesi } from '@/theme/neoBrutalista';
 
 const ETICHETTE_GIORNI = ['LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB', 'DOM'];
@@ -49,6 +50,7 @@ export default function AllenamentiPersonali() {
   const [schedaInModifica, setSchedaInModifica] = useState<Allenamento | null>(null);
   const [bozzaTitolo, setBozzaTitolo] = useState('');
   const [bozzaGiorni, setBozzaGiorni] = useState<number[]>([]);
+  const [bozzaColore, setBozzaColore] = useState<string>(PALETTE_CASELLE[0]);
 
   function tornaIndietro() {
     if (router.canGoBack()) {
@@ -66,6 +68,7 @@ export default function AllenamentiPersonali() {
     setSchedaInModifica(null);
     setBozzaTitolo('');
     setBozzaGiorni([]);
+    setBozzaColore(PALETTE_CASELLE[0]);
     setFormAperto(true);
   }
 
@@ -73,6 +76,7 @@ export default function AllenamentiPersonali() {
     setSchedaInModifica(scheda);
     setBozzaTitolo(scheda.titolo);
     setBozzaGiorni(scheda.giorni_settimana);
+    setBozzaColore(scheda.colore);
     setFormAperto(true);
   }
 
@@ -90,9 +94,9 @@ export default function AllenamentiPersonali() {
       return;
     }
     if (schedaInModifica !== null) {
-      aggiorna.mutate({ id: schedaInModifica.id, titolo, giorniSettimana: bozzaGiorni });
+      aggiorna.mutate({ id: schedaInModifica.id, titolo, giorniSettimana: bozzaGiorni, colore: bozzaColore });
     } else {
-      crea.mutate({ titolo, giorniSettimana: bozzaGiorni });
+      crea.mutate({ titolo, giorniSettimana: bozzaGiorni, colore: bozzaColore });
     }
     setFormAperto(false);
   }
@@ -147,30 +151,32 @@ export default function AllenamentiPersonali() {
             {giorni.map((dataISO, indice) => {
               const schedeDiQuestoGiorno = schedeDelGiorno(schedeMappate, dataISO);
               const haSchede = schedeDiQuestoGiorno.length > 0;
+              // Con più schede nello stesso giorno (raro) si prende il colore
+              // della prima: l'elenco sotto la striscia mostra comunque il
+              // dettaglio esatto di ciascuna.
+              const coloreGiorno = haSchede ? schedeDiQuestoGiorno[0].colore : colori.panna;
               const tutteFatte = haSchede && schedeDiQuestoGiorno.every((s) => fattaIl(s.id, dataISO));
               const selezionato = dataISO === giornoSelezionato;
               const oggi = dataISO === oggiISO;
               return (
                 <Pressable key={dataISO} onPress={() => setGiornoSelezionato(dataISO)}>
-                  <BloccoDuro
-                    offset={selezionato ? 2.5 : 0}
-                    colore={tutteFatte ? colori.menta : haSchede ? colori.corallo : colori.panna}
-                    bordo={oggi || !haSchede}
-                    raggio={12}
-                    contenutoStyle={styles.pillGiorno}
-                  >
-                    <Text
-                      style={[
-                        styles.etichettaPillGiorno,
-                        haSchede && styles.testoChiaroPillGiorno,
-                      ]}
+                  <View style={styles.involucroPillGiorno}>
+                    <BloccoDuro
+                      offset={selezionato ? 2.5 : 0}
+                      colore={coloreGiorno}
+                      bordo={oggi || !haSchede}
+                      raggio={12}
+                      contenutoStyle={styles.pillGiorno}
                     >
-                      {ETICHETTE_GIORNI[indice]}
-                    </Text>
-                    <Text style={[styles.numeroPillGiorno, haSchede && styles.testoChiaroPillGiorno]}>
-                      {Number(dataISO.slice(8, 10))}
-                    </Text>
-                  </BloccoDuro>
+                      <Text style={styles.etichettaPillGiorno}>{ETICHETTE_GIORNI[indice]}</Text>
+                      <Text style={styles.numeroPillGiorno}>{Number(dataISO.slice(8, 10))}</Text>
+                    </BloccoDuro>
+                    {tutteFatte && (
+                      <View style={styles.distintivoFatto}>
+                        <Feather name="check" size={9} color={colori.scuro} />
+                      </View>
+                    )}
+                  </View>
                 </Pressable>
               );
             })}
@@ -193,6 +199,7 @@ export default function AllenamentiPersonali() {
               return (
                 <View key={scheda.id} style={styles.cardScheda}>
                   <Pressable style={styles.cardSchedaContenuto} onPress={() => apriSessione(scheda)}>
+                    <View style={[styles.accentoScheda, { backgroundColor: scheda.colore }]} />
                     <View style={styles.cardSchedaTesti}>
                       <Text style={styles.cardSchedaTitolo}>{scheda.titolo}</Text>
                       <Text style={[styles.cardSchedaStato, fatta && styles.cardSchedaStatoFatta]}>
@@ -240,6 +247,21 @@ export default function AllenamentiPersonali() {
                   </Pressable>
                 );
               })}
+            </View>
+            <View style={styles.rigaColoriForm}>
+              {PALETTE_CASELLE.map((coloreOpzione) => (
+                <Pressable key={coloreOpzione} onPress={() => setBozzaColore(coloreOpzione)} hitSlop={4}>
+                  <View
+                    style={[
+                      styles.pallinoColoreForm,
+                      { backgroundColor: coloreOpzione },
+                      bozzaColore === coloreOpzione && styles.pallinoColoreFormSelezionato,
+                    ]}
+                  >
+                    {bozzaColore === coloreOpzione && <Feather name="check" size={14} color={colori.scuro} />}
+                  </View>
+                </Pressable>
+              ))}
             </View>
             <View style={styles.rigaAzioniForm}>
               <Pressable onPress={() => setFormAperto(false)} style={styles.bottoneAnnullaForm}>
@@ -303,6 +325,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 2,
   },
+  involucroPillGiorno: {
+    position: 'relative',
+  },
   pillGiorno: {
     width: 42,
     height: 58,
@@ -320,8 +345,18 @@ const styles = StyleSheet.create({
     color: colori.scuro,
     marginTop: 2,
   },
-  testoChiaroPillGiorno: {
-    color: '#fff',
+  distintivoFatto: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: colori.scuro,
+    backgroundColor: colori.menta,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   etichettaGiorno: {
     ...pesi.extraBold,
@@ -356,6 +391,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  accentoScheda: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: colori.scuro,
   },
   cardSchedaTesti: {
     flex: 1,
@@ -423,6 +465,24 @@ const styles = StyleSheet.create({
   },
   testoChipGiornoFormSelezionato: {
     color: colori.scuro,
+  },
+  rigaColoriForm: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  pallinoColoreForm: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pallinoColoreFormSelezionato: {
+    borderWidth: 3,
   },
   rigaAzioniForm: {
     flexDirection: 'row',
