@@ -188,6 +188,8 @@ function FormEsercizi({
   return (
     <>
       <View style={styles.listaEsercizi}>
+        <Text style={styles.etichettaSezione}>Esercizi</Text>
+        {righe.length === 0 && <Text style={styles.vuoto}>Aggiungi il primo esercizio qui sotto.</Text>}
         {righe.map((riga, indice) => {
           const riferimento = riferimentoUltimaVolta(riga.nome);
           return (
@@ -243,8 +245,11 @@ function FormEsercizi({
           );
         })}
 
-        <Pressable onPress={aggiungiRiga} hitSlop={8}>
-          <Text style={styles.linkAggiungiEsercizio}>+ Aggiungi esercizio</Text>
+        <Pressable onPress={aggiungiRiga}>
+          <BloccoDuro offset={2} colore={colori.panna} raggio={11} contenutoStyle={styles.bottoneAggiungiEsercizio}>
+            <Feather name="plus" size={14} color={colori.scuro} />
+            <Text style={styles.testoAggiungiEsercizio}>Aggiungi esercizio</Text>
+          </BloccoDuro>
         </Pressable>
       </View>
 
@@ -305,6 +310,20 @@ const styles = StyleSheet.create({
   listaEsercizi: {
     gap: 12,
   },
+  etichettaSezione: {
+    ...pesi.extraBold,
+    fontSize: 10,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colori.soft,
+  },
+  vuoto: {
+    ...pesi.bold,
+    fontSize: 13,
+    color: colori.soft,
+    textAlign: 'center',
+    paddingVertical: 12,
+  },
   cardEsercizio: {
     borderWidth: 2,
     borderColor: colori.scuro,
@@ -358,11 +377,19 @@ const styles = StyleSheet.create({
     color: colori.scuro,
     backgroundColor: '#fff',
   },
-  linkAggiungiEsercizio: {
+  bottoneAggiungiEsercizio: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 11,
+  },
+  testoAggiungiEsercizio: {
     ...pesi.extraBold,
-    fontSize: 13,
-    color: colori.corallo,
-    textAlign: 'center',
+    fontSize: 11.5,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: colori.scuro,
   },
   bottoneDisabilitato: {
     opacity: 0.5,

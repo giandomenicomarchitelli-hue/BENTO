@@ -79,6 +79,7 @@ export type Database = {
           colore: string
           creato_il: string
           giorni_settimana: number[]
+          gruppi_muscolari: string[]
           id: string
           titolo: string
           utente_id: string
@@ -88,6 +89,7 @@ export type Database = {
           colore?: string
           creato_il?: string
           giorni_settimana: number[]
+          gruppi_muscolari?: string[]
           id?: string
           titolo: string
           utente_id: string
@@ -97,6 +99,7 @@ export type Database = {
           colore?: string
           creato_il?: string
           giorni_settimana?: number[]
+          gruppi_muscolari?: string[]
           id?: string
           titolo?: string
           utente_id?: string

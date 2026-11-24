@@ -28,6 +28,7 @@ const NOMI_MESI = [
   'gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno',
   'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre',
 ];
+const GRUPPI_MUSCOLARI = ['Petto', 'Dorso', 'Spalle', 'Bicipiti', 'Tricipiti'];
 
 function etichettaGiornoEsteso(dataISO: string): string {
   const [anno, mese, giorno] = dataISO.split('-').map(Number);
@@ -46,11 +47,14 @@ export default function AllenamentiPersonali() {
   const { allenamenti, isLoading, crea, aggiorna, elimina } = useAllenamenti(utenteId);
   const { occorrenze } = useOccorrenzeAllenamentoSettimana(utenteId, giorni[0], giorni[6]);
 
+  const [filtroGruppi, setFiltroGruppi] = useState<string[]>([]);
+
   const [formAperto, setFormAperto] = useState(false);
   const [schedaInModifica, setSchedaInModifica] = useState<Allenamento | null>(null);
   const [bozzaTitolo, setBozzaTitolo] = useState('');
   const [bozzaGiorni, setBozzaGiorni] = useState<number[]>([]);
   const [bozzaColore, setBozzaColore] = useState<string>(PALETTE_CASELLE[0]);
+  const [bozzaGruppi, setBozzaGruppi] = useState<string[]>([]);
 
   function tornaIndietro() {
     if (router.canGoBack()) {
@@ -64,11 +68,18 @@ export default function AllenamentiPersonali() {
     setGiornoSelezionato((precedente) => aggiungiGiorni(precedente, delta * 7));
   }
 
+  function alternaFiltroGruppo(gruppo: string) {
+    setFiltroGruppi((precedente) =>
+      precedente.includes(gruppo) ? precedente.filter((g) => g !== gruppo) : [...precedente, gruppo]
+    );
+  }
+
   function apriNuovaScheda() {
     setSchedaInModifica(null);
     setBozzaTitolo('');
     setBozzaGiorni([]);
     setBozzaColore(PALETTE_CASELLE[0]);
+    setBozzaGruppi([]);
     setFormAperto(true);
   }
 
@@ -77,6 +88,7 @@ export default function AllenamentiPersonali() {
     setBozzaTitolo(scheda.titolo);
     setBozzaGiorni(scheda.giorni_settimana);
     setBozzaColore(scheda.colore);
+    setBozzaGruppi(scheda.gruppi_muscolari);
     setFormAperto(true);
   }
 
@@ -88,15 +100,27 @@ export default function AllenamentiPersonali() {
     );
   }
 
+  function alternaGruppoBozza(gruppo: string) {
+    setBozzaGruppi((precedente) =>
+      precedente.includes(gruppo) ? precedente.filter((g) => g !== gruppo) : [...precedente, gruppo]
+    );
+  }
+
   function salvaScheda() {
     const titolo = bozzaTitolo.trim();
     if (titolo === '' || bozzaGiorni.length === 0) {
       return;
     }
     if (schedaInModifica !== null) {
-      aggiorna.mutate({ id: schedaInModifica.id, titolo, giorniSettimana: bozzaGiorni, colore: bozzaColore });
+      aggiorna.mutate({
+        id: schedaInModifica.id,
+        titolo,
+        giorniSettimana: bozzaGiorni,
+        colore: bozzaColore,
+        gruppiMuscolari: bozzaGruppi,
+      });
     } else {
-      crea.mutate({ titolo, giorniSettimana: bozzaGiorni, colore: bozzaColore });
+      crea.mutate({ titolo, giorniSettimana: bozzaGiorni, colore: bozzaColore, gruppiMuscolari: bozzaGruppi });
     }
     setFormAperto(false);
   }
@@ -120,7 +144,11 @@ export default function AllenamentiPersonali() {
   }
 
   const schedeMappate = allenamenti.map((a) => ({ ...a, giorniSettimana: a.giorni_settimana }));
-  const schedeDelGiornoSelezionato = schedeDelGiorno(schedeMappate, giornoSelezionato);
+  const schedeVisibili =
+    filtroGruppi.length === 0
+      ? schedeMappate
+      : schedeMappate.filter((s) => s.gruppi_muscolari.some((g) => filtroGruppi.includes(g)));
+  const schedeDelGiornoSelezionato = schedeDelGiorno(schedeVisibili, giornoSelezionato);
 
   function fattaIl(allenamentoId: string, data: string): boolean {
     return occorrenze.some((o) => o.allenamento_id === allenamentoId && o.data === data);
@@ -143,126 +171,187 @@ export default function AllenamentiPersonali() {
           <Text style={styles.titolo}>Allenamenti</Text>
         </View>
 
-        <View style={styles.rigaSettimana}>
-          <Pressable onPress={() => cambiaSettimana(-1)} hitSlop={8}>
-            <Feather name="chevron-left" size={22} color={colori.scuro} />
-          </Pressable>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.striscia}>
-            {giorni.map((dataISO, indice) => {
-              const schedeDiQuestoGiorno = schedeDelGiorno(schedeMappate, dataISO);
-              const haSchede = schedeDiQuestoGiorno.length > 0;
-              // Con più schede nello stesso giorno (raro) si prende il colore
-              // della prima: l'elenco sotto la striscia mostra comunque il
-              // dettaglio esatto di ciascuna.
-              const coloreGiorno = haSchede ? schedeDiQuestoGiorno[0].colore : colori.panna;
-              const tutteFatte = haSchede && schedeDiQuestoGiorno.every((s) => fattaIl(s.id, dataISO));
-              const selezionato = dataISO === giornoSelezionato;
-              const oggi = dataISO === oggiISO;
-              return (
-                <Pressable key={dataISO} onPress={() => setGiornoSelezionato(dataISO)}>
-                  <View style={styles.involucroPillGiorno}>
-                    <BloccoDuro
-                      offset={selezionato ? 2.5 : 0}
-                      colore={coloreGiorno}
-                      bordo={oggi || !haSchede}
-                      raggio={12}
-                      contenutoStyle={styles.pillGiorno}
-                    >
-                      <Text style={styles.etichettaPillGiorno}>{ETICHETTE_GIORNI[indice]}</Text>
-                      <Text style={styles.numeroPillGiorno}>{Number(dataISO.slice(8, 10))}</Text>
-                    </BloccoDuro>
-                    {tutteFatte && (
-                      <View style={styles.distintivoFatto}>
-                        <Feather name="check" size={9} color={colori.scuro} />
-                      </View>
-                    )}
-                  </View>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-          <Pressable onPress={() => cambiaSettimana(1)} hitSlop={8}>
-            <Feather name="chevron-right" size={22} color={colori.scuro} />
-          </Pressable>
-        </View>
-
-        <Text style={styles.etichettaGiorno}>{etichettaGiornoEsteso(giornoSelezionato)}</Text>
-
-        {isLoading ? (
-          <ActivityIndicator color={colori.scuro} style={styles.caricamento} />
-        ) : schedeDelGiornoSelezionato.length === 0 ? (
-          <Text style={styles.vuoto}>Nessun allenamento programmato per questo giorno.</Text>
-        ) : (
-          <View style={styles.listaSchede}>
-            {schedeDelGiornoSelezionato.map((scheda) => {
-              const fatta = fattaIl(scheda.id, giornoSelezionato);
-              return (
-                <View key={scheda.id} style={styles.cardScheda}>
-                  <Pressable style={styles.cardSchedaContenuto} onPress={() => apriSessione(scheda)}>
-                    <View style={[styles.accentoScheda, { backgroundColor: scheda.colore }]} />
-                    <View style={styles.cardSchedaTesti}>
-                      <Text style={styles.cardSchedaTitolo}>{scheda.titolo}</Text>
-                      <Text style={[styles.cardSchedaStato, fatta && styles.cardSchedaStatoFatta]}>
-                        {fatta ? 'Fatto' : 'Da fare'}
-                      </Text>
-                    </View>
-                    <Feather name="chevron-right" size={18} color={colori.soft} />
-                  </Pressable>
-                  <View style={styles.cardSchedaAzioni}>
-                    <Pressable onPress={() => apriModificaScheda(scheda)} hitSlop={8}>
-                      <Feather name="edit-2" size={14} color={colori.soft} />
-                    </Pressable>
-                    <Pressable onPress={() => confermaEliminaScheda(scheda)} hitSlop={8}>
-                      <Feather name="trash-2" size={14} color={colori.soft} />
-                    </Pressable>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
-
-        {formAperto ? (
-          <View style={styles.form}>
-            <TextInput
-              style={styles.input}
-              placeholder="Es. Palestra - Petto e bicipiti"
-              placeholderTextColor={colori.soft}
-              value={bozzaTitolo}
-              onChangeText={setBozzaTitolo}
-            />
-            <View style={styles.rigaGiorniForm}>
-              {ETICHETTE_GIORNI.map((etichetta, indice) => {
-                const giorno = indice + 1;
-                const selezionato = bozzaGiorni.includes(giorno);
+        {schedeMappate.length > 0 && (
+          <View style={styles.sezione}>
+            <Text style={styles.etichettaSezione}>Filtra per gruppo muscolare</Text>
+            <View style={styles.rigaFiltri}>
+              {GRUPPI_MUSCOLARI.map((gruppo) => {
+                const attivo = filtroGruppi.includes(gruppo);
                 return (
-                  <Pressable key={giorno} onPress={() => alternaGiornoBozza(giorno)}>
-                    <View style={[styles.chipGiornoForm, selezionato && styles.chipGiornoFormSelezionato]}>
-                      <Text
-                        style={[styles.testoChipGiornoForm, selezionato && styles.testoChipGiornoFormSelezionato]}
-                      >
-                        {etichetta.charAt(0)}
-                      </Text>
+                  <Pressable key={gruppo} onPress={() => alternaFiltroGruppo(gruppo)}>
+                    <View style={[styles.chipFiltro, attivo && styles.chipFiltroAttivo]}>
+                      <Text style={[styles.testoChipFiltro, attivo && styles.testoChipFiltroAttivo]}>{gruppo}</Text>
                     </View>
                   </Pressable>
                 );
               })}
             </View>
-            <View style={styles.rigaColoriForm}>
-              {PALETTE_CASELLE.map((coloreOpzione) => (
-                <Pressable key={coloreOpzione} onPress={() => setBozzaColore(coloreOpzione)} hitSlop={4}>
-                  <View
-                    style={[
-                      styles.pallinoColoreForm,
-                      { backgroundColor: coloreOpzione },
-                      bozzaColore === coloreOpzione && styles.pallinoColoreFormSelezionato,
-                    ]}
-                  >
-                    {bozzaColore === coloreOpzione && <Feather name="check" size={14} color={colori.scuro} />}
+          </View>
+        )}
+
+        <View style={styles.sezione}>
+          <View style={styles.rigaSettimana}>
+            <Pressable onPress={() => cambiaSettimana(-1)} hitSlop={8}>
+              <Feather name="chevron-left" size={22} color={colori.scuro} />
+            </Pressable>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.striscia}>
+              {giorni.map((dataISO, indice) => {
+                const schedeDiQuestoGiorno = schedeDelGiorno(schedeVisibili, dataISO);
+                const haSchede = schedeDiQuestoGiorno.length > 0;
+                // Con più schede nello stesso giorno (raro) si prende il
+                // colore della prima: l'elenco sotto la striscia mostra
+                // comunque il dettaglio esatto di ciascuna.
+                const coloreGiorno = haSchede ? schedeDiQuestoGiorno[0].colore : colori.panna;
+                const tutteFatte = haSchede && schedeDiQuestoGiorno.every((s) => fattaIl(s.id, dataISO));
+                const selezionato = dataISO === giornoSelezionato;
+                const oggi = dataISO === oggiISO;
+                return (
+                  <Pressable key={dataISO} onPress={() => setGiornoSelezionato(dataISO)}>
+                    <View style={styles.involucroPillGiorno}>
+                      <BloccoDuro
+                        offset={selezionato ? 2.5 : 0}
+                        colore={coloreGiorno}
+                        bordo={oggi || !haSchede}
+                        raggio={12}
+                        contenutoStyle={styles.pillGiorno}
+                      >
+                        <Text style={styles.etichettaPillGiorno}>{ETICHETTE_GIORNI[indice]}</Text>
+                        <Text style={styles.numeroPillGiorno}>{Number(dataISO.slice(8, 10))}</Text>
+                      </BloccoDuro>
+                      {tutteFatte && (
+                        <View style={styles.distintivoFatto}>
+                          <Feather name="check" size={9} color={colori.scuro} />
+                        </View>
+                      )}
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <Pressable onPress={() => cambiaSettimana(1)} hitSlop={8}>
+              <Feather name="chevron-right" size={22} color={colori.scuro} />
+            </Pressable>
+          </View>
+
+          <Text style={styles.etichettaGiorno}>{etichettaGiornoEsteso(giornoSelezionato)}</Text>
+
+          {isLoading ? (
+            <ActivityIndicator color={colori.scuro} style={styles.caricamento} />
+          ) : schedeDelGiornoSelezionato.length === 0 ? (
+            <Text style={styles.vuoto}>
+              {filtroGruppi.length === 0
+                ? 'Nessun allenamento programmato per questo giorno.'
+                : 'Nessun allenamento di questo gruppo muscolare in questo giorno.'}
+            </Text>
+          ) : (
+            <View style={styles.listaSchede}>
+              {schedeDelGiornoSelezionato.map((scheda) => {
+                const fatta = fattaIl(scheda.id, giornoSelezionato);
+                return (
+                  <View key={scheda.id} style={styles.cardScheda}>
+                    <Pressable style={styles.cardSchedaContenuto} onPress={() => apriSessione(scheda)}>
+                      <View style={[styles.accentoScheda, { backgroundColor: scheda.colore }]} />
+                      <View style={styles.cardSchedaTesti}>
+                        <Text style={styles.cardSchedaTitolo}>{scheda.titolo}</Text>
+                        {scheda.gruppi_muscolari.length > 0 && (
+                          <Text style={styles.cardSchedaGruppi} numberOfLines={1}>
+                            {scheda.gruppi_muscolari.join(' · ')}
+                          </Text>
+                        )}
+                      </View>
+                      <View style={[styles.distintivoStato, fatta && styles.distintivoStatoFatto]}>
+                        <Text style={[styles.testoDistintivoStato, fatta && styles.testoDistintivoStatoFatto]}>
+                          {fatta ? 'Fatto' : 'Da fare'}
+                        </Text>
+                      </View>
+                      <Feather name="chevron-right" size={18} color={colori.soft} />
+                    </Pressable>
+                    <View style={styles.cardSchedaAzioni}>
+                      <Pressable onPress={() => apriModificaScheda(scheda)} hitSlop={8}>
+                        <Feather name="edit-2" size={14} color={colori.soft} />
+                      </Pressable>
+                      <Pressable onPress={() => confermaEliminaScheda(scheda)} hitSlop={8}>
+                        <Feather name="trash-2" size={14} color={colori.soft} />
+                      </Pressable>
+                    </View>
                   </View>
-                </Pressable>
-              ))}
+                );
+              })}
             </View>
+          )}
+        </View>
+
+        {formAperto ? (
+          <View style={styles.form}>
+            <View style={styles.campoForm}>
+              <Text style={styles.etichettaCampoForm}>Titolo</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Es. Palestra - Petto e bicipiti"
+                placeholderTextColor={colori.soft}
+                value={bozzaTitolo}
+                onChangeText={setBozzaTitolo}
+              />
+            </View>
+
+            <View style={styles.campoForm}>
+              <Text style={styles.etichettaCampoForm}>Giorni</Text>
+              <View style={styles.rigaGiorniForm}>
+                {ETICHETTE_GIORNI.map((etichetta, indice) => {
+                  const giorno = indice + 1;
+                  const selezionato = bozzaGiorni.includes(giorno);
+                  return (
+                    <Pressable key={giorno} onPress={() => alternaGiornoBozza(giorno)}>
+                      <View style={[styles.chipGiornoForm, selezionato && styles.chipGiornoFormSelezionato]}>
+                        <Text
+                          style={[styles.testoChipGiornoForm, selezionato && styles.testoChipGiornoFormSelezionato]}
+                        >
+                          {etichetta.charAt(0)}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View style={styles.campoForm}>
+              <Text style={styles.etichettaCampoForm}>Gruppi muscolari</Text>
+              <View style={styles.rigaFiltri}>
+                {GRUPPI_MUSCOLARI.map((gruppo) => {
+                  const selezionato = bozzaGruppi.includes(gruppo);
+                  return (
+                    <Pressable key={gruppo} onPress={() => alternaGruppoBozza(gruppo)}>
+                      <View style={[styles.chipFiltro, selezionato && styles.chipFiltroAttivo]}>
+                        <Text style={[styles.testoChipFiltro, selezionato && styles.testoChipFiltroAttivo]}>
+                          {gruppo}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View style={styles.campoForm}>
+              <Text style={styles.etichettaCampoForm}>Colore</Text>
+              <View style={styles.rigaColoriForm}>
+                {PALETTE_CASELLE.map((coloreOpzione) => (
+                  <Pressable key={coloreOpzione} onPress={() => setBozzaColore(coloreOpzione)} hitSlop={4}>
+                    <View
+                      style={[
+                        styles.pallinoColoreForm,
+                        { backgroundColor: coloreOpzione },
+                        bozzaColore === coloreOpzione && styles.pallinoColoreFormSelezionato,
+                      ]}
+                    >
+                      {bozzaColore === coloreOpzione && <Feather name="check" size={14} color={colori.scuro} />}
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
             <View style={styles.rigaAzioniForm}>
               <Pressable onPress={() => setFormAperto(false)} style={styles.bottoneAnnullaForm}>
                 <Text style={styles.testoAnnullaForm}>Annulla</Text>
@@ -279,8 +368,11 @@ export default function AllenamentiPersonali() {
             </View>
           </View>
         ) : (
-          <Pressable onPress={apriNuovaScheda} hitSlop={8}>
-            <Text style={styles.linkNuovaScheda}>+ Nuova scheda</Text>
+          <Pressable onPress={apriNuovaScheda}>
+            <BloccoDuro offset={2.5} colore={colori.panna} raggio={12} contenutoStyle={styles.bottoneNuovaScheda}>
+              <Feather name="plus" size={15} color={colori.scuro} />
+              <Text style={styles.testoNuovaScheda}>Nuova scheda</Text>
+            </BloccoDuro>
           </Pressable>
         )}
       </ScrollView>
@@ -295,7 +387,7 @@ const styles = StyleSheet.create({
   },
   contenuto: {
     paddingHorizontal: 16,
-    gap: 16,
+    gap: 20,
   },
   rigaTitolo: {
     flexDirection: 'row',
@@ -313,6 +405,40 @@ const styles = StyleSheet.create({
     fontSize: 18,
     letterSpacing: -0.3,
     color: colori.scuro,
+  },
+  sezione: {
+    gap: 10,
+  },
+  etichettaSezione: {
+    ...pesi.extraBold,
+    fontSize: 10,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colori.soft,
+  },
+  rigaFiltri: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chipFiltro: {
+    borderWidth: 2,
+    borderColor: colori.scuro,
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    backgroundColor: colori.panna,
+  },
+  chipFiltroAttivo: {
+    backgroundColor: colori.scuro,
+  },
+  testoChipFiltro: {
+    ...pesi.bold,
+    fontSize: 12,
+    color: colori.scuro,
+  },
+  testoChipFiltroAttivo: {
+    color: colori.crema,
   },
   rigaSettimana: {
     flexDirection: 'row',
@@ -364,6 +490,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.9,
     textTransform: 'uppercase',
     color: colori.soft,
+    marginTop: 14,
+    marginBottom: 2,
   },
   caricamento: {
     marginTop: 12,
@@ -401,20 +529,39 @@ const styles = StyleSheet.create({
   },
   cardSchedaTesti: {
     flex: 1,
+    minWidth: 0,
   },
   cardSchedaTitolo: {
     ...pesi.extraBold,
     fontSize: 14.5,
     color: colori.scuro,
   },
-  cardSchedaStato: {
-    ...pesi.bold,
+  cardSchedaGruppi: {
+    ...pesi.semiBold,
     fontSize: 11,
     color: colori.soft,
     marginTop: 2,
   },
-  cardSchedaStatoFatta: {
-    color: colori.menta,
+  distintivoStato: {
+    borderWidth: 1.5,
+    borderColor: colori.scuro,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    backgroundColor: colori.crema,
+  },
+  distintivoStatoFatto: {
+    backgroundColor: colori.menta,
+  },
+  testoDistintivoStato: {
+    ...pesi.extraBold,
+    fontSize: 9.5,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colori.soft,
+  },
+  testoDistintivoStatoFatto: {
+    color: colori.scuro,
   },
   cardSchedaAzioni: {
     flexDirection: 'row',
@@ -424,10 +571,20 @@ const styles = StyleSheet.create({
   form: {
     borderWidth: 2,
     borderColor: colori.scuro,
-    borderRadius: 14,
-    padding: 14,
-    gap: 12,
+    borderRadius: 16,
+    padding: 16,
+    gap: 16,
     backgroundColor: colori.panna,
+  },
+  campoForm: {
+    gap: 8,
+  },
+  etichettaCampoForm: {
+    ...pesi.extraBold,
+    fontSize: 10,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colori.soft,
   },
   input: {
     borderWidth: 2,
@@ -470,7 +627,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    justifyContent: 'center',
   },
   pallinoColoreForm: {
     width: 32,
@@ -488,6 +644,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginTop: 2,
   },
   bottoneAnnullaForm: {
     paddingVertical: 10,
@@ -512,10 +669,18 @@ const styles = StyleSheet.create({
   bottoneDisabilitato: {
     opacity: 0.5,
   },
-  linkNuovaScheda: {
+  bottoneNuovaScheda: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 13,
+  },
+  testoNuovaScheda: {
     ...pesi.extraBold,
-    fontSize: 13,
-    color: colori.corallo,
-    textAlign: 'center',
+    fontSize: 12,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: colori.scuro,
   },
 });

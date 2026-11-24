@@ -23,6 +23,7 @@ export async function creaAllenamento(params: {
   titolo: string;
   giorniSettimana: number[];
   colore: string;
+  gruppiMuscolari: string[];
 }): Promise<Allenamento> {
   const { data, error } = await supabase
     .from('allenamenti')
@@ -31,6 +32,7 @@ export async function creaAllenamento(params: {
       titolo: params.titolo,
       giorni_settimana: params.giorniSettimana,
       colore: params.colore,
+      gruppi_muscolari: params.gruppiMuscolari,
     })
     .select()
     .single();
@@ -41,12 +43,13 @@ export async function creaAllenamento(params: {
   return data;
 }
 
-/** Aggiorna titolo, giorni della settimana e/o colore di una scheda. Solo i campi passati vengono scritti. */
+/** Aggiorna uno o più campi di una scheda. Solo i campi passati vengono scritti. */
 export async function aggiornaAllenamento(params: {
   id: string;
   titolo?: string;
   giorniSettimana?: number[];
   colore?: string;
+  gruppiMuscolari?: string[];
 }): Promise<void> {
   const payload: Database['public']['Tables']['allenamenti']['Update'] = {};
   if (params.titolo !== undefined) {
@@ -57,6 +60,9 @@ export async function aggiornaAllenamento(params: {
   }
   if (params.colore !== undefined) {
     payload.colore = params.colore;
+  }
+  if (params.gruppiMuscolari !== undefined) {
+    payload.gruppi_muscolari = params.gruppiMuscolari;
   }
 
   const { error } = await supabase.from('allenamenti').update(payload).eq('id', params.id);
