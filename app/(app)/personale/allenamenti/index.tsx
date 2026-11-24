@@ -194,7 +194,7 @@ export default function AllenamentiPersonali() {
             <Pressable onPress={() => cambiaSettimana(-1)} hitSlop={8}>
               <Feather name="chevron-left" size={22} color={colori.scuro} />
             </Pressable>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.striscia}>
+            <View style={styles.striscia}>
               {giorni.map((dataISO, indice) => {
                 const schedeDiQuestoGiorno = schedeDelGiorno(schedeVisibili, dataISO);
                 const haSchede = schedeDiQuestoGiorno.length > 0;
@@ -206,7 +206,7 @@ export default function AllenamentiPersonali() {
                 const selezionato = dataISO === giornoSelezionato;
                 const oggi = dataISO === oggiISO;
                 return (
-                  <Pressable key={dataISO} onPress={() => setGiornoSelezionato(dataISO)}>
+                  <Pressable key={dataISO} style={styles.cellaGiorno} onPress={() => setGiornoSelezionato(dataISO)}>
                     <View style={styles.involucroPillGiorno}>
                       <BloccoDuro
                         offset={selezionato ? 2.5 : 0}
@@ -227,7 +227,7 @@ export default function AllenamentiPersonali() {
                   </Pressable>
                 );
               })}
-            </ScrollView>
+            </View>
             <Pressable onPress={() => cambiaSettimana(1)} hitSlop={8}>
               <Feather name="chevron-right" size={22} color={colori.scuro} />
             </Pressable>
@@ -446,16 +446,19 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   striscia: {
+    flex: 1,
     flexDirection: 'row',
-    gap: 8,
-    paddingVertical: 2,
+    gap: 5,
+    paddingTop: 6,
     paddingHorizontal: 2,
+  },
+  cellaGiorno: {
+    flex: 1,
   },
   involucroPillGiorno: {
     position: 'relative',
   },
   pillGiorno: {
-    width: 42,
     height: 58,
     alignItems: 'center',
     justifyContent: 'center',
