@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { doseRimanenti, scortaInEsaurimento } from '@/calcolo/pianoTerapeutico';
 import { dataLocaleISO } from '@/calcolo/ricorrenzaFaccende';
 import { altezzaBarraConSafeArea, BarraInferiore } from '@/components/BarraInferiore';
 import { BloccoDuro } from '@/components/BloccoDuro';
@@ -12,10 +13,12 @@ import { CifraScomparto, Scomparto } from '@/components/Scomparto';
 import { SelettoreColoreCasella } from '@/components/SelettoreColoreCasella';
 import { PARETE, Vassoio } from '@/components/Vassoio';
 import { useAllenamenti } from '@/hooks/useAllenamenti';
+import { useDosiPiano } from '@/hooks/useDosiPiano';
 import { useEventiPersonali } from '@/hooks/useEventiPersonali';
 import { useFontBento } from '@/hooks/useFontBento';
 import { useListePersonali } from '@/hooks/useListePersonali';
 import { useNotePersonali } from '@/hooks/useNotePersonali';
+import { usePianiTerapeutici } from '@/hooks/usePianiTerapeutici';
 import { useProfilo } from '@/hooks/useProfilo';
 import { useAuthStore } from '@/store/authStore';
 import { useColoreCasella } from '@/store/coloriCaselleStore';
@@ -32,11 +35,14 @@ export default function PersonaleHome() {
   const { note, isLoading: noteInCaricamento } = useNotePersonali(utenteId);
   const { eventi, isLoading: eventiInCaricamento } = useEventiPersonali(utenteId);
   const { allenamenti, isLoading: allenamentiInCaricamento } = useAllenamenti(utenteId);
+  const { piani, isLoading: pianiInCaricamento } = usePianiTerapeutici(utenteId);
+  const { dosi } = useDosiPiano(utenteId);
 
   const coloreListe = useColoreCasella('personale.liste', colori.oro);
   const coloreNote = useColoreCasella('personale.note', colori.viola);
   const coloreCalendario = useColoreCasella('personale.calendario', colori.panna);
   const coloreAllenamenti = useColoreCasella('personale.allenamenti', colori.menta);
+  const colorePianoTerapeutico = useColoreCasella('personale.piano-terapeutico', '#F28FB3');
   const [casellaInModifica, setCasellaInModifica] = useState<AperturaSelettoreColore | null>(null);
 
   if (profiloInCaricamento || !fontPronti) {
@@ -55,6 +61,17 @@ export default function PersonaleHome() {
   const eventiOggi = eventi.filter((evento) => evento.data === oggiISO);
   const sommarioCalendario =
     eventiOggi.length === 0 ? 'Nessun impegno oggi' : eventiOggi.map((e) => e.titolo).join(' • ');
+
+  const pianiInAllerta = piani.filter((piano) => {
+    const doseAssunte = dosi.filter((d) => d.piano_id === piano.id && d.assunta).length;
+    return scortaInEsaurimento(doseRimanenti(piano.quantita_confezione, doseAssunte), piano.orari.length);
+  }).length;
+  const sommarioPianoTerapeutico =
+    piani.length === 0
+      ? 'Nessun farmaco'
+      : pianiInAllerta > 0
+        ? `${pianiInAllerta} in esaurimento`
+        : `${piani.length} ${piani.length === 1 ? 'farmaco' : 'farmaci'}`;
 
   return (
     <View style={styles.schermo}>
@@ -180,6 +197,30 @@ export default function PersonaleHome() {
                 </View>
               </View>
             </Scomparto>
+
+            <Scomparto
+              colore={colorePianoTerapeutico}
+              azione="Apri"
+              orizzontale
+              onPress={() => router.push('/personale/piano-terapeutico')}
+              onLongPress={() => setCasellaInModifica(apriSelettore('personale.piano-terapeutico'))}
+            >
+              <View style={styles.rigaCalendario}>
+                <View style={[styles.chipCalendario, pianiInAllerta > 0 && styles.chipCalendarioAllerta]}>
+                  <Feather name="alert-circle" size={20} color={colori.scuro} />
+                </View>
+                <View style={styles.testiCalendario}>
+                  <Text style={styles.nomeCalendario}>Piano terapeutico</Text>
+                  {pianiInCaricamento ? (
+                    <ActivityIndicator color={colori.scuro} style={styles.caricamentoCalendario} />
+                  ) : (
+                    <Text style={styles.metaCalendario} numberOfLines={1}>
+                      {sommarioPianoTerapeutico}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            </Scomparto>
           </View>
         </Vassoio>
       </ScrollView>
@@ -274,6 +315,9 @@ const styles = StyleSheet.create({
     backgroundColor: colori.menta,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  chipCalendarioAllerta: {
+    backgroundColor: '#F28FB3',
   },
   testiCalendario: {
     flexShrink: 1,

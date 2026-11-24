@@ -1005,6 +1005,83 @@ export type Database = {
         }
         Relationships: []
       }
+      piani_terapeutici: {
+        Row: {
+          attivo: boolean
+          creato_il: string
+          data_inizio: string
+          durata_giorni: number
+          id: string
+          nome: string
+          orari: string[]
+          quantita_confezione: number
+          utente_id: string
+        }
+        Insert: {
+          attivo?: boolean
+          creato_il?: string
+          data_inizio: string
+          durata_giorni: number
+          id?: string
+          nome: string
+          orari: string[]
+          quantita_confezione: number
+          utente_id: string
+        }
+        Update: {
+          attivo?: boolean
+          creato_il?: string
+          data_inizio?: string
+          durata_giorni?: number
+          id?: string
+          nome?: string
+          orari?: string[]
+          quantita_confezione?: number
+          utente_id?: string
+        }
+        Relationships: []
+      }
+      dosi_piano_terapeutico: {
+        Row: {
+          assunta: boolean
+          assunta_il: string | null
+          creato_il: string
+          data: string
+          id: string
+          orario: string
+          piano_id: string
+          utente_id: string
+        }
+        Insert: {
+          assunta?: boolean
+          assunta_il?: string | null
+          creato_il?: string
+          data: string
+          id?: string
+          orario: string
+          piano_id: string
+          utente_id: string
+        }
+        Update: {
+          assunta?: boolean
+          assunta_il?: string | null
+          creato_il?: string
+          data?: string
+          id?: string
+          orario?: string
+          piano_id?: string
+          utente_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dosi_piano_terapeutico_piano_id_fkey"
+            columns: ["piano_id"]
+            isOneToOne: false
+            referencedRelation: "piani_terapeutici"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profili: {
         Row: {
           codice_utente: string
